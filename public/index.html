@@ -1,0 +1,30 @@
+<!DOCTYPE html >
+<html data-ng-app="AI">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title data-ng-bind="appName"></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link media="all" type="text/css" href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="lib/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="styles/base.css" rel="stylesheet" />
+</head>
+
+<body data-ng-cloak data-ng-view>
+
+<!-- Load Library Scripts -->
+<script type="text/javascript" src="lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="lib/angular/angular.min.js"></script>
+<script type="text/javascript" src="lib/angular-route/angular-route.min.js"></script>
+<script type="text/javascript" src="socket.io/socket.io.js"></script>
+
+<!-- Load App Script -->
+<script type="text/javascript" src="app/app.js"></script>
+<script src="app/socketFactory.js"></script>
+<script src="app/aiUx.js"></script>
+<script src="app/views/interface.js"></script>
+<script src="app/views/dashboard.js"></script>
+
+</body>
+</html>

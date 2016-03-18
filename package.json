@@ -1,0 +1,54 @@
+{
+    "name": "J.A.R.V.I.S.",
+    "version": "1.0.0",
+    "description": "Voice or Text personal assistant",
+    "keywords": [
+        "JARVIS",
+        "Assistant",
+        "IFTTT",
+        "Siri",
+        "Cartona",
+        "Echo",
+        "OK Google",
+        "API"
+    ],
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "engines": {
+        "node": ">= 0.6.0",
+        "npm": ">= 1.0.0"
+    },
+    "dependencies": {
+        "angular": "~1.5.0",
+        "angular-route": "~1.5.0",
+        "body-parser": "~1.15.0",
+        "bootstrap": "~3.3.6",
+        "express": "~4.10.2",
+        "extend": "~3.0.0",
+        "ffi": "~2.0.0",
+        "jquery": "~2.2.0",
+        "libxmljs": "^0.14.0",
+        "method-override": "~2.3.5",
+        "moment": "~2.11.2",
+        "natural": "~0.4.0",
+        "node-neo4j": "~2.0.3",
+        "node-phantom-simple": "~2.2.4",
+        "node-wit": "~2.0.0",
+        "phantomjs": "^1.9.19",
+        "q": "1.2.0",
+        "qtypes": "~0.1.6",
+        "request": "~2.1",
+        "socket.io": "~1.4.5",
+        "watson-developer-cloud": "^1.0.6"
+    },
+    "devDependencies": {
+        "mocha": "~2.4.5",
+        "should": "~8.2.2"
+    },
+    "bundleDependencies": [],
+    "private": true,
+    "main": "server.js"
+}

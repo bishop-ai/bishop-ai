@@ -1,0 +1,114 @@
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+    font-family: "Courier New", monospace;
+}
+
+.recording-indicator {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: rgba(255,0,0,1);
+    -webkit-box-shadow: 0 0 4px 1px rgba(255,0,0,0.9);
+    -moz-box-shadow: 0 0 4px 1px rgba(255,0,0,0.9);
+    box-shadow: 0 0 4px 1px rgba(255,0,0,0.9);
+    border-radius: 5px;
+    z-index: 1;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+}
+.recording-indicator:not(.active) {
+    opacity: .8;
+    -webkit-box-shadow: 0 0 2px 0 rgba(255,0,0,0.9);
+    -moz-box-shadow: 0 0 2px 0 rgba(255,0,0,0.9);
+    box-shadow: 0 0 2px 0 rgba(255,0,0,0.9);
+}
+
+.input,
+.input:focus {
+    position: absolute;
+    width: 200px;
+    left: 50%;
+    top: 50%;
+    margin-left: -100px;
+    z-index: 1;
+    color: rgb(202,253,255);
+    text-shadow: 0 0 5px rgba(202,253,255,0.5);
+}
+
+.input input,
+.input input:focus {
+    background: transparent;
+    outline: none;
+    border: none;
+    text-shadow: 0 0 5px rgba(202,253,255,0.5);
+}
+
+.transcript-container {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 200px;
+    top: 50%;
+    margin-left: -100px;
+    margin-top: 180px;
+    z-index: 1;
+    text-align: center;
+    color: black;
+    text-shadow: 0 0 5px rgba(0,0,0,0.2);
+    -webkit-mask-image: -webkit-gradient(linear, left 30%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)))
+}
+.transcript-container .transcript {
+    overflow: auto;
+    height: 100%;
+    padding-bottom: 70%;
+}
+.transcript-container .transcript::-webkit-scrollbar {
+    display: none;
+}
+.transcript-container .transcript .message.ai {
+    font-weight: bold;
+}
+
+.vz-wrapper {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    background: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 460, from(#396362), to(#000000));
+    background: -webkit-radial-gradient(circle, #396362, #000000);
+    background: -moz-radial-gradient(circle, #396362, #000000);
+    background: -ms-radial-gradient(circle, #396362, #000000);
+    box-shadow: inset 0 0 160px 0 #000;
+}
+
+.vz-wrapper .canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: initial;
+    width: initial;
+    background: transparent;
+    box-shadow: none;
+}
+
+@media screen and (min-width: 420px) {
+    .vz-wrapper {
+        box-shadow: inset 0 0 200px 60px #000;
+    }
+}
+
+.dashboard {
+    margin-top: 20px;
+}
+
+.dashboard .expression-injectors li,
+.dashboard .expression-triggers li,
+.dashboard .to-expressions li,
+.dashboard .from-expressions li {
+    cursor: pointer;
+}
