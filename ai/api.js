@@ -5,7 +5,7 @@ var db = require('./../utils/db');
 var Expression = require('./../models/expression');
 var normalizer = require('./../nlp').normalizer;
 var seeder = require('./../utils/seeder');
-var Scraper = require('./../utils/scraper');
+var scraper = require('./../utils/scraper');
 
 var brain = new Brain(true);
 
@@ -18,7 +18,7 @@ router.get('/seed', function (req, res) {
 });
 
 router.get('/seed/:name', function (req, res) {
-    seeder.plant(req.params.message).then(function (result) {
+    seeder.plant(req.params.name).then(function (result) {
         res.send(result);
     }, function (err) {
         res.status(500).send(err);
@@ -205,12 +205,15 @@ router.get('/injectors', function (req, res) {
 });
 
 router.get('/scrape', function (req, res) {
-    var scraper = new Scraper();
-    scraper.search("What is phantomjs").then(function (results) {
-        res.send(results);
-    }, function (err) {
-        res.status(500).send(err);
-    });
+    if (req.query.term) {
+        scraper.search(req.query.term).then(function (results) {
+            res.send(results);
+        }, function (err) {
+            res.status(500).send(err);
+        });
+    } else {
+        res.status(200).send([]);
+    }
 });
 
 module.exports = router;
