@@ -5,9 +5,12 @@ var db = require('./../utils/db');
 var Expression = require('./../models/expression');
 var normalizer = require('./../nlp').normalizer;
 var seeder = require('./../utils/seeder');
-var scraper = require('./../utils/scraper');
+var GoogleScraper = require('./../scrapers/google');
+var WikipediaScraper = require('./../scrapers/wikipedia');
 
 var brain = new Brain(true);
+var googleScraper = new GoogleScraper();
+var wikipediaScraper = new WikipediaScraper();
 
 router.get('/seed', function (req, res) {
     seeder.plant().then(function (result) {
@@ -206,8 +209,15 @@ router.get('/injectors', function (req, res) {
 
 router.get('/scrape', function (req, res) {
     if (req.query.term) {
-        scraper.search(req.query.term).then(function (results) {
-            res.send(results);
+        var results = {};
+        googleScraper.scrape(req.query.term).then(function (result) {
+            results.google = result;
+            wikipediaScraper.scrape(req.query.term).then(function (result) {
+                results.wikipedia = result;
+                res.send(results);
+            }, function (err) {
+                res.status(500).send(err);
+            });
         }, function (err) {
             res.status(500).send(err);
         });

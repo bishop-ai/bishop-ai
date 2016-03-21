@@ -2,114 +2,113 @@ var phantom = require('node-phantom-simple');
 var $q = require('q');
 
 var scraper = {
-    ph: null
+    ph: null,
+    initPromise: null
 };
 
-scraper.summarize = function (msg) {
-    var lines = msg.split('\n');
-    var linesToKeep = [];
-
-    var i;
-    var linesToRemove = [];
-    for (i = 0; i < lines.length; i++) {
-        if (!lines[i] || lines[i].indexOf("...") >= 0 || lines[i].substring(lines[i].length - 1) !== "." || lines[i].toLowerCase().indexOf("http") === 0) {
-            linesToRemove.push(i);
-        }
-    }
-    for (i = linesToRemove.length - 1; i >= 0; i--) {
-        lines.splice(linesToRemove[i], 1);
-    }
-
-    // Remove duplicates
-    for (i = 0; i < lines.length; i++) {
-        if (linesToKeep.indexOf(lines[i]) === -1) {
-            linesToKeep.push(lines[i]);
-        }
-    }
-
-    return linesToKeep;
+var noop = function () {
+    return null;
 };
 
-scraper.search = function (term) {
+scraper.createPage = function () {
     var dfd = $q.defer();
     var self = this;
 
-    var doSearch = function (page, term) {
-        var dfd = $q.defer();
-        page.onLoadFinished = function (status) {
-            dfd.resolve(status);
-        };
-
-        page.evaluate(function (term) {
-            var input = document.getElementsByName('q')[0];
-            input.value = term;
-            input.form.submit();
-            return true;
-        }, term, function () {
+    this.initPromise.then(function () {
+        self.ph.createPage(function (err, page) {
+            if (err) {
+                console.log("Scraper: Error: " + err);
+                dfd.reject(err);
+            } else {
+                dfd.resolve(new scraper.Page(page));
+            }
         });
-
-        return dfd.promise;
-    };
-
-    var displayResults = function (page) {
-        var dfd = $q.defer();
-
-        var result = "";
-        page.onConsoleMessage = function (msg) {
-            result = msg;
-        };
-
-        page.evaluate(function () {
-            console.log(document.getElementById("res").innerText);
-            return true;
-        }, function () {
-            dfd.resolve(result);
-        });
-        return dfd.promise;
-    };
-
-    this.ph.createPage(function (err, page) {
-        if (err) {
-            dfd.reject(err);
-        } else {
-
-            page.onError = function (msg) {
-                console.log(msg);
-            };
-
-            page.onLoadFinished = function (status) {
-                if (status === 'success') {
-                    doSearch(page, term).then(function (status) {
-                        if (status === 'success') {
-                            displayResults(page).then(function (msg) {
-                                dfd.resolve(self.summarize(msg));
-                            });
-                        } else {
-                            dfd.reject('Connection failed.');
-                        }
-                    });
-                } else {
-                    dfd.reject('Connection failed.');
-                }
-            };
-
-            page.open("http://google.com");
-        }
     });
 
     return dfd.promise;
 };
 
+scraper.Page = function (page) {
+    this._page = page;
+};
+
+scraper.Page.prototype.load = function (url) {
+    var dfd = $q.defer();
+
+    this._page.onError = function (err) {
+        console.log("Scraper: Error: " + err);
+        dfd.reject(err);
+    };
+
+    this.expectNavigation().then(function () {
+        dfd.resolve();
+    }, function (e) {
+        dfd.reject(e);
+    });
+
+    this._page.open(url);
+
+    return dfd.promise;
+};
+
+scraper.Page.prototype.evaluate = function (func, args) {
+    var dfd = $q.defer();
+
+    this._page.onError = function (err) {
+        console.log("Scraper: Error: " + err);
+        dfd.reject(err);
+    };
+
+    this._page.onConsoleMessage = function (msg) {
+        dfd.notify(msg);
+    };
+
+    args = [].splice.call(arguments, 0);
+    args.push(function (result) {
+        dfd.resolve(result);
+    });
+
+    this._page.evaluate.apply(this, args);
+
+    return dfd.promise;
+};
+
+scraper.Page.prototype.expectNavigation = function () {
+    var dfd = $q.defer();
+    var self = this;
+
+    this._page.onError = function (err) {
+        console.log("Scraper: Error: " + err);
+        dfd.reject(err);
+    };
+
+    this._page.onLoadFinished = function (status) {
+        self._page.onLoadFinished = noop;
+        if (status === 'success') {
+            dfd.resolve();
+        } else {
+            dfd.reject("Scraper Page Load: Error: Connection failed.");
+        }
+    };
+
+    return dfd.promise;
+};
+
 scraper._init = function () {
+    var dfd = $q.defer();
     var self = this;
     phantom.create(function (err, ph) {
         if (err) {
-            console.log("Scraper Error: " + err);
+            console.log("Scraper: Error: " + err);
+            dfd.reject();
         } else {
-            console.log("Scraper Initialized");
+            console.log("Scraper: Initialized");
             self.ph = ph;
+            dfd.resolve();
         }
     });
+
+    this.initPromise = dfd.promise;
 };
 
 scraper._init();
