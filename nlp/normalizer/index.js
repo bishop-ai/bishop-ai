@@ -1,5 +1,7 @@
 var fs = require('fs');
 
+var numberParser = require('./numberParser');
+
 var normalizer = {
     _substitutions: [],
     _corrections: [],
@@ -19,6 +21,8 @@ normalizer.normalize = function (input) {
 
     input = this.clean(input);
     input = this.applySubstitutions(input);
+    input = this.replaceWrittenTime(input);
+    input = this.replaceWrittenNumbers(input);
 
     return input;
 };
@@ -40,6 +44,61 @@ normalizer.cleanChars = function (input) {
     });
 
     return input.trim();
+};
+
+normalizer.replaceWrittenTime = function (input) {
+    var writtenNumberBase = /(one|two|three|four|five|six|seven|eight|nine)/;
+    var writtenNumberBaseTeen = /(ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)/;
+    var writtenTimeMultiple = /(twenty|thirty|forty|fifty)/;
+    var writtenTimeMultipleBase = new RegExp(writtenTimeMultiple.source + "( |-)" + writtenNumberBase.source);
+    var writtenTimeHour = new RegExp("(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)", "i");
+    var writtenTime = new RegExp("(" + writtenTimeHour.source + " (((oh|o|o') " + writtenNumberBase.source + ")|" + writtenTimeMultipleBase.source + "|" + writtenTimeMultiple.source + "|" + writtenNumberBaseTeen.source + "))");
+
+    var toExtract = new RegExp("(" + writtenTime.source + ")", "i");
+    var regex = new RegExp("(^|[^\\w'-])" + toExtract.source + "([^\\w'-]|$)", "i");
+    var match = input.match(regex);
+
+    while (match) {
+        var extracted = match[0].match(toExtract)[0];
+        var clone = extracted;
+        var writtenHour = clone.match(writtenTimeHour);
+        var hour = numberParser.parse(writtenHour[0]);
+
+        clone = clone.replace(writtenHour[0], hour);
+        var writtenMinute = clone.match(new RegExp("(" + writtenNumberBase.source + "|" + writtenTimeMultipleBase.source + "|" + writtenTimeMultiple.source + "|" + writtenNumberBaseTeen.source + ")", "i"));
+        var minute = numberParser.parse(writtenMinute[0]);
+        if (minute < 10) {
+            minute = "0" + minute;
+        }
+
+        input = input.replace(extracted, hour + ":" + minute);
+        match = input.match(regex);
+    }
+
+    return input;
+};
+
+normalizer.replaceWrittenNumbers = function (input) {
+    var writtenNumberUnit = /((hundred thousand)|(hundred grand)|(hundred million)|(hundred billion)|(hundred trillion)|(thousand million)|(thousand billion)|(thousand trillion)|(million trillion)|(million billion)|(million trillion)|(billion trillion)|hundred|thousand|grand|million|billion|trillion)/;
+    var writtenNumberBase = /(one|two|three|four|five|six|seven|eight|nine)/;
+    var writtenNumberBaseTeen = /(ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)/;
+    var writtenNumberMultiple = /(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)/;
+    var writtenNumberMultipleBase = new RegExp(writtenNumberMultiple.source + "( |-)" + writtenNumberBase.source);
+    var writtenNumberSingle = new RegExp("((" + writtenNumberMultipleBase.source + "|" + writtenNumberMultiple.source + "|" + writtenNumberBaseTeen.source + "|" + writtenNumberBase.source + ")( " + writtenNumberUnit.source + ")?)");
+    var writtenNumber = new RegExp("((" + writtenNumberSingle.source + ")( (and )?" + writtenNumberSingle.source + ")*)");
+
+    var toExtract = new RegExp("(((a|\\d+) " + writtenNumberUnit.source + ")|" + writtenNumber.source + ")", "i");
+    var regex = new RegExp("(^|[^\\w'-])" + toExtract.source + "([^\\w'-]|$)", "i");
+    var match = input.match(regex);
+
+    while (match) {
+        var extracted = match[0].match(toExtract);
+        var number = numberParser.parse(extracted[0]);
+        input = input.replace(extracted[0], number);
+        match = input.match(regex);
+    }
+
+    return input;
 };
 
 normalizer.applySubstitutions = function (input) {

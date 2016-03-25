@@ -1,11 +1,17 @@
 var moment = require('moment');
-var numberParser = require('./../utils/numberParser');
 var expressions = require('./../utils/expressions');
 var extract = require('./../utils/entityExtractor').extract;
 
 var entity = {
     extractors: {}
 };
+
+var relativeTimeOfDay = new RegExp("(((in the )?" + expressions.timeOfDayInThe.source + ")|(((at|around) )?" + expressions.timeOfDayAt.source + ")|(the " + expressions.timeOfDayInThe.source + " of))", "i");
+var relativeTime = new RegExp("((right now)|(" + relativeTimeOfDay.source + " )?(today|yesterday|tomorrow|tonight)( " + relativeTimeOfDay.source + ")?|(this " + expressions.timeOfDayInThe.source + ")|((" + relativeTimeOfDay.source + " )?this " + expressions.daysOfWeek.source + "( " + relativeTimeOfDay.source + ")?)|((this|next|last) (" + expressions.daysOfWeek.source + "|" + expressions.timePeriods.source + "|" + expressions.monthOfYear.source + ")))", "i");
+
+var timeLength = new RegExp("(\\d+|a|an) " + expressions.timePeriods.source, "i");
+var timeFromNow = new RegExp("((in " + timeLength.source + " from (now|" + relativeTime.source + "))|(in " + timeLength.source + ")|(" + timeLength.source + " from (now|" + relativeTime.source + ")))", "i");
+var timeAgo = new RegExp("(" + timeLength.source + " ago( " + relativeTime.source + ")?)", "i");
 
 /**
  * Used to extract the entities from an expression
@@ -14,142 +20,225 @@ var entity = {
  */
 entity.extract = function (expression) {
     var entities = [];
-    entities = entities.concat(extract(expression.normalized, 'datetime.timeFromNow', new RegExp(expressions.timeFromNow.source, 'i'), entity.extractors.timeFromNow));
-    entities = entities.concat(extract(expression.normalized, 'datetime.timeAgo', new RegExp(expressions.timeAgo.source, 'i'), entity.extractors.timeAgo));
-    entities = entities.concat(extract(expression.normalized, 'datetime.timeLength', new RegExp(expressions.timeLength.source, 'i'), entity.extractors.timeLength));
+    entities = entities.concat(extract(expression.normalized, 'datetime.datetime', new RegExp("(" + timeFromNow + "|" + timeAgo + "|" + relativeTime + ")", "i"), entity.extractors.datetime));
+    entities = entities.concat(extract(expression.normalized, 'datetime.duration', timeLength, entity.extractors.duration));
     return entities;
 };
 
 /**
- * Extracts the timeFromNow value from a string
+ * Extracts the datetime value from a string
  * @param {String} string Containing the value to extract
  * @returns {String} ISO8601 Date
  */
-entity.extractors.timeFromNow = function (string) {
+entity.extractors.datetime = function (string) {
     var date = moment();
-    var extractedNumber = string.match(expressions.writtenNumber);
-    var number;
-    if (extractedNumber) {
-        number = numberParser(extractedNumber[0]);
-        string = string.replace(extractedNumber[0], number);
-    }
-    extractedNumber = string.match(/\d+/);
-    if (extractedNumber) {
-        number = extractedNumber[0];
+
+    if (string.match(/tonight/i)) {
+        date.hour(20); // 8pm
+    } else if (string.match(/tomorrow/i)) {
+        date.add(1, 'd').hour(7); // 7am
+    } else if (string.match(/yesterday/i)) {
+        date.subtract(1, 'd').hour(7); // 7am
     }
 
-    if (number) {
-        var extractedTimePeriod = string.match(expressions.timePeriods);
-        if (extractedTimePeriod) {
-            switch (extractedTimePeriod[0]) {
-            case 'second':
-            case 'seconds':
-                date.add(parseInt(number, 10), 's');
+    var relative = string.match(new RegExp("(this (coming)?|(this past)|last|next) (" + expressions.daysOfWeek.source + "|" + expressions.timePeriods.source + "|" + expressions.monthOfYear.source + ")", "i"));
+    if (relative) {
+        var past = relative[0].match(/(last|(this past))/i);
+        var dayOfWeek = relative[0].match(new RegExp(expressions.daysOfWeek.source, "i"));
+        var monthOfYear = relative[0].match(new RegExp(expressions.monthOfYear.source, "i"));
+        var timePeriod = relative[0].match(new RegExp(expressions.timePeriods.source, "i"));
+
+        if (dayOfWeek) {
+            var currentDay = date.day();
+            var setDay = currentDay;
+            switch (dayOfWeek[0].toLowerCase()) {
+            case 'monday':
+                setDay = 1;
                 break;
-            case 'minute':
-            case 'minutes':
-                date.add(parseInt(number, 10), 'm');
+            case 'tuesday':
+                setDay = 2;
                 break;
-            case 'hour':
-            case 'hours':
-                date.add(parseInt(number, 10), 'h');
+            case 'wednesday':
+                setDay = 3;
                 break;
-            case 'day':
-            case 'days':
-                date.add(parseInt(number, 10), 'd');
+            case 'thursday':
+                setDay = 4;
                 break;
+            case 'friday':
+                setDay = 5;
+                break;
+            case 'saturday':
+                setDay = 6;
+                break;
+            case 'sunday':
+                setDay = 0;
+                break;
+            }
+
+            if (past && setDay >= currentDay) {
+                setDay -= 7;
+            }
+            if (!past && setDay < currentDay) {
+                setDay += 7;
+            }
+
+            date.day(setDay);
+        }
+
+        if (monthOfYear) {
+            var currentMonth = date.month();
+            var setMonth = currentMonth;
+            switch (monthOfYear[0].toLowerCase()) {
+            case 'january':
+                setMonth = 0;
+                break;
+            case 'february':
+                setMonth = 1;
+                break;
+            case 'march':
+                setMonth = 2;
+                break;
+            case 'april':
+                setMonth = 3;
+                break;
+            case 'may':
+                setMonth = 4;
+                break;
+            case 'june':
+                setMonth = 5;
+                break;
+            case 'july':
+                setMonth = 6;
+                break;
+            case 'august':
+                setMonth = 7;
+                break;
+            case 'september':
+                setMonth = 8;
+                break;
+            case 'october':
+                setMonth = 9;
+                break;
+            case 'november':
+                setMonth = 10;
+                break;
+            case 'december':
+                setMonth = 11;
+                break;
+            }
+
+            if (past && setMonth >= currentMonth) {
+                date.subtract(1, "y");
+            }
+            if (!past && setMonth < currentMonth) {
+                date.add(1, "y");
+            }
+
+            date.month(setMonth);
+        }
+
+        if (timePeriod) {
+            switch (timePeriod[0].toLowerCase()) {
             case 'week':
-            case 'weeks':
-                date.add(parseInt(number, 10), 'w');
+                date = (past) ? date.subtract(1, "w") : date.add(1, "w");
                 break;
             case 'month':
-            case 'months':
-                date.add(parseInt(number, 10), 'M');
+                date = (past) ? date.subtract(1, "M") : date.add(1, "M");
                 break;
             case 'year':
-            case 'years':
-                date.add(parseInt(number, 10), 'y');
-                break;
-            case 'decade':
-            case 'decades':
-                date.add(parseInt(number, 10) * 10, 'y');
-                break;
-            case 'century':
-            case 'centuries':
-                date.add(parseInt(number, 10) * 100, 'y');
-                break;
-            case 'millennium':
-            case 'millennia':
-                date.add(parseInt(number, 10) * 1000, 'y');
+                date = (past) ? date.subtract(1, "y") : date.add(1, "y");
                 break;
             }
         }
     }
 
-    return date.format();
-};
-
-/**
- * Extracts the timeAgo value from a string
- * @param {String} string Containing the value to extract
- * @returns {String} ISO8601 Date
- */
-entity.extractors.timeAgo = function (string) {
-    var date = moment();
-    var extractedNumber = string.match(expressions.writtenNumber);
-    var number;
-    if (extractedNumber) {
-        number = numberParser(extractedNumber[0]);
-        string = string.replace(extractedNumber[0], number);
+    var timeOfDay = string.match(new RegExp(expressions.timeOfDay.source, 'i'));
+    if (timeOfDay) {
+        switch (timeOfDay[0].toLowerCase()) {
+        case 'dawn':
+            date.hour(6); // 6am
+            break;
+        case 'morning':
+        case 'sunrise':
+            date.hour(7); // 7am
+            break;
+        case 'noon':
+        case 'midday':
+        case 'mid-day':
+            date.hour(12); // 12pm
+            break;
+        case 'afternoon':
+            date.hour(14); // 2pm
+            break;
+        case 'evening':
+        case 'sunset':
+            date.hour(18); // 6pm
+            break;
+        case 'dusk':
+            date.hour(19); // 7pm
+            break;
+        case 'night':
+            date.hour(20); // 8pm
+            break;
+        case 'midnight':
+            date.hour(23).minute(59); // 11:59pm
+            break;
+        }
     }
-    extractedNumber = string.match(/\d+/);
-    if (extractedNumber) {
-        number = extractedNumber[0];
-    }
 
-    if (number) {
-        var extractedTimePeriod = string.match(expressions.timePeriods);
-        if (extractedTimePeriod) {
+    var fromNow = string.match(new RegExp(timeFromNow.source, 'i'));
+    var ago = string.match(new RegExp(timeAgo.source, 'i'));
+    if (fromNow || ago) {
+        var number;
+        if ((fromNow && fromNow[0].match(/^(a|an)/)) || (ago && ago[0].match(/^(a|an)/))) {
+            number = 1;
+        } else if (fromNow) {
+            number = parseInt(fromNow[0].match(/\d+/)[0], 10);
+        } else {
+            number = parseInt(ago[0].match(/\d+/)[0], 10);
+        }
+        if (number) {
+            var extractedTimePeriod = string.match(expressions.timePeriods);
             switch (extractedTimePeriod[0]) {
             case 'second':
             case 'seconds':
-                date.subtract(parseInt(number, 10), 's');
+                date = (fromNow) ? date.add(number, 's') : date.subtract(number, 's');
                 break;
             case 'minute':
             case 'minutes':
-                date.subtract(parseInt(number, 10), 'm');
+                date = (fromNow) ? date.add(number, 'm') : date.subtract(number, 'm');
                 break;
             case 'hour':
             case 'hours':
-                date.subtract(parseInt(number, 10), 'h');
+                date = (fromNow) ? date.add(number, 'h') : date.subtract(number, 'h');
                 break;
             case 'day':
             case 'days':
-                date.subtract(parseInt(number, 10), 'd');
+                date = (fromNow) ? date.add(number, 'd') : date.subtract(number, 'd');
                 break;
             case 'week':
             case 'weeks':
-                date.subtract(parseInt(number, 10), 'w');
+                date = (fromNow) ? date.add(number, 'w') : date.subtract(number, 'w');
                 break;
             case 'month':
             case 'months':
-                date.subtract(parseInt(number, 10), 'M');
+                date = (fromNow) ? date.add(number, 'M') : date.subtract(number, 'M');
                 break;
             case 'year':
             case 'years':
-                date.subtract(parseInt(number, 10), 'y');
+                date = (fromNow) ? date.add(number, 'y') : date.subtract(number, 'y');
                 break;
             case 'decade':
             case 'decades':
-                date.subtract(parseInt(number, 10) * 10, 'y');
+                date = (fromNow) ? date.add(number * 10, 'y') : date.subtract(number * 10, 'y');
                 break;
             case 'century':
             case 'centuries':
-                date.subtract(parseInt(number, 10) * 100, 'y');
+                date = (fromNow) ? date.add(number * 100, 'y') : date.subtract(number * 100, 'y');
                 break;
             case 'millennium':
             case 'millennia':
-                date.subtract(parseInt(number, 10) * 1000, 'y');
+                date = (fromNow) ? date.add(number * 1000, 'y') : date.subtract(number * 1000, 'y');
                 break;
             }
         }
@@ -163,18 +252,9 @@ entity.extractors.timeAgo = function (string) {
  * @param {string} string
  * @returns {number} Seconds
  */
-entity.extractors.timeLength = function (string) {
+entity.extractors.duration = function (string) {
     var seconds = 0;
-    var extractedNumber = string.match(expressions.writtenNumber);
-    var number;
-    if (extractedNumber) {
-        number = numberParser(extractedNumber[0]);
-        string = string.replace(extractedNumber[0], number);
-    }
-    extractedNumber = string.match(/\d+/);
-    if (extractedNumber) {
-        number = extractedNumber[0];
-    }
+    var number = parseInt(string.match(/\d+/)[0], 10);
 
     if (number) {
         var extractedTimePeriod = string.match(expressions.timePeriods);
@@ -182,43 +262,43 @@ entity.extractors.timeLength = function (string) {
             switch (extractedTimePeriod[0]) {
             case 'second':
             case 'seconds':
-                seconds = parseInt(number, 10);
+                seconds = number;
                 break;
             case 'minute':
             case 'minutes':
-                seconds = parseInt(number, 10) * 60;
+                seconds = number * 60;
                 break;
             case 'hour':
             case 'hours':
-                seconds = parseInt(number, 10) * 60 * 60;
+                seconds = number * 60 * 60;
                 break;
             case 'day':
             case 'days':
-                seconds = parseInt(number, 10) * 60 * 60 * 24;
+                seconds = number * 60 * 60 * 24;
                 break;
             case 'week':
             case 'weeks':
-                seconds = parseInt(number, 10) * 60 * 60 * 24 * 7;
+                seconds = number * 60 * 60 * 24 * 7;
                 break;
             case 'month':
             case 'months':
-                seconds = Math.round(parseInt(number, 10) * 60 * 60 * 24 * 30.42);
+                seconds = Math.round(number * 60 * 60 * 24 * 30.42);
                 break;
             case 'year':
             case 'years':
-                seconds = parseInt(number, 10) * 60 * 60 * 24 * 365;
+                seconds = number * 60 * 60 * 24 * 365;
                 break;
             case 'decade':
             case 'decades':
-                seconds = parseInt(number, 10) * 60 * 60 * 24 * 365 * 10;
+                seconds = number * 60 * 60 * 24 * 365 * 10;
                 break;
             case 'century':
             case 'centuries':
-                seconds = parseInt(number, 10) * 60 * 60 * 24 * 365 * 100;
+                seconds = number * 60 * 60 * 24 * 365 * 100;
                 break;
             case 'millennium':
             case 'millennia':
-                seconds = parseInt(number, 10) * 60 * 60 * 24 * 365 * 1000;
+                seconds = number * 60 * 60 * 24 * 365 * 1000;
                 break;
             }
         }

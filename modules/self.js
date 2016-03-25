@@ -89,7 +89,7 @@ var Self = function (createTrigger, createInjector, getMemory, createMemory) {
                 }
             }
             for (i = 0; i < matchEntities.length; i++) {
-                if (matchEntities[i].type === 'datetime.timeFromNow') {
+                if (matchEntities[i].type === 'datetime.datetime') {
                     timeFromNow = matchEntities[i].value;
                     break;
                 }
@@ -120,7 +120,7 @@ var Self = function (createTrigger, createInjector, getMemory, createMemory) {
             }
         },
 
-        getName: function (dfd, expression, responseEntities, matchEntities) {
+        getName: function (dfd, expression, responseEntities) {
             var i;
             var name;
             for (i = 0; i < responseEntities.length; i++) {

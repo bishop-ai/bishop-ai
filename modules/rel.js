@@ -89,7 +89,7 @@ var Rel = function (createTrigger, createInjector, getMemory, createMemory) {
                 }
             }
             for (i = 0; i < matchEntities.length; i++) {
-                if (matchEntities[i].type === 'datetime.timeFromNow') {
+                if (matchEntities[i].type === 'datetime.datetime') {
                     timeFromNow = matchEntities[i].value;
                     break;
                 }

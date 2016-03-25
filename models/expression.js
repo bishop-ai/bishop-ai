@@ -19,8 +19,9 @@ var Expression = function (value) {
 
 Expression.prototype.clean = function () {
     if (this.value) {
-        this.value = nlp.normalizer.clean(this.value);
-        this.normalized = nlp.normalizer.applySubstitutions(this.value);
+        var value = this.value;
+        this.value = nlp.normalizer.clean(value);
+        this.normalized = nlp.normalizer.normalize(value);
     }
     return this;
 };

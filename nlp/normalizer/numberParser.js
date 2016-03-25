@@ -1,4 +1,7 @@
-var numberParser = function (numbersInString) {
+var numberParser = {};
+
+numberParser.parse = function (numbersInString) {
+    numbersInString = numbersInString.toLowerCase().replace("-", " ");
     var ref        = {
             a: 1,
             one: 1,

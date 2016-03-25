@@ -1,5 +1,4 @@
 var moment = require('moment');
-var numberParser = require('./../utils/numberParser');
 var path = require("path");
 
 var expressions = require('./../utils/expressions');
@@ -9,6 +8,9 @@ var entity = {
     extractors: {}
 };
 
+var timeLength = new RegExp("\\d+ " + expressions.timePeriods.source);
+var age = new RegExp("(" + timeLength.source + " (old|young))");
+
 /**
  * Used to extract the entities from an expression
  * @param {Expression} expression
@@ -16,7 +18,7 @@ var entity = {
  */
 entity.extract = function (expression) {
     var entities = [];
-    entities = entities.concat(extractor.extract(expression.normalized, 'person.age', new RegExp(expressions.age.source, 'i'), entity.extractors.birthday));
+    entities = entities.concat(extractor.extract(expression.normalized, 'person.age', new RegExp(age.source, 'i'), entity.extractors.birthday));
     entities = entities.concat(entity.extractors.name(expression.normalized, expression.tags));
     return entities;
 };
@@ -28,16 +30,7 @@ entity.extract = function (expression) {
  */
 entity.extractors.birthday = function (string) {
     var date = moment();
-    var extractedNumber = string.match(expressions.writtenNumber);
-    var number;
-    if (extractedNumber) {
-        number = numberParser(extractedNumber[0]);
-        string = string.replace(extractedNumber[0], number);
-    }
-    extractedNumber = string.match(/\d+/);
-    if (extractedNumber) {
-        number = extractedNumber[0];
-    }
+    var number = parseInt(string.match(/\d+/)[0], 10);
 
     if (number) {
         var extractedTimePeriod = string.match(expressions.timePeriods);
@@ -45,43 +38,43 @@ entity.extractors.birthday = function (string) {
             switch (extractedTimePeriod[0]) {
             case 'second':
             case 'seconds':
-                date.subtract(parseInt(number, 10), 's');
+                date.subtract(number, 's');
                 break;
             case 'minute':
             case 'minutes':
-                date.subtract(parseInt(number, 10), 'm');
+                date.subtract(number, 'm');
                 break;
             case 'hour':
             case 'hours':
-                date.subtract(parseInt(number, 10), 'h');
+                date.subtract(number, 'h');
                 break;
             case 'day':
             case 'days':
-                date.subtract(parseInt(number, 10), 'd');
+                date.subtract(number, 'd');
                 break;
             case 'week':
             case 'weeks':
-                date.subtract(parseInt(number, 10), 'w');
+                date.subtract(number, 'w');
                 break;
             case 'month':
             case 'months':
-                date.subtract(parseInt(number, 10), 'M');
+                date.subtract(number, 'M');
                 break;
             case 'year':
             case 'years':
-                date.subtract(parseInt(number, 10), 'y');
+                date.subtract(number, 'y');
                 break;
             case 'decade':
             case 'decades':
-                date.subtract(parseInt(number, 10) * 10, 'y');
+                date.subtract(number * 10, 'y');
                 break;
             case 'century':
             case 'centuries':
-                date.subtract(parseInt(number, 10) * 100, 'y');
+                date.subtract(number * 100, 'y');
                 break;
             case 'millennium':
             case 'millennia':
-                date.subtract(parseInt(number, 10) * 1000, 'y');
+                date.subtract(number * 1000, 'y');
                 break;
             }
         }
