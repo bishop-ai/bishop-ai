@@ -11,6 +11,13 @@ describe('Datetime Entity', function () {
 
     describe('datetime()', function () {
 
+        /*it("should handle time", function () {
+            eql("6 p.m.", moment().hour(18));
+            eql("6:30 in the morning", moment().hour(6).minute(30));
+            eql("9:06 tomorrow evening", moment().add(1, 'd').hour(21).minute(6));
+            eql("tomorrow evening at 9:06", moment().add(1, 'd').hour(21).minute(6));
+        });*/
+
         it("should handle time from now", function () {
             eql("13 days from now", moment().add(13, 'd'));
             eql("in 9 years from now", moment().add(9, 'y'));
@@ -41,7 +48,7 @@ describe('Datetime Entity', function () {
             eql("1 minute ago", moment().subtract(1, 'm'));
         });
 
-        it("should handle relative time", function () {
+        it("should handle relative datetimes", function () {
             var nextThursday = moment();
             if (nextThursday.day() > 4) {
                 nextThursday.day(11);
@@ -63,6 +70,7 @@ describe('Datetime Entity', function () {
             eql("tomorrow morning", moment().add(1, "d").hour(7));
             eql("this evening", moment().hour(18));
             eql("next thursday evening", moment(nextThursday).hour(18));
+            //eql("next week on friday", moment(nextThursday).add(1, 'd')); // TODO: Handle complex dates
         });
 
     });
