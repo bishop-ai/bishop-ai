@@ -13,7 +13,7 @@ extractor.Entity = function (raw, type, value, source, confidence) {
 extractor.extract = function (string, type, regexp, getValue) {
     var entities = [];
     var originalString = string;
-    var match = string.match(regexp);
+    var match = string.trim().match(regexp);
     var entity;
     var value;
 

@@ -2,9 +2,25 @@ var assert = require("assert");
 var moment = require('moment');
 
 var datetime = require("../entities/datetime").entity;
+var Expression = require("../models/expression");
 
 var eql = function (string, moment) {
     assert.equal(datetime.extractors.datetime(string), moment.format(), string);
+};
+var expEql = function (string, type, moment) {
+    var exp = new Expression(string).clean();
+    var matched = false;
+    var entities = datetime.extract(exp);
+    var i;
+    for (i = 0; i < entities.length; i++) {
+        if (entities[i].type === type) {
+            // Assert ignores seconds since the process may take extended periods of time
+            assert.equal(entities[i].value.slice(0, -9), moment.format().slice(0, -9), exp.value);
+            matched = true;
+            break;
+        }
+    }
+    assert.equal(matched, true, "An entity was not extracted: " + exp.value);
 };
 
 describe('Datetime Entity', function () {
@@ -28,7 +44,7 @@ describe('Datetime Entity', function () {
         });
 
         it("should handle time from relative", function () {
-            eql("13 days from tomorrow", moment().add(14, 'd').hour(7));
+            eql("13 days from tomorrow", moment().add(14, 'd'));
             eql("2 weeks from today", moment().add(2, 'w'));
 
             var nextThursday = moment();
@@ -68,9 +84,33 @@ describe('Datetime Entity', function () {
             eql("this last April", lastApril);
 
             eql("tomorrow morning", moment().add(1, "d").hour(7));
+            eql("thursday night", moment(nextThursday).hour(20));
             eql("this evening", moment().hour(18));
+            eql("in the evening", moment().hour(18));
             eql("next thursday evening", moment(nextThursday).hour(18));
             //eql("next week on friday", moment(nextThursday).add(1, 'd')); // TODO: Handle complex dates
+        });
+
+    });
+
+    describe("extract()", function () {
+
+        it("should extract datetime values", function () {
+            expEql("I should drink coffee tomorrow morning.", 'datetime.datetime', moment().add(1, "d").hour(7));
+
+            var nextThursday = moment();
+            if (nextThursday.day() > 4) {
+                nextThursday.day(11);
+            } else {
+                nextThursday.day(4);
+            }
+            expEql("April, would you like to go to the park next Thursday for lunch?", 'datetime.datetime', nextThursday);
+            expEql("We are expecting a package 2 days from now.", 'datetime.datetime', moment().add(2, 'd'));
+            expEql("In 2 weeks, we will be leaving for Paris.", 'datetime.datetime', moment().add(2, 'w'));
+            expEql("1 week from tomorrow, there is a parade.", 'datetime.datetime', moment().add(1, 'd').add(1, 'w'));
+            expEql("What is the weather like tomorrow?", 'datetime.datetime', moment().add(1, 'd'));
+            expEql("What is the weather like in the evening?", 'datetime.datetime', moment().hour(18));
+            expEql("What did you do yesterday?", 'datetime.datetime', moment().subtract(1, 'd'));
         });
 
     });
