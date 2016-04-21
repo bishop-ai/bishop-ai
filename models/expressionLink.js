@@ -16,7 +16,7 @@ ExpressionLink.save = function (link) {
     var query = [
         'MATCH (e1:Expression {value: {e1v}})',
         'MATCH (e2:Expression {value: {e2v}})',
-        'MERGE (e1)-[r:' + link.intent + ' {transfer: {transfer}}]->(e2)',
+        'MERGE (e1)-[r:LEADS_TO {transfer: {transfer}, intent: {intent}}]->(e2)',
         'ON CREATE SET r.weight = 1, r.validated = {validated}',
         'ON MATCH SET r.weight = r.weight + 1',
         'SET r.condition = {condition}'
@@ -30,6 +30,7 @@ ExpressionLink.save = function (link) {
         e1v: link.prevExpression.value,
         e2v: link.nextExpression.value,
         transfer: link.transfer,
+        intent: link.intent,
         validated: link.validated,
         condition: link.condition
     };

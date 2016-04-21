@@ -94,8 +94,8 @@ Expression.findNextExpressions = function (expression, transfer, intent) {
 
     var query = [
         'MATCH (e:Expression) WHERE ID(e) = {id}',
-        'OPTIONAL MATCH (e)-[r:' + intent + ']->(ne:Expression)',
-        'WHERE ne.validated = true AND r.validated = true AND r.transfer = {transfer}'
+        'OPTIONAL MATCH (e)-[r:LEADS_TO]->(ne:Expression)',
+        'WHERE ne.validated = true AND r.validated = true AND r.transfer = {transfer} AND r.intent = {intent}'
     ];
 
     var params = {
