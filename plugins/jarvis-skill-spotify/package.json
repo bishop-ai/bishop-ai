@@ -1,0 +1,13 @@
+{
+    "name": "jarvis-skill-spotify",
+    "version": "1.0.0",
+    "description": "Skill plugin for Jarvis that enables controls for Spotify.",
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {
+        "ffi": "^2.2.0"
+    }
+}

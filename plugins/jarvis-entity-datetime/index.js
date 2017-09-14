@@ -1,27 +1,26 @@
 var moment = require('moment');
-var expressions = require('./../utils/expressions');
-var extract = require('./../utils/entityExtractor').extract;
 
-var entity = {
-    extractors: {}
+var DateTimeExtractor = function (commonExtractor, commonExpressions) {
+    this.extractor = commonExtractor;
+    this.expressions = commonExpressions;
+
+    this.relativeTimeOfDay = new RegExp("(((in the )?" + this.expressions.timeOfDayInThe.source + ")|(((at|around) )?" + this.expressions.timeOfDayAt.source + ")|(the " + this.expressions.timeOfDayInThe.source + " of))", "i");
+    this.relativeTime = new RegExp("((right now)|(" + this.relativeTimeOfDay.source + " )?(today|yesterday|tomorrow|tonight)( " + this.relativeTimeOfDay.source + ")?|" + this.expressions.daysOfWeek.source + "( " + this.relativeTimeOfDay.source + ")?|(this " + this.expressions.timeOfDayInThe.source + ")|((" + this.relativeTimeOfDay.source + " )?this " + this.expressions.daysOfWeek.source + "( " + this.relativeTimeOfDay.source + ")?)|((this|next|last) (" + this.expressions.daysOfWeek.source + "|" + this.expressions.timePeriods.source + "|" + this.expressions.monthOfYear.source + "))|(in the " + this.expressions.timeOfDayInThe.source + ")|((at|around) " + this.expressions.timeOfDayAt.source + "))", "i");
+
+    this.timeLength = new RegExp("(\\d+|a|an) " + this.expressions.timePeriods.source, "i");
+    this.timeFromNow = new RegExp("((in " + this.timeLength.source + " from (now|" + this.relativeTime.source + "))|(in " + this.timeLength.source + ")|(" + this.timeLength.source + " from (now|" + this.relativeTime.source + ")))", "i");
+    this.timeAgo = new RegExp("(" + this.timeLength.source + " ago( " + this.relativeTime.source + ")?)", "i");
 };
-
-var relativeTimeOfDay = new RegExp("(((in the )?" + expressions.timeOfDayInThe.source + ")|(((at|around) )?" + expressions.timeOfDayAt.source + ")|(the " + expressions.timeOfDayInThe.source + " of))", "i");
-var relativeTime = new RegExp("((right now)|(" + relativeTimeOfDay.source + " )?(today|yesterday|tomorrow|tonight)( " + relativeTimeOfDay.source + ")?|" + expressions.daysOfWeek.source + "( " + relativeTimeOfDay.source + ")?|(this " + expressions.timeOfDayInThe.source + ")|((" + relativeTimeOfDay.source + " )?this " + expressions.daysOfWeek.source + "( " + relativeTimeOfDay.source + ")?)|((this|next|last) (" + expressions.daysOfWeek.source + "|" + expressions.timePeriods.source + "|" + expressions.monthOfYear.source + "))|(in the " + expressions.timeOfDayInThe.source + ")|((at|around) " + expressions.timeOfDayAt.source + "))", "i");
-
-var timeLength = new RegExp("(\\d+|a|an) " + expressions.timePeriods.source, "i");
-var timeFromNow = new RegExp("((in " + timeLength.source + " from (now|" + relativeTime.source + "))|(in " + timeLength.source + ")|(" + timeLength.source + " from (now|" + relativeTime.source + ")))", "i");
-var timeAgo = new RegExp("(" + timeLength.source + " ago( " + relativeTime.source + ")?)", "i");
 
 /**
  * Used to extract the entities from an expression
- * @param {Expression} expression
+ * @param {String} normalized input
  * @returns {extractor.Entity[]}
  */
-entity.extract = function (expression) {
+DateTimeExtractor.prototype.extract = function (normalized) {
     var entities = [];
-    entities = entities.concat(extract(expression.normalized, 'datetime.datetime', new RegExp("(" + timeFromNow.source + "|" + timeAgo.source + "|" + relativeTime.source + ")", "i"), entity.extractors.datetime));
-    entities = entities.concat(extract(expression.normalized, 'datetime.duration', timeLength, entity.extractors.duration));
+    entities = entities.concat(this.extractor.extract(normalized, 'datetime.datetime', new RegExp("(" + this.timeFromNow.source + "|" + this.timeAgo.source + "|" + this.relativeTime.source + ")", "i"), this.extractDatetime.bind(this)));
+    entities = entities.concat(this.extractor.extract(normalized, 'datetime.duration', this.timeLength, this.extractDuration.bind(this)));
     return entities;
 };
 
@@ -30,7 +29,7 @@ entity.extract = function (expression) {
  * @param {String} string Containing the value to extract
  * @returns {String} ISO8601 Date
  */
-entity.extractors.datetime = function (string) {
+DateTimeExtractor.prototype.extractDatetime = function (string) {
     var date = moment();
 
     if (string.match(/tonight/i)) {
@@ -41,12 +40,12 @@ entity.extractors.datetime = function (string) {
         date.subtract(1, 'd');
     }
 
-    var relative = string.match(new RegExp("((on|this (coming)?|(this past)|last|next) (" + expressions.daysOfWeek.source + "|" + expressions.timePeriods.source + "|" + expressions.monthOfYear.source + ")|(" + expressions.daysOfWeek.source + "|" + expressions.monthOfYear.source + "))", "i"));
+    var relative = string.match(new RegExp("((on|this (coming)?|(this past)|last|next) (" + this.expressions.daysOfWeek.source + "|" + this.expressions.timePeriods.source + "|" + this.expressions.monthOfYear.source + ")|(" + this.expressions.daysOfWeek.source + "|" + this.expressions.monthOfYear.source + "))", "i"));
     if (relative) {
         var past = relative[0].match(/(last|(this past))/i);
-        var dayOfWeek = relative[0].match(new RegExp(expressions.daysOfWeek.source, "i"));
-        var monthOfYear = relative[0].match(new RegExp(expressions.monthOfYear.source, "i"));
-        var timePeriod = relative[0].match(new RegExp(expressions.timePeriods.source, "i"));
+        var dayOfWeek = relative[0].match(new RegExp(this.expressions.daysOfWeek.source, "i"));
+        var monthOfYear = relative[0].match(new RegExp(this.expressions.monthOfYear.source, "i"));
+        var timePeriod = relative[0].match(new RegExp(this.expressions.timePeriods.source, "i"));
 
         if (dayOfWeek) {
             var currentDay = date.day();
@@ -152,7 +151,7 @@ entity.extractors.datetime = function (string) {
         }
     }
 
-    var timeOfDay = string.match(new RegExp(expressions.timeOfDay.source, 'i'));
+    var timeOfDay = string.match(new RegExp(this.expressions.timeOfDay.source, 'i'));
     if (timeOfDay) {
         switch (timeOfDay[0].toLowerCase()) {
         case 'dawn':
@@ -186,8 +185,8 @@ entity.extractors.datetime = function (string) {
         }
     }
 
-    var fromNow = string.match(new RegExp(timeFromNow.source, 'i'));
-    var ago = string.match(new RegExp(timeAgo.source, 'i'));
+    var fromNow = string.match(new RegExp(this.timeFromNow.source, 'i'));
+    var ago = string.match(new RegExp(this.timeAgo.source, 'i'));
     if (fromNow || ago) {
         var number;
         if ((fromNow && fromNow[0].match(/^(a|an)/)) || (ago && ago[0].match(/^(a|an)/))) {
@@ -198,7 +197,7 @@ entity.extractors.datetime = function (string) {
             number = parseInt(ago[0].match(/\d+/)[0], 10);
         }
         if (number) {
-            var extractedTimePeriod = string.match(expressions.timePeriods);
+            var extractedTimePeriod = string.match(this.expressions.timePeriods);
             switch (extractedTimePeriod[0]) {
             case 'second':
             case 'seconds':
@@ -252,12 +251,12 @@ entity.extractors.datetime = function (string) {
  * @param {string} string
  * @returns {number} Seconds
  */
-entity.extractors.duration = function (string) {
+DateTimeExtractor.prototype.extractDuration = function (string) {
     var seconds = 0;
     var number = parseInt(string.match(/\d+/)[0], 10);
 
     if (number) {
-        var extractedTimePeriod = string.match(expressions.timePeriods);
+        var extractedTimePeriod = string.match(this.expressions.timePeriods);
         if (extractedTimePeriod) {
             switch (extractedTimePeriod[0]) {
             case 'second':
@@ -307,4 +306,10 @@ entity.extractors.duration = function (string) {
     return seconds;
 };
 
-module.exports = {entity: entity, namespace: 'datetime'};
+module.exports = {
+    namespace: 'datetime',
+    type: 'ENTITY_EXTRACTOR',
+    register: function (config) {
+        return new DateTimeExtractor(config.commonExtractor, config.commonExpressions);
+    }
+};

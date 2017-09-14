@@ -1,0 +1,14 @@
+{
+    "name": "jarvis-tts-watson",
+    "version": "1.0.0",
+    "description": "TTS plugin for Jarvis that enables text-to-speech using IBM's Watson API.",
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {
+        "q": "1.2.0",
+        "watson-developer-cloud": "^2.39.0"
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "name": "jarvis-skill-weather",
+    "version": "1.0.0",
+    "description": "Skill plugin for Jarvis that enables weather queries.",
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {
+        "moment": "~2.11.2",
+        "q": "1.2.0",
+        "request": "~2.1"
+    }
+}

@@ -95,6 +95,9 @@ Spotify.commands = {
 };
 
 module.exports = {
-    Constructor: Spotify,
-    namespace: 'spotify'
+    namespace: 'spotify',
+    type: 'SKILL',
+    register: function () {
+        return new Spotify();
+    }
 };

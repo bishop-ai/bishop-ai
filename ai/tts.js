@@ -5,6 +5,7 @@ var uuid = require('./../utils/uuid');
 
 var cache = require('./../utils/cache');
 var configuration = require('./configuration');
+var pluginLoader = require('./pluginLoader');
 
 var TTS = function () {
     this._audioUrl = cache.cacheUrl + 'audio/';
@@ -72,6 +73,9 @@ TTS.prototype.synthesize = function (text, cache) {
 
             return this.getStream(text).then(function (stream) {
                 return self.writeAudio(stream, text);
+            }, function (e) {
+                console.log('TTS: Could not get message to synthesize: ' + e);
+                dfd.resolve();
             });
         }
     } else {
@@ -83,9 +87,22 @@ TTS.prototype.synthesize = function (text, cache) {
 };
 
 TTS.prototype.getStream = function (text) {
-    var dfd = $q.defer();
-    dfd.reject("This must be overridden");
-    return dfd.promise;
+    var ttsPlugin = null;
+    if (pluginLoader.plugins.TTS && pluginLoader.plugins.TTS.length > 0) {
+        var i;
+        for (i = 0; i < pluginLoader.plugins.TTS.length; i++) {
+            if (pluginLoader.plugins.TTS[i].enabled) {
+                ttsPlugin = pluginLoader.plugins.TTS[i];
+                break;
+            }
+        }
+    }
+
+    if (!ttsPlugin) {
+        return $q.reject("No TTS plugin was enabled.");
+    }
+
+    return ttsPlugin.service.getStream(text);
 };
 
 module.exports = TTS;

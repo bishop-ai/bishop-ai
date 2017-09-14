@@ -5,15 +5,46 @@ var configuration = {
     file: 'configuration.json',
     settings: {
         tts: {
-            enabled: true,
-            username: null,
-            password: null,
-            voice: null
+            enabled: true
         },
-        stt: {
-            token: null
+        enabledPlugins: {
+            "TTS": [],
+            "ENTITY_EXTRACTOR": [],
+            "SKILL": []
         },
-        modules: {}
+        plugins: {
+            "TTS": {},
+            "ENTITY_EXTRACTOR": {},
+            "SKILL": {}
+        }
+    }
+};
+
+configuration.skillService = {
+
+    namespace: 'ai.configuration',
+
+    intent: [
+        {value: "Stop talking", trigger: "ai.configuration.disableAudio"},
+        {value: "Be quiet", trigger: "ai.configuration.disableAudio"},
+        {value: "Disable Audio", trigger: "ai.configuration.disableAudio"},
+        {value: "Resume talking", trigger: "ai.configuration.enableAudio"},
+        {value: "Enable audio", trigger: "ai.configuration.enableAudio"}
+    ],
+
+    triggers: {
+        enableAudio: function (dfd) {
+            configuration.enableAudio();
+            dfd.resolve([
+                "Can you hear me now?",
+                "Is that better?"
+            ]);
+        },
+
+        disableAudio: function (dfd) {
+            configuration.disableAudio();
+            dfd.resolve();
+        }
     }
 };
 

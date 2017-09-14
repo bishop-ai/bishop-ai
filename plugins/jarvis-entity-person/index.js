@@ -1,25 +1,23 @@
 var moment = require('moment');
-var path = require("path");
 
-var expressions = require('./../utils/expressions');
-var extractor = require('./../utils/entityExtractor');
+var PersonExtractor = function (commonExtractor, commonExpressions) {
+    this.extractor = commonExtractor;
+    this.expressions = commonExpressions;
 
-var entity = {
-    extractors: {}
+    this.timeLength = new RegExp("\\d+ " + this.expressions.timePeriods.source);
+    this.age = new RegExp("(" + this.timeLength.source + " (old|young))");
 };
-
-var timeLength = new RegExp("\\d+ " + expressions.timePeriods.source);
-var age = new RegExp("(" + timeLength.source + " (old|young))");
 
 /**
  * Used to extract the entities from an expression
- * @param {Expression} expression
+ * @param {String} normalized input
+ * @param {{tokens: [], tags: [], qType: String, qClass: String, value: String}} data additional NLP data
  * @returns {{type: String, start: Number, end: Number, value: *}[]}
  */
-entity.extract = function (expression) {
+PersonExtractor.prototype.extract = function (normalized, data) {
     var entities = [];
-    entities = entities.concat(extractor.extract(expression.normalized, 'person.age', new RegExp(age.source, 'i'), entity.extractors.birthday));
-    entities = entities.concat(entity.extractors.name(expression.normalized, expression.tags));
+    entities = entities.concat(this.extractor.extract(normalized, 'person.age', new RegExp(this.age.source, 'i'), this.extractBirthday.bind(this)));
+    entities = entities.concat(this.extractName(normalized, data.tags));
     return entities;
 };
 
@@ -28,12 +26,12 @@ entity.extract = function (expression) {
  * @param {String} string Containing the value to extract
  * @returns {String} "4 years old"
  */
-entity.extractors.birthday = function (string) {
+PersonExtractor.prototype.extractBirthday = function (string) {
     var date = moment();
     var number = parseInt(string.match(/\d+/)[0], 10);
 
     if (number) {
-        var extractedTimePeriod = string.match(expressions.timePeriods);
+        var extractedTimePeriod = string.match(this.expressions.timePeriods);
         if (extractedTimePeriod) {
             switch (extractedTimePeriod[0]) {
             case 'second':
@@ -89,7 +87,7 @@ entity.extractors.birthday = function (string) {
  * @param {Array} tags
  * @returns {extractor.Entity[]} Entities
  */
-entity.extractors.name = function (string, tags) {
+PersonExtractor.prototype.extractName = function (string, tags) {
     var entities = [];
 
     var i;
@@ -110,7 +108,7 @@ entity.extractors.name = function (string, tags) {
             }
 
             if (name) {
-                entities.push(new extractor.Entity(name, 'person.name', name, string, 1));
+                entities.push(new this.extractor.Entity(name, 'person.name', name, string, 1));
             }
 
             i = r + 1;
@@ -131,7 +129,7 @@ entity.extractors.name = function (string, tags) {
             }
 
             if (name) {
-                entities.push(new extractor.Entity(name, 'person.name', name, string, 0.5));
+                entities.push(new this.extractor.Entity(name, 'person.name', name, string, 0.5));
             }
 
             i = r + 1;
@@ -141,4 +139,10 @@ entity.extractors.name = function (string, tags) {
     return entities;
 };
 
-module.exports = {entity: entity, namespace: 'person'};
+module.exports = {
+    namespace: 'person',
+    type: 'ENTITY_EXTRACTOR',
+    register: function (config) {
+        return new PersonExtractor(config.commonExtractor, config.commonExpressions);
+    }
+};

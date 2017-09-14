@@ -1,26 +1,33 @@
 var assert = require("assert");
 var moment = require('moment');
 
-var datetime = require("../entities/datetime").entity;
-var Expression = require("../ai/expression");
+var DateTimeExtractor = require("../index");
+
+// TODO: This is a copy from the core module and should be removed once the core module utilities are packaged as a separate nodejs module
+var entityExtractor = require("./entityExtractor");
+var expressions = require("./expressions");
+
+var dateTimeExtractor = DateTimeExtractor.register({
+    commonExtractor: entityExtractor,
+    commonExpressions: expressions
+});
 
 var eql = function (string, moment) {
-    assert.equal(datetime.extractors.datetime(string), moment.format(), string);
+    assert.equal(dateTimeExtractor.extractDatetime(string), moment.format(), string);
 };
 var expEql = function (string, type, moment) {
-    var exp = new Expression(string).clean();
     var matched = false;
-    var entities = datetime.extract(exp);
+    var entities = dateTimeExtractor.extract(string);
     var i;
     for (i = 0; i < entities.length; i++) {
         if (entities[i].type === type) {
             // Assert ignores seconds since the process may take extended periods of time
-            assert.equal(entities[i].value.slice(0, -9), moment.format().slice(0, -9), exp.value);
+            assert.equal(entities[i].value.slice(0, -9), moment.format().slice(0, -9), string);
             matched = true;
             break;
         }
     }
-    assert.equal(matched, true, "An entity was not extracted: " + exp.value);
+    assert.equal(matched, true, "An entity was not extracted: " + string);
 };
 
 describe('Datetime Entity', function () {

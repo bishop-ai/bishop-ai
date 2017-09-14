@@ -1,0 +1,14 @@
+{
+    "name": "jarvis-skill-wolfram",
+    "version": "1.0.0",
+    "description": "Skill plugin for Jarvis that enables Wolfram Alpha queries.",
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {
+        "request": "~2.1",
+        "libxmljs": "^0.18.7"
+    }
+}

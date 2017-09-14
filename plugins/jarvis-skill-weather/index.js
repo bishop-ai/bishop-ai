@@ -5,15 +5,14 @@ var request = require('request');
 var intent = require('./intent');
 
 var cache = require('./../../utils/cache');
-var configuration = require('./../../ai/configuration');
 
-var Weather = function () {
+var Weather = function (config) {
 
     this.intent = intent;
 
     this.triggers = {
         getCurrent: function (dfd) {
-            Weather.getWeather(true).then(function (weather) {
+            Weather.getWeather(config, true).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -33,7 +32,7 @@ var Weather = function () {
         },
 
         getTomorrow: function (dfd) {
-            Weather.getWeather().then(function (weather) {
+            Weather.getWeather(config).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -53,7 +52,7 @@ var Weather = function () {
         },
 
         getCurrentTemp: function (dfd) {
-            Weather.getWeather(true).then(function (weather) {
+            Weather.getWeather(config, true).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -67,7 +66,7 @@ var Weather = function () {
         },
 
         getTomorrowTemp: function (dfd) {
-            Weather.getWeather().then(function (weather) {
+            Weather.getWeather(config).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -81,7 +80,7 @@ var Weather = function () {
         },
 
         getCurrentConditionSnow: function (dfd) {
-            Weather.getWeather(true).then(function (weather) {
+            Weather.getWeather(config, true).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -95,7 +94,7 @@ var Weather = function () {
         },
 
         getTomorrowConditionSnow: function (dfd) {
-            Weather.getWeather().then(function (weather) {
+            Weather.getWeather(config).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -109,7 +108,7 @@ var Weather = function () {
         },
 
         getFutureConditionSnow: function (dfd) {
-            Weather.getWeather().then(function (weather) {
+            Weather.getWeather(config).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -123,7 +122,7 @@ var Weather = function () {
         },
 
         getCurrentConditionRain: function (dfd) {
-            Weather.getWeather(true).then(function (weather) {
+            Weather.getWeather(config, true).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -137,7 +136,7 @@ var Weather = function () {
         },
 
         getTomorrowConditionRain: function (dfd) {
-            Weather.getWeather().then(function (weather) {
+            Weather.getWeather(config).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -151,7 +150,7 @@ var Weather = function () {
         },
 
         getFutureConditionRain: function (dfd) {
-            Weather.getWeather().then(function (weather) {
+            Weather.getWeather(config).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -364,7 +363,7 @@ Weather.returnRandom = function (responses) {
     return responses[Math.floor(Math.random() * responses.length)];
 };
 
-Weather.getWeather = function (current) {
+Weather.getWeather = function (config, current) {
     var dfd = $q.defer();
     var weather = cache.read('weather.json');
 
@@ -374,7 +373,7 @@ Weather.getWeather = function (current) {
         dfd.resolve(weather);
     } else {
         console.log('Fetching weather');
-        var uri = 'https://api.forecast.io/forecast/' + configuration.settings.modules.forecast.apiKey + '/' + configuration.settings.modules.forecast.location;
+        var uri = 'https://api.forecast.io/forecast/' + config.apiKey + '/' + config.location;
 
         request(uri, function (error, response, body) {
             if (error) {
@@ -396,6 +395,9 @@ Weather.failureMessages = [
 ];
 
 module.exports = {
-    Constructor: Weather,
-    namespace: 'weather'
+    namespace: 'weather',
+    type: 'SKILL',
+    register: function (config) {
+        return new Weather(config);
+    }
 };

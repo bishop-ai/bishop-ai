@@ -1,0 +1,11 @@
+{
+    "name": "jarvis-entity-url",
+    "version": "1.0.0",
+    "description": "Entity extractor plugin for Jarvis that allows extracting url entities.",
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {}
+}

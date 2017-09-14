@@ -1,14 +1,11 @@
 var $q = require('q');
 var TextToSpeechV1 = require('watson-developer-cloud/text-to-speech/v1');
 
-var configuration = require('./../ai/configuration');
-var TTS = require('./../ai/tts');
+var TTSWatson = function (config) {
 
-var TTSWatson = function () {
-    TTS.call(this);
     this.engine = new TextToSpeechV1({
-        username: configuration.settings.tts.watson.username,
-        password: configuration.settings.tts.watson.password
+        username: config.username,
+        password: config.password
     });
 
     this.voices = [
@@ -117,11 +114,8 @@ var TTSWatson = function () {
             "description": "Sofia: North American Spanish (español norteamericano) female voice."
         }
     ];
-    this.voice = configuration.settings.tts.watson.voice || this.voices[0].name;
+    this.voice = config.voice || this.voices[0].name;
 };
-
-TTSWatson.prototype = Object.create(TTS.prototype);
-TTSWatson.prototype.constructor = TTS;
 
 TTSWatson.prototype.getStream = function (text) {
     var dfd = $q.defer();
@@ -135,4 +129,10 @@ TTSWatson.prototype.getStream = function (text) {
     return dfd.promise;
 };
 
-module.exports = TTSWatson;
+module.exports = {
+    namespace: 'watson',
+    type: 'TTS',
+    register: function (config) {
+        return new TTSWatson(config);
+    }
+};

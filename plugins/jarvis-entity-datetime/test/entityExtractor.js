@@ -1,4 +1,4 @@
-// TODO: This should be packaged as a nodejs module along with common expressions and common nlp tools that plugins would use.
+// TODO: This is a copy from the core module and should be removed once the core module utilities are packaged as a separate nodejs module
 
 var extractor = {};
 

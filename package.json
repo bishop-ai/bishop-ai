@@ -28,20 +28,16 @@
         "bootstrap": "~3.3.6",
         "express": "~4.10.2",
         "extend": "~3.0.0",
-        "ffi": "^2.2.0",
         "jquery": "~2.2.0",
-        "libxmljs": "^0.18.7",
         "method-override": "~2.3.5",
         "moment": "~2.11.2",
         "natural": "~0.5.4",
         "node-phantom-simple": "~2.2.4",
-        "node-wit": "~2.0.0",
         "phantomjs": "^1.9.19",
         "q": "1.2.0",
         "qtypes": "~0.1.6",
         "request": "~2.1",
-        "socket.io": "~2.0.3",
-        "watson-developer-cloud": "^2.39.0"
+        "socket.io": "~2.0.3"
     },
     "devDependencies": {
         "mocha": "~2.4.5",

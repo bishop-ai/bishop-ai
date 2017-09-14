@@ -6,6 +6,7 @@ var methodOverride = require('method-override');
 var socket = require('socket.io');
 var path = require('path');
 
+var Brain = require('./ai/brain');
 var Core = require('./ai/core');
 
 var Server = function () {
@@ -33,6 +34,11 @@ var Server = function () {
     this.server.listen(this.port, this.ipaddress, function () {
         console.log('Server started on %s:%d ...', self.ipaddress, self.port);
     });
+
+    var pluginLoader = require('./ai/pluginLoader');
+    pluginLoader.load();
+
+    Brain.initialize();
 
     this.io = socket(this.server);
     this.Core = new Core(this.io);

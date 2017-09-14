@@ -1,13 +1,27 @@
 var xml = require('libxmljs');
 var request = require('request');
 
-var configuration = require('./../ai/configuration');
+var Wolfram = function (config) {
+    this.appKey = config.appId;
 
-var Client = function (appId) {
-    this.appKey = appId;
+    this.intent = [
+        {value: "How big is the earth?", trigger: "wolfram.query"}
+    ];
+
+    this.triggers = {
+        query: function (dfd, expression) {
+            this.query(expression.value, null, function (error, pods) {
+                if (error) {
+                    dfd.reject(error);
+                } else {
+                    dfd.resolve(pods[0].primary);
+                }
+            });
+        }
+    };
 };
 
-Client.prototype.query = function (query, params, cb) {
+Wolfram.prototype.query = function (query, params, cb) {
     if (!this.appKey) {
         return cb("Application key not set", null);
     }
@@ -43,4 +57,10 @@ Client.prototype.query = function (query, params, cb) {
     });
 };
 
-module.exports = Client;
+module.exports = {
+    namespace: 'wolfram',
+    type: 'SKILL',
+    register: function (config) {
+        return new Wolfram(config);
+    }
+};

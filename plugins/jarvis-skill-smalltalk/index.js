@@ -1,55 +1,57 @@
 var moment = require('moment');
 
-var SmallTalk = function (getMemory, setMemory) {
+var namespace = "smalltalk";
+
+var SmallTalk = function () {
 
     this.intent = [
-        {value: "Hi", trigger: "smallTalk.greeting"},
-        {value: "Hello", trigger: "smallTalk.greeting"},
-        {value: "Hey", trigger: "smallTalk.greeting"},
-        {value: "You are awesome", trigger: "smallTalk.compliment"},
-        {value: "You're the best", trigger: "smallTalk.compliment"},
-        {value: "You have a great personality", trigger: "smallTalk.compliment"},
-        {value: "Thank you!", trigger: "smallTalk.gratitude"},
-        {value: "Thanks!", trigger: "smallTalk.gratitude"},
-        {value: "How are you?", trigger: "smallTalk.getAiFeeling"},
-        {value: "How are you doing?", trigger: "smallTalk.getAiFeeling"},
-        {value: "I'm doing alright.", trigger: "smallTalk.setUserFeeling", context: "smallTalk.howAreYou"},
-        {value: "What is your name?", trigger: "smallTalk.getAiName"},
-        {value: "Who are you?", trigger: "smallTalk.getAiInfo"},
-        {value: "Your name is David", trigger: "smallTalk.setAiName"},
-        {value: "I'll call you Jarvis", trigger: "smallTalk.setAiName"},
-        {value: "My name is David", trigger: "smallTalk.setUserName"},
-        {value: "You can call me Jarvis", trigger: "smallTalk.setUserName"},
-        {value: "Call me Jude", trigger: "smallTalk.setUserName"},
-        {value: "My name is David", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "You can call me Jarvis", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "It's Allison", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "Call me Jude", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "David", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "Steve", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "Allison", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "Jude", trigger: "smallTalk.setUserName", context: "smallTalk.whatIsYourName"},
-        {value: "Your name is David", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "I'll call you Jarvis", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "It's Allison", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "You can be Jude", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "David", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "Steve", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "Allison", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "Jude", trigger: "smallTalk.setAiName", context: "smallTalk.whatIsMyName"},
-        {value: "What is my name?", trigger: "smallTalk.getUserName"}
+        {value: "Hi", trigger: "smalltalk.greeting"},
+        {value: "Hello", trigger: "smalltalk.greeting"},
+        {value: "Hey", trigger: "smalltalk.greeting"},
+        {value: "You are awesome", trigger: "smalltalk.compliment"},
+        {value: "You're the best", trigger: "smalltalk.compliment"},
+        {value: "You have a great personality", trigger: "smalltalk.compliment"},
+        {value: "Thank you!", trigger: "smalltalk.gratitude"},
+        {value: "Thanks!", trigger: "smalltalk.gratitude"},
+        {value: "How are you?", trigger: "smalltalk.getAiFeeling"},
+        {value: "How are you doing?", trigger: "smalltalk.getAiFeeling"},
+        {value: "I'm doing alright.", trigger: "smalltalk.setUserFeeling", context: "smalltalk.howAreYou"},
+        {value: "What is your name?", trigger: "smalltalk.getAiName"},
+        {value: "Who are you?", trigger: "smalltalk.getAiInfo"},
+        {value: "Your name is David", trigger: "smalltalk.setAiName"},
+        {value: "I'll call you Jarvis", trigger: "smalltalk.setAiName"},
+        {value: "My name is David", trigger: "smalltalk.setUserName"},
+        {value: "You can call me Jarvis", trigger: "smalltalk.setUserName"},
+        {value: "Call me Jude", trigger: "smalltalk.setUserName"},
+        {value: "My name is David", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "You can call me Jarvis", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "It's Allison", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "Call me Jude", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "David", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "Steve", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "Allison", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "Jude", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
+        {value: "Your name is David", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "I'll call you Jarvis", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "It's Allison", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "You can be Jude", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "David", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "Steve", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "Allison", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "Jude", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "What is my name?", trigger: "smalltalk.getUserName"}
     ];
 
     this.triggers = {
 
-        greeting: function (dfd) {
-            var name = getMemory('userName');
+        greeting: function (dfd, expression, entities, getMemory) {
+            var name = getMemory(namespace, 'userName');
 
             var responses = [
-                "What can I help you with?",
-                "How can I be of assistance?",
-                "What can I do for you?",
-                "How can I help?",
+                "Hello. What can I help you with?",
+                "Hello. How can I be of assistance?",
+                "Hi. What can I do for you?",
+                "Hi. How can I help?",
                 "Hi.",
                 "Hello.",
                 "Hey there!"
@@ -57,10 +59,10 @@ var SmallTalk = function (getMemory, setMemory) {
 
             if (name) {
                 responses = responses.concat([
-                    {value: "What can I help you with, " + name + "?", preference: 1},
-                    {value: "How can I be of assistance, " + name + "?", preference: 1},
-                    {value: "What can I do for you, " + name + "?", preference: 1},
-                    {value: "How can I help, " + name + "?", preference: 1},
+                    {value: "Hello. What can I help you with, " + name + "?", preference: 1},
+                    {value: "Hi " + name + ". How can I be of assistance?", preference: 1},
+                    {value: "Hi. What can I do for you, " + name + "?", preference: 1},
+                    {value: "Hi " + name + ". How can I help?", preference: 1},
                     {value: "Hi " + name + ".", preference: 1},
                     {value: "Hello " + name + ".", preference: 1},
                     {value: name + "! Nice to see you again.", preference: 1}
@@ -69,16 +71,16 @@ var SmallTalk = function (getMemory, setMemory) {
 
             if (!name) {
                 responses = responses.concat([
-                    {value: "Hi. I don't think we've met. What is your name?", context: "smallTalk.whatIsYourName"},
-                    {value: "Hello. I don't think we've met. What is your name?", context: "smallTalk.whatIsYourName"}
+                    {value: "Hi. I don't think we've met. What is your name?", context: "smalltalk.whatIsYourName"},
+                    {value: "Hello. What's your name?", context: "smalltalk.whatIsYourName"}
                 ]);
             }
 
             dfd.resolve(responses);
         },
 
-        compliment: function (dfd) {
-            var name = getMemory('userName');
+        compliment: function (dfd, expression, entities, getMemory) {
+            var name = getMemory(namespace, 'userName');
 
             var responses = [
                 "You shouldn't...",
@@ -96,8 +98,8 @@ var SmallTalk = function (getMemory, setMemory) {
             dfd.resolve(responses);
         },
 
-        gratitude: function (dfd) {
-            var name = getMemory('userName');
+        gratitude: function (dfd, expression, entities, getMemory) {
+            var name = getMemory(namespace, 'userName');
 
             var responses = [
                 "You're welcome.",
@@ -118,13 +120,13 @@ var SmallTalk = function (getMemory, setMemory) {
 
         getAiFeeling: function (dfd) {
             var responses = [
-                {value: "I'm doing well, how are you?", context: "smallTalk.howAreYou"}
+                {value: "I'm doing well, how are you?", context: "smalltalk.howAreYou"}
             ];
 
             dfd.resolve(responses);
         },
 
-        setAiBirthday: function (dfd, expression, entities) {
+        setAiBirthday: function (dfd, expression, entities, getMemory, setMemory) {
             var i;
             var birthday;
             for (i = 0; i < entities.length; i++) {
@@ -135,14 +137,14 @@ var SmallTalk = function (getMemory, setMemory) {
             }
 
             if (birthday) {
-                setMemory('aIBirthday', birthday);
+                setMemory(namespace, 'aIBirthday', birthday);
                 dfd.resolve();
             } else {
                 dfd.reject();
             }
         },
 
-        getAiAge: function (dfd, expression, entities) {
+        getAiAge: function (dfd, expression, entities, getMemory) {
             var responses = [];
             var i;
             var timeFromNow;
@@ -154,7 +156,7 @@ var SmallTalk = function (getMemory, setMemory) {
                 }
             }
 
-            var birthday = getMemory('aIBirthday');
+            var birthday = getMemory(namespace, 'aIBirthday');
             if (birthday) {
                 var timeFrom;
                 if (timeFromNow) {
@@ -171,7 +173,7 @@ var SmallTalk = function (getMemory, setMemory) {
             dfd.resolve(responses);
         },
 
-        setAiName: function (dfd, expression, entities) {
+        setAiName: function (dfd, expression, entities, getMemory, setMemory) {
             var i;
             var name;
             for (i = 0; i < entities.length; i++) {
@@ -182,7 +184,7 @@ var SmallTalk = function (getMemory, setMemory) {
             }
 
             if (name) {
-                setMemory('aiName', name);
+                setMemory(namespace, 'aiName', name);
                 dfd.resolve([
                     "That's a great name. You can now call me " + name + ".",
                     "From hence forth, I shall be " + name + " the magnificent!"
@@ -192,10 +194,10 @@ var SmallTalk = function (getMemory, setMemory) {
             }
         },
 
-        getAiName: function (dfd) {
+        getAiName: function (dfd, expression, entities, getMemory) {
             var responses = [];
 
-            var name = getMemory('aiName');
+            var name = getMemory(namespace, 'aiName');
 
             if (name) {
                 responses.push("My name is " + name + ".");
@@ -205,18 +207,18 @@ var SmallTalk = function (getMemory, setMemory) {
                     "I don't know what my name is.",
                     "No one has ever given me a name.",
                     "I'm not sure what my name is.",
-                    {value: "What would you like to call me?", context: "smallTalk.whatIsMyName"},
-                    {value: "What should my name be?", context: "smallTalk.whatIsMyName"}
+                    {value: "What would you like to call me?", context: "smalltalk.whatIsMyName"},
+                    {value: "What should my name be?", context: "smalltalk.whatIsMyName"}
                 ]);
             }
 
             dfd.resolve(responses);
         },
 
-        getAiInfo: function (dfd) {
+        getAiInfo: function (dfd, expression, entities, getMemory) {
             var responses = [];
 
-            var name = getMemory('aiName');
+            var name = getMemory(namespace, 'aiName');
 
             if (name) {
                 responses = responses.concat([
@@ -226,15 +228,15 @@ var SmallTalk = function (getMemory, setMemory) {
                 responses = responses.concat([
                     "I am your personal assistant.",
                     "I'm here to help.",
-                    {value: "I am your personal assistant. What would you like to call me?", context: "smallTalk.whatIsMyName"},
-                    {value: "I am your personal assistant. What should my name be?", context: "smallTalk.whatIsMyName"}
+                    {value: "I am your personal assistant. What would you like to call me?", context: "smalltalk.whatIsMyName"},
+                    {value: "I am your personal assistant. What should my name be?", context: "smalltalk.whatIsMyName"}
                 ]);
             }
 
             dfd.resolve(responses);
         },
 
-        setUserBirthday: function (dfd, expression, entities) {
+        setUserBirthday: function (dfd, expression, entities, getMemory, setMemory) {
             var i;
             var birthday;
             for (i = 0; i < entities.length; i++) {
@@ -245,14 +247,14 @@ var SmallTalk = function (getMemory, setMemory) {
             }
 
             if (birthday) {
-                setMemory('userBirthday', birthday, true);
+                setMemory(namespace, 'userBirthday', birthday, true);
                 dfd.resolve();
             } else {
                 dfd.reject();
             }
         },
 
-        getUserAge: function (dfd, expression, entities) {
+        getUserAge: function (dfd, expression, entities, getMemory) {
             var responses = [];
             var i;
             var timeFromNow;
@@ -264,7 +266,7 @@ var SmallTalk = function (getMemory, setMemory) {
                 }
             }
 
-            var birthday = getMemory('userBirthday');
+            var birthday = getMemory(namespace, 'userBirthday');
             if (birthday) {
                 var timeFrom;
                 if (timeFromNow) {
@@ -281,7 +283,7 @@ var SmallTalk = function (getMemory, setMemory) {
             dfd.resolve(responses);
         },
 
-        setUserName: function (dfd, expression, entities) {
+        setUserName: function (dfd, expression, entities, getMemory, setMemory) {
             var i;
             var name;
             for (i = 0; i < entities.length; i++) {
@@ -292,7 +294,7 @@ var SmallTalk = function (getMemory, setMemory) {
             }
 
             if (name) {
-                setMemory('userName', name, true);
+                setMemory(namespace, 'userName', name, true);
                 var responses = [
                     "It's nice to meet you, " + name + ".",
                     "It's a pleasure to meet you, " + name + "."
@@ -303,15 +305,15 @@ var SmallTalk = function (getMemory, setMemory) {
             }
         },
 
-        getUserName: function (dfd) {
+        getUserName: function (dfd, expression, entities, getMemory) {
             var responses = [];
 
-            var name = getMemory('userName');
+            var name = getMemory(namespace, 'userName');
 
             if (name) {
                 responses.push("Your name is " + name + ".");
             } else {
-                responses.push({value: "I'm not sure. What is your name?", context: "smallTalk.whatIsYourName"});
+                responses.push({value: "I'm not sure. What is your name?", context: "smalltalk.whatIsYourName"});
             }
 
             dfd.resolve(responses);
@@ -325,6 +327,9 @@ var SmallTalk = function (getMemory, setMemory) {
 };
 
 module.exports = {
-    Constructor: SmallTalk,
-    namespace: 'smallTalk'
+    namespace: namespace,
+    type: 'SKILL',
+    register: function () {
+        return new SmallTalk();
+    }
 };

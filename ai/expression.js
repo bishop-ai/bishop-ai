@@ -12,34 +12,17 @@ var Expression = function (value, trigger, condition, context) {
 
     this.context = "";
     this.trigger = null;
-    this.condition = null;
 
     if (typeof value === "object" && value.hasOwnProperty("value")) {
         var intent = value;
         this.value = intent.value;
         this.context = intent.context || "";
         this.trigger = intent.trigger || null;
-        this.condition = intent.condition || null;
     } else {
         this.value = value || "";
         this.context = context || "";
         this.trigger = trigger || null;
-        this.condition = condition || null;
     }
-};
-
-Expression.prototype.setTrigger = function (trigger) {
-    if (typeof trigger === "string") {
-        this.trigger = trigger;
-    } else if (trigger && trigger.value) {
-        this.trigger = trigger.value;
-    } else {
-        this.trigger = null;
-    }
-};
-
-Expression.prototype.setCondition = function (condition) {
-    this.condition = condition;
 };
 
 Expression.prototype.process = function () {
