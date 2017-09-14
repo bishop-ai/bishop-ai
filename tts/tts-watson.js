@@ -1,13 +1,12 @@
 var $q = require('q');
-var watson = require('watson-developer-cloud');
+var TextToSpeechV1 = require('watson-developer-cloud/text-to-speech/v1');
 
 var configuration = require('./../ai/configuration');
 var TTS = require('./../ai/tts');
 
 var TTSWatson = function () {
     TTS.call(this);
-    this.engine = watson.text_to_speech({
-        version: 'v1',
+    this.engine = new TextToSpeechV1({
         username: configuration.settings.tts.watson.username,
         password: configuration.settings.tts.watson.password
     });

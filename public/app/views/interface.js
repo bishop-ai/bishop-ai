@@ -13,13 +13,15 @@ angular.module('AI').controller('InterfaceCtrl', [
         socket.forward('response', $scope);
         $scope.$on('socket:response', function (ev, data) {
             $scope.audioFile = data.audio;
-            $scope.transcript.unshift({m: data.message, ai: true});
+            if (data.message) {
+                $scope.transcript.push({m: '> ' + data.message, ai: true});
+            }
         });
 
         $scope.handleKeyPress = function (event) {
-            if (event.which === 13) {
+            if (event.which === 13 && $scope.message) {
                 socket.emit('command', $scope.message);
-                $scope.transcript.unshift({m: '> ' + $scope.message, ai: false});
+                $scope.transcript.push({m: $scope.message + ' <', ai: false});
                 $scope.message = "";
                 event.preventDefault();
             }
@@ -53,7 +55,7 @@ angular.module('AI').controller('InterfaceCtrl', [
 
                 console.log('Voice Match: ' + finalTranscript);
                 socket.emit('command', finalTranscript);
-                $scope.transcript.unshift({m: '$ ' + finalTranscript, ai: false});
+                $scope.transcript.push({m: finalTranscript + ' $', ai: false});
             };
 
             // Start it if it ends

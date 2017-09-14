@@ -10,7 +10,9 @@
     <link media="all" type="text/css" href="styles/base.css" rel="stylesheet" />
 </head>
 
-<body data-ng-cloak data-ng-view>
+<body>
+
+<div data-ng-cloak data-ng-view></div>
 
 <!-- Load Library Scripts -->
 <script type="text/javascript" src="lib/jquery/dist/jquery.min.js"></script>
@@ -21,10 +23,10 @@
 
 <!-- Load App Script -->
 <script type="text/javascript" src="app/app.js"></script>
-<script src="app/socketFactory.js"></script>
-<script src="app/aiUx.js"></script>
+<script src="app/directives/aiUx.js"></script>
+<script src="app/directives/scrollBottom.js"></script>
+<script src="app/services/socketFactory.js"></script>
 <script src="app/views/interface.js"></script>
-<script src="app/views/dashboard.js"></script>
 
 </body>
 </html>

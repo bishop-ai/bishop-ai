@@ -1,15 +1,14 @@
-var Brain         = require('./brain'),
+var brain         = require('./brain'),
     configuration = require('./configuration'),
     memory        = require('./memory'),
     STT           = require('./stt'),
-    TTS           = require('./../tts/tts-apiai');
+    TTS           = require('./../tts/tts-watson');
 
 /**
  * The core is the main point of interaction. It handles input and output.
  */
 function Core(io) {
     memory.init();
-    this._brain = new Brain();
     this._stt = new STT();
     this._tts = new TTS();
     this._io = io;
@@ -22,7 +21,7 @@ Core.prototype._handleConnection = function (client) {
 
     client.on('command', function (command) {
         try {
-            self._brain.processExpression(command).then(function (result) {
+            brain.processExpression(command).then(function (result) {
                 if (result) {
                     if (configuration.settings.tts.enabled) {
                         self._tts.synthesize(result.response).then(function (audioFile) {

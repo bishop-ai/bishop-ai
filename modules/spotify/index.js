@@ -1,14 +1,31 @@
 var ffi = require('ffi');
 
-var Spotify = function (createTrigger) {
-    createTrigger('play');
-    createTrigger('pause');
-    createTrigger('next');
-    createTrigger('previous');
-    createTrigger('stop');
-    createTrigger('volumeUp');
-    createTrigger('volumeDown');
-    createTrigger('mute');
+var Spotify = function () {
+
+    this.intent = [
+        {value: "Quieter", trigger: "spotify.volumeDown"},
+        {value: "The music is too loud", trigger: "spotify.volumeDown"},
+        {value: "Turn the music down", trigger: "spotify.volumeDown"},
+        {value: "Turn the volume down", trigger: "spotify.volumeDown"},
+        {value: "Mute", trigger: "spotify.mute"},
+        {value: "Unmute", trigger: "spotify.mute"},
+        {value: "Louder", trigger: "spotify.volumeUp"},
+        {value: "The music is too quiet", trigger: "spotify.volumeUp"},
+        {value: "Turn the music up", trigger: "spotify.volumeUp"},
+        {value: "Turn the volume up", trigger: "spotify.volumeUp"},
+        {value: "Stop playing music", trigger: "spotify.stop"},
+        {value: "Stop the music", trigger: "spotify.stop"},
+        {value: "Turn off the music", trigger: "spotify.stop"},
+        {value: "Play the last song", trigger: "spotify.previous"},
+        {value: "Play the last song again", trigger: "spotify.previous"},
+        {value: "Pause music", trigger: "spotify.pause"},
+        {value: "Play the next song", trigger: "spotify.next"},
+        {value: "Next song", trigger: "spotify.next"},
+        {value: "Play music please", trigger: "spotify.play"},
+        {value: "Play music", trigger: "spotify.play"},
+        {value: "Play my music", trigger: "spotify.play"},
+        {value: "Turn the music on", trigger: "spotify.play"}
+    ];
 
     this.triggers = {
         play: function (dfd) {
@@ -77,4 +94,7 @@ Spotify.commands = {
     MUTE: 524288
 };
 
-module.exports = {Constructor: Spotify, namespace: 'spotify'};
+module.exports = {
+    Constructor: Spotify,
+    namespace: 'spotify'
+};

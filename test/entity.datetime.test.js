@@ -2,7 +2,7 @@ var assert = require("assert");
 var moment = require('moment');
 
 var datetime = require("../entities/datetime").entity;
-var Expression = require("../models/expression");
+var Expression = require("../ai/expression");
 
 var eql = function (string, moment) {
     assert.equal(datetime.extractors.datetime(string), moment.format(), string);

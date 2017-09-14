@@ -40,19 +40,16 @@ nlp.DiceCoefficient = function (s1, s2) {
 };
 
 nlp._init = function () {
-    var normalizedPath = path.join(__dirname, "../node_modules/natural");
-    var base_folder = normalizedPath + "/lib/natural/brill_pos_tagger";
-    var rules_file = base_folder + "/data/English/tr_from_posjs.txt";
-    var lexicon_file = base_folder + "/data/English/lexicon_from_posjs.json";
-    var default_category = 'N';
+    var base_folder = path.join(path.dirname(require.resolve("natural")), "brill_pos_tagger");
+    var rulesFilename = base_folder + "/data/English/tr_from_posjs.txt";
+    var lexiconFilename = base_folder + "/data/English/lexicon_from_posjs.json";
+    var defaultCategory = 'N';
 
+    var lexicon = new natural.Lexicon(lexiconFilename, defaultCategory);
+    var rules = new natural.RuleSet(rulesFilename);
+
+    this._tagger = new natural.BrillPOSTagger(lexicon, rules);
     this._tokenizer = new natural.WordTokenizer();
-    this._tagger = new natural.BrillPOSTagger(lexicon_file, rules_file, default_category, function (error) {
-        if (error) {
-            console.log(error);
-        }
-    });
-
     this._classifier = new RuleClassify(function (classifier) {
         nlp._classifier = classifier;
     });

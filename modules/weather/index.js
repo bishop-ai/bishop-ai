@@ -2,17 +2,14 @@ var moment = require('moment');
 var $q = require('q');
 var request = require('request');
 
-var cache = require('./../utils/cache');
-var configuration = require('./../ai/configuration');
+var intent = require('./intent');
 
-var Weather = function (createTrigger) {
+var cache = require('./../../utils/cache');
+var configuration = require('./../../ai/configuration');
 
-    createTrigger('getCurrent');
-    createTrigger('getTomorrow');
-    createTrigger('getCurrentTemp');
-    createTrigger('getTomorrowTemp');
-    createTrigger('getFutureConditionSnow');
-    createTrigger('getFutureConditionRain');
+var Weather = function () {
+
+    this.intent = intent;
 
     this.triggers = {
         getCurrent: function (dfd) {
@@ -398,4 +395,7 @@ Weather.failureMessages = [
     "I could not check the weather right now."
 ];
 
-module.exports = {Constructor: Weather, namespace: 'weather'};
+module.exports = {
+    Constructor: Weather,
+    namespace: 'weather'
+};

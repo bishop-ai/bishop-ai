@@ -4,9 +4,6 @@ var cache = require('./../utils/cache');
 var configuration = {
     file: 'configuration.json',
     settings: {
-        neo4j: {
-            host: "http://localhost:7474"
-        },
         tts: {
             enabled: true,
             username: null,

@@ -1,149 +1,123 @@
-var extend = require('extend');
 var fs = require("fs");
 var path = require("path");
-var neo4j = require('node-neo4j');
 var $q = require('q');
 
-var configuration = require('./configuration');
-var db = require('./../utils/db');
-var Expression = require('./../models/expression');
+var Expression = require('./expression');
+var Intent = require('./intent');
+var Response = require('./response');
 var memory = require('./memory');
 var nlp = require('./../nlp');
-var Predicate = require('./../utils/predicate');
 
-var Brain = function (debug) {
+var Brain = function () {
+
+    // Keep track of the transcript. This should allow for repetition checking for both the user and the AI. This should
+    // help prevent the AI from repeating a response to frequently. Also, when the user repeats the same thing multiple
+    // times, the AI can respond differently.
     this._transcript = [];
-    this._entities = {};
-    this._modules = {};
-    this._triggers = {};
-    this._conditions = {};
-    this._injectors = {};
-    this._intent = null;
 
-    this._debug = configuration.debug === true || debug === true;
+    // Entity extractors are used to create named entities from parts of the input. These are then passed into the module
+    // intent conditions and triggers to help perform actions and/or return responses. For example, a date/time extractor
+    // might be used to create a Date object that represents a spoken date ("The fifth of January"). This date object can
+    // then be used throughout the process to provide a more accurate experience.
+    this._entityExtractors = {};
+
+    // Modules are add on components that register triggers and intents. The intents are matched using the input. The trigger
+    // registered for the matching intent is then called to perform an action and/or return a response.
+    this._modules = {};
+
+    // Intents are registered by modules. Intents represent a value to match the input on, a condition to validate the match
+    // and either a trigger to act on or static responses. All intents must provide a value. If a trigger is set, the
+    // registered trigger will be called. If there is no trigger, but there are static responses, one of the responses
+    // will be used. If there is not condition is present, the match will not be validated and only the scored confidence
+    // will be used to select the match.
+    this._intents = [];
+
+    // Just like triggers are registered for a module, so are conditions. Conditions are used to determine if a matched
+    // expression is valid for the provided input. When matching expressions, there may be multiple matches. The matches
+    // are scored and sorted to find the most accurate match. The best match is found by taking the sorted matches and
+    // checking the condition. If there is no condition or the condition returns true, the match is used otherwise the
+    // next highest scoring match is tested against its condition.
+    this._conditions = {};
+
+    // Triggers are registered by the module. The module then registers intents which correspond to a given trigger
+    // When the intent is matched to the input, the registered trigger referenced by the matched intent is called and
+    // can provide a response.
+    this._triggers = {};
+
+    this._context = "";
 
     this._initializeEntities();
     this._initializeModules();
 };
 
-Brain.TRANSCRIPT_DIR = {
-    'SENT': 'SENT',
-    'RECEIVED': 'RECEIVED'
-};
-
-// TODO: Handle multiple/compound sentences
 Brain.prototype.processExpression = function (input) {
     var dfd = $q.defer();
 
-    var expression = new Expression(input);
-    expression = expression.clean();
-    expression = Expression.process(expression);
+    var inputExpression = new Expression(input);
+    inputExpression.process();
 
-    var result = {
-        input: expression.value,
-        normalized: expression.normalized,
-        entities: this._extractExpressionEntities(expression),
-        response: ""
-    };
+    var inputEntities = this._extractExpressionEntities(inputExpression);
 
     var self = this;
-    this._getBestMatch(expression).then(function (response) {
-        if (response.confidence > 0.5) {
-            result.match = {
-                expression: response.expression,
-                confidence: response.confidence
-            };
-            return self._handleBestMatch(result, response, expression);
+    var handleMatch = function (bestMatch) {
+        if (bestMatch && bestMatch.confidence > 0.5) {
+            return self._handleBestMatch(bestMatch, inputExpression, inputEntities);
         } else {
-            return self._handleUnknownMatch(expression);
+            return self._handleUnknownMatch(inputExpression);
         }
-    }).then(function (response) {
-        result = self._handleResponse(result, response, expression);
-        console.log(JSON.stringify(result, null, "  "));
-        dfd.resolve(result);
+    };
+
+    var matchedExpression = this._getBestMatch(inputExpression, inputEntities);
+    handleMatch(matchedExpression).then(function (response) {
+        self._setContext(response.context);
+
+        var data = {
+            input: inputExpression,
+            entities: inputEntities,
+            match: matchedExpression,
+            response: response.value,
+            context: self._context
+        };
+
+        console.log(JSON.stringify({
+            input: data.input.value,
+            match: data.match.intent.value,
+            module: data.match.intent.namespace,
+            confidence: data.match.confidence,
+            entities: data.entities,
+            trigger: data.match.intent.expression.trigger,
+            response: data.response,
+            context: data.context
+        }, null, "  "));
+
+        self._transcript.push(inputExpression.value);
+        self._transcript.push(response.value);
+
+        dfd.resolve(data);
     });
 
     return dfd.promise;
 };
 
-Brain.prototype._setIntent = function (intent) {
-    if (intent || intent === "") {
-        this._intent = intent;
-    }
+Brain.prototype._setContext = function (context) {
+    this._context = context || "";
 };
 
-Brain.prototype._getBestMatch = function (expression) {
-    var dfd = $q.defer();
-    var self = this;
+Brain.prototype._getBestMatch = function (expression, inputEntities) {
+    var i;
+    var matches = [];
+    var match;
 
-    var predicate = new Predicate('e.validated').equals(true);
-    Expression.find(null, predicate).then(function (expressions) {
-        var i;
-        var matches = [];
-        var match;
+    for (i = 0; i < this._intents.length; i++) {
+        match = {
+            intent: this._intents[i],
+            confidence: this._getConfidence(this._intents[i], expression)
+        };
 
-        // TODO: Take into account expressions that typically follow the previous expression chain
-        for (i = 0; i < expressions.length; i++) {
-            match = {
-                expression: Expression.process(expressions[i]),
-                score: {}
-            };
-            match.score.jwDist = nlp.JaroWinklerDistance(match.expression.normalized, expression.normalized);
-            match.score.lDist = nlp.LevenshteinDistance(match.expression.normalized, expression.normalized);
-            match.score.dcDist = nlp.DiceCoefficient(match.expression.normalized, expression.normalized);
-
-            matches.push(match);
-        }
-
-        self._sortMatches(matches);
-
-        dfd.resolve({
-            expression: matches[0].expression,
-            confidence: matches[0].confidence
-        });
-    }, function (e) {
-        dfd.reject(e);
-    });
-
-    return dfd.promise;
-};
-
-Brain.prototype._sortMatches = function (matches) {
-    if (!matches) {
-        return [];
+        matches.push(match);
     }
-
-    var calculateConfidence = function (match) {
-        var lDistWeight = 4;
-        var jwDistWeight = 4;
-        var dcDistWeight = 4;
-        var totalWeight = lDistWeight + jwDistWeight + dcDistWeight;
-
-        var lDist = match.score.lDist;
-        var jwDist = match.score.jwDist;
-        var dcDist = match.score.dcDist;
-
-        if (lDist === 0) {
-            lDist = 1;
-        } else {
-            lDist = 1 / lDist;
-        }
-
-        lDist *= lDistWeight;
-        jwDist *= jwDistWeight;
-        dcDist *= dcDistWeight;
-
-        match.confidence = (lDist + jwDist + dcDist) / totalWeight;
-    };
 
     matches.sort(function (a, b) {
-        if (!a.confidence && a.confidence !== 0) {
-            calculateConfidence(a);
-        }
-        if (!b.confidence && b.confidence !== 0) {
-            calculateConfidence(b);
-        }
-
         if (a.confidence > b.confidence) {
             return -1;
         }
@@ -153,254 +127,197 @@ Brain.prototype._sortMatches = function (matches) {
         return 0;
     });
 
-    return matches;
+    var bestMatch = null;
+    i = 0;
+    while (matches.length > 0 && bestMatch === null) {
+
+        // If there is no condition, or the condition is met, this expression is acceptable
+        if (!matches[i].intent.expression.condition) {
+            bestMatch = matches[i];
+            break;
+        } else if (this._handleCondition(matches[i].intent.expression.condition, matches[i].intent.expression, inputEntities)) {
+            bestMatch = matches[i];
+        }
+
+        i++;
+    }
+
+    return bestMatch;
 };
 
-Brain.prototype._handleBestMatch = function (result, response, expression) {
-    this._setIntent(result.match.expression.intent);
+Brain.prototype._getConfidence = function (intent, inputExpression) {
+    var lDistWeight = 4;
+    var jwDistWeight = 4;
+    var dcDistWeight = 4;
+    var totalWeight = lDistWeight + jwDistWeight + dcDistWeight;
+
+    var lDist = nlp.LevenshteinDistance(intent.expression.normalized, inputExpression.normalized);
+    var jwDist = nlp.JaroWinklerDistance(intent.expression.normalized, inputExpression.normalized);
+    var dcDist = nlp.DiceCoefficient(intent.expression.normalized, inputExpression.normalized);
+
+    if (lDist === 0) {
+        lDist = 1;
+    } else {
+        lDist = 1 / lDist;
+    }
+
+    lDist *= lDistWeight;
+    jwDist *= jwDistWeight;
+    dcDist *= dcDistWeight;
+
+    var confidence = (lDist + jwDist + dcDist) / totalWeight;
+
+    if (this._context) {
+        if (this._context === intent.expression.context) {
+            confidence *= 1.5;
+        } else {
+            confidence *= 0.5;
+        }
+    } else if (intent.expression.context) {
+        // Assign no confidence to intents that have context when there is no global context set.
+        confidence *= 0;
+    }
+
+    return confidence;
+};
+
+/**
+ * Resolve conditions on relationships to check if the expression is a valid response
+ *
+ * @param {String} condition The name of the condition to call {namespace + "." + method}
+ * @param {Expression} matchedExpression The matched expression
+ * @param {Array} inputEntities The entities extracted from the input expression
+ * @returns {boolean} If true, this matched expression should be considered as a match.
+ * @private
+ */
+Brain.prototype._handleCondition = function (condition, matchedExpression, inputEntities) {
+    var result = true;
+
+    if (condition) {
+        if (this._conditions[condition]) {
+            result = this._conditions[condition](matchedExpression, inputEntities);
+        } else {
+            /* jshint ignore:start */
+            try {
+                result = eval("!!(" + condition + ")");
+            } catch (e) {
+                console.log('Brain Error: Evaluation failed for condition: ' + condition + '" - ' + e);
+            }
+            /* jshint ignore:end */
+        }
+    }
+
+    return result;
+};
+
+/**
+ * Takes the match intent expression and resolves a Response. If the match has a trigger, the registered trigger is called.
+ * This takes String or Object responses and wraps them in a Response object.
+ *
+ * @param match
+ * @param inputExpression
+ * @param inputEntities
+ * @returns {Promise.<Response>}
+ * @private
+ */
+Brain.prototype._handleBestMatch = function (match, inputExpression, inputEntities) {
+    var matchedExpression = match.intent.expression;
 
     var self = this;
-    return Expression.inflate(result.match.expression).then(function (matchedExpression) {
-        result.match.trigger = matchedExpression.trigger;
-        result.match.injector = matchedExpression.injector;
 
-        return self._handleTrigger(matchedExpression.trigger, expression, result.entities).then(function (response) {
-            if (response || response === "") {
-                if (response instanceof Array) {
-                    response = response[Math.floor(Math.random() * response.length)];
+    // If there is a trigger, let the trigger handle the response
+    if (matchedExpression.trigger && this._triggers[matchedExpression.trigger]) {
+        return this._handleTrigger(matchedExpression.trigger, inputExpression, inputEntities).then(function (triggerResponses) {
+            var response;
+            if (triggerResponses instanceof Array) {
+                var i;
+                var responses = [];
+                for (i = 0; i < triggerResponses.length; i++) {
+                    responses.push(new Response(triggerResponses[i]));
                 }
-                self._setIntent("");
-                return response;
+                response = self._getBestResponse(responses);
+            } else {
+                response = new Response(triggerResponses);
             }
-            return self._getResponse(matchedExpression, result.entities);
+
+            return response;
+        }, function () {
+            return self._handleUnknownMatch(inputExpression);
         });
-    });
+    }
+
+    // If there is not a trigger but the intent has static responses, find an appropriate static response
+    if (match.intent.responses) {
+        var response;
+        if (match.intent.responses instanceof Array) {
+            var i;
+            var responses = [];
+            for (i = 0; i < match.intent.responses.length; i++) {
+                responses.push(new Response(match.intent.responses[i]));
+            }
+            response = self._getBestResponse(responses);
+        } else {
+            response = new Response(match.intent.responses);
+        }
+        return $q.resolve(self._getBestResponse(response));
+    }
+
+    // If there is not a trigger and there is not a static response, do not respond.
+    return $q.resolve(new Response());
 };
 
 Brain.prototype._handleUnknownMatch = function (expression) {
     var dfd = $q.defer();
 
     var responses = [
-        new Expression("I'm not sure I understand."),
-        new Expression("I'm not sure I understand what you mean."),
-        new Expression("I'm not sure I know what you mean."),
-        new Expression("I'm not sure I understand what you're saying."),
-        new Expression("I'm not sure I know what you're saying."),
-        new Expression("I'm not sure I understand what you mean by '" + expression.value + "'."),
-        new Expression("I'm not sure I know what you mean by '" + expression.value + "'."),
-        new Expression("I'm not sure I understand what you mean when you say, '" + expression.value + "'."),
-        new Expression("I'm not sure I know what you mean when you say, '" + expression.value + "'."),
-        new Expression("I don't understand."),
-        new Expression("I don't understand what you mean."),
-        new Expression("I don't know what you mean."),
-        new Expression("I don't understand what you're saying."),
-        new Expression("I don't know what you're saying."),
-        new Expression("I don't understand what you mean by '" + expression.value + "'."),
-        new Expression("I don't know what you mean by '" + expression.value + "'."),
-        new Expression("I don't understand what you mean when you say, '" + expression.value + "'."),
-        new Expression("I don't know what you mean when you say, '" + expression.value + "'."),
-        new Expression("I'm sorry, I'm not sure I understand."),
-        new Expression("I'm sorry, I'm not sure I understand what you mean."),
-        new Expression("I'm sorry, I'm not sure I know what you mean."),
-        new Expression("I'm sorry, I'm not sure I understand what you're saying."),
-        new Expression("I'm sorry, I'm not sure I know what you're saying."),
-        new Expression("I'm sorry, I'm not sure I understand what you mean by '" + expression.value + "'."),
-        new Expression("I'm sorry, I'm not sure I know what you mean by '" + expression.value + "'."),
-        new Expression("I'm sorry, I'm not sure I understand what you mean when you say, '" + expression.value + "'."),
-        new Expression("I'm sorry, I'm not sure I know what you mean when you say, '" + expression.value + "'."),
-        new Expression("I'm sorry, I don't understand."),
-        new Expression("I'm sorry, I don't understand what you mean."),
-        new Expression("I'm sorry, I don't know what you mean."),
-        new Expression("I'm sorry, I don't understand what you're saying."),
-        new Expression("I'm sorry, I don't know what you're saying."),
-        new Expression("I'm sorry, I don't understand what you mean by '" + expression.value + "'."),
-        new Expression("I'm sorry, I don't know what you mean by '" + expression.value + "'."),
-        new Expression("I'm sorry, I don't understand what you mean when you say, '" + expression.value + "'."),
-        new Expression("I'm sorry, I don't know what you mean when you say, '" + expression.value + "'.")
+        "I didn't quite get that.",
+        "I'm not sure I understand.",
+        "I'm not sure I understand what you mean.",
+        "I'm not sure I know what you mean.",
+        "I'm not sure I understand what you're saying.",
+        "I'm not sure I know what you're saying.",
+        "I'm not sure I understand what you mean by '" + expression.value + "'.",
+        "I'm not sure I know what you mean by '" + expression.value + "'.",
+        "I'm not sure I understand what you mean when you say, '" + expression.value + "'.",
+        "I'm not sure I know what you mean when you say, '" + expression.value + "'.",
+        "I don't understand.",
+        "I don't understand what you mean.",
+        "I don't know what you mean.",
+        "I don't understand what you're saying.",
+        "I don't know what you're saying.",
+        "I don't understand what you mean by '" + expression.value + "'.",
+        "I don't know what you mean by '" + expression.value + "'.",
+        "I don't understand what you mean when you say, '" + expression.value + "'.",
+        "I don't know what you mean when you say, '" + expression.value + "'.",
+        "I'm sorry, I'm not sure I understand.",
+        "I'm sorry, I'm not sure I understand what you mean.",
+        "I'm sorry, I'm not sure I know what you mean.",
+        "I'm sorry, I'm not sure I understand what you're saying.",
+        "I'm sorry, I'm not sure I know what you're saying.",
+        "I'm sorry, I'm not sure I understand what you mean by '" + expression.value + "'.",
+        "I'm sorry, I'm not sure I know what you mean by '" + expression.value + "'.",
+        "I'm sorry, I'm not sure I understand what you mean when you say, '" + expression.value + "'.",
+        "I'm sorry, I'm not sure I know what you mean when you say, '" + expression.value + "'.",
+        "I'm sorry, I don't understand.",
+        "I'm sorry, I don't understand what you mean.",
+        "I'm sorry, I don't know what you mean.",
+        "I'm sorry, I don't understand what you're saying.",
+        "I'm sorry, I don't know what you're saying.",
+        "I'm sorry, I don't understand what you mean by '" + expression.value + "'.",
+        "I'm sorry, I don't know what you mean by '" + expression.value + "'.",
+        "I'm sorry, I don't understand what you mean when you say, '" + expression.value + "'.",
+        "I'm sorry, I don't know what you mean when you say, '" + expression.value + "'."
     ];
 
-    var responseExpression = this._getBestResponseExpression(responses);
-    dfd.resolve(responseExpression.value);
-
-    return dfd.promise;
-};
-
-Brain.prototype._handleResponse = function (result, response, expression) {
-    result.response = response;
-
-    /**
-     * If this is not debug mode, create links between what was said and the previous transcript. Also generate new
-     * nodes for what was said and the response.
-     */
-    // TODO: Handle multiple sentences
-    if (this._debug !== true) {
-        /*var self = this;
-         expression.setTrigger(result.match.trigger);
-         expression.setInjector(result.match.injector);
-         expression.intent = result.match.intent;
-         Expression.save(expression).then(function (expression) {
-         if (expression) {
-         var query;
-         var params;
-         var rel;
-         if (self._transcript[0] && self._transcript[0].expression.value !== expression.value) {
-         query = ['MATCH (le:Expression) WHERE ID(le) = {lastExpressionId}'];
-         rel = self._transcript[0].expression.intent || 'transfer';
-         query.push('MERGE (le)-[r:' + rel + ']->(e)');
-         query.push('ON CREATE SET r.weight = 1, r.validated = false');
-         query.push('ON MATCH SET r.weight = r.weight + 1');
-         params = {
-         lastExpressionId: self._transcript[0].expression._id
-         };
-         db.executeCypher(query, params);
-         }
-         self._transcript.unshift({
-         dir: Brain.TRANSCRIPT_DIR.RECEIVED,
-         expression: expression
-         });
-         }
-         });*/
-    }
-
-    var data = {
-        input: result.input,
-        normalized: result.normalized,
-        entities: result.entities,
-        response: result.response
-    };
-
-    if (result.match) {
-        data.match = {
-            expression: result.match.expression.value,
-            trigger: result.match.trigger,
-            confidence: result.match.confidence
-        };
-    }
-
-    return data;
-};
-
-Brain.prototype._getResponse = function (expression, expressionEntities) {
-    var dfd = $q.defer();
-    var self = this;
-
-    this._getResponseChain(expression, expressionEntities).then(function (expressions) {
-        if (expressions.length > 0) {
-            var i;
-            var promises = [];
-
-            var success = function (inflatedResponseExpression) {
-                if (inflatedResponseExpression.injector) {
-                    return self._handleInjector(inflatedResponseExpression.injector, inflatedResponseExpression, expressionEntities).then(function (response) {
-                        return response;
-                    });
-                } else {
-                    return inflatedResponseExpression.value;
-                }
-            };
-
-            for (i = 0; i < expressions.length; i++) {
-                promises.push(Expression.inflate(expressions[i]).then(success));
-            }
-
-            $q.all(promises).then(function (responses) {
-                var sentences = self._joinSentenceChain(responses);
-                dfd.resolve(sentences);
-            });
-        } else {
-            dfd.resolve("");
-        }
-    }, function (e) {
-        dfd.reject(e);
-    });
-
-    return dfd.promise;
-};
-
-Brain.prototype._getResponseChain = function (expression, entities) {
-    var self = this;
-    var dfd = $q.defer();
-    var expressions = [];
-
-    var findNext = function (expression, transfer) {
-        Expression.findNextExpressions(expression, transfer, self._intent).then(function (results) {
-            if (results.length > 0) {
-                self._filterResponsesByCondition(results, entities, expression).then(function (exps) {
-                    if (exps.length > 0) {
-                        var expression = self._getBestResponseExpression(exps);
-                        expressions.push(expression);
-                        self._setIntent(expression.intent);
-                        findNext(expression, false);
-                    } else {
-                        dfd.resolve(expressions);
-                    }
-                });
-            } else {
-                dfd.resolve(expressions);
-            }
-        }, function (e) {
-            console.log(e);
-            dfd.resolve(expressions);
-        });
-    };
-
-    findNext(expression, true);
-
-    return dfd.promise;
-};
-
-/**
- *
- * @param {{expression: Expression, condition: String}[]} responses
- * @param {Array} entities
- * @param {Expression} expression
- * @returns {*|jQuery.promise|promise.promise|d.promise|promise}
- * @private
- */
-Brain.prototype._filterResponsesByCondition = function (responses, entities, expression) {
-    var dfd = $q.defer();
-    var expressions = [];
-    var promises = [];
+    var res = [];
     var i;
-
-    var success = function (truthy) {
-        if (truthy) {
-            expressions.push(this.expression);
-        }
-    };
-
     for (i = 0; i < responses.length; i++) {
-        if (responses[i].condition) {
-            promises.push(this._handleCondition(responses[i].condition, expression, entities).then(success.bind(responses[i])));
-        } else {
-            expressions.push(responses[i].expression);
-        }
+        res.push(new Response(responses[i]));
     }
 
-    $q.all(promises).then(function () {
-        dfd.resolve(expressions);
-    });
+    dfd.resolve(this._getBestResponse(res));
 
     return dfd.promise;
-};
-
-Brain.prototype._joinSentenceChain = function (sentences) {
-    var results = [];
-    var i;
-    for (i = 0; i < sentences.length; i++) {
-        if (sentences[i]) {
-            if (sentences[i].match(/(\?|!|\.)$/) === null) {
-                sentences[i] += ".";
-            }
-            results.push(sentences[i]);
-        }
-    }
-    return results.join(" ");
-};
-
-Brain.prototype._getBestResponseExpression = function (responseExpressions) {
-    // TODO: Use something other than a random generator.
-    return responseExpressions[Math.floor(Math.random() * responseExpressions.length)];
 };
 
 /**
@@ -415,80 +332,28 @@ Brain.prototype._getBestResponseExpression = function (responseExpressions) {
 Brain.prototype._handleTrigger = function (trigger, expression, entities) {
     var dfd = $q.defer();
 
-    if (!trigger) {
-        dfd.resolve();
-    } else if (this._triggers[trigger]) {
+    if (trigger && this._triggers[trigger]) {
         this._triggers[trigger](dfd, expression, entities || []);
+    } else {
+        dfd.reject();
     }
 
     return dfd.promise;
 };
 
-/**
- * Resolve conditions on relationships to check if the expression is a valid response
- *
- * @param {String} condition The name of the condition to call {namespace + "." + method}
- * @param {Expression} expression The matched expression
- * @param {Array} entities The entities extracted from the matched expression
- * @returns {*|jQuery.promise|promise.promise|d.promise|promise} Should be resolved with true or false
- * @private
- */
-Brain.prototype._handleCondition = function (condition, expression, entities) {
-    var dfd = $q.defer();
-
-    if (!condition) {
-        dfd.resolve(false);
-    } else if (this._conditions[condition]) {
-        this._conditions[condition](dfd, expression, entities);
-    } else {
-        var result = false;
-        /* jshint ignore:start */
-        try {
-            result = eval("!!(" + condition + ")");
-        } catch (e) {
-            console.log('Brain Error: Evaluation failed for condition: ' + condition + '" - ' + e);
-            result = false;
-        }
-        /* jshint ignore:end */
-        dfd.resolve(result);
-    }
-
-    return dfd.promise;
-};
-
-/**
- * Handles module injections into response expressions
- *
- * @param {String} injector The name of the injector to call {namespace + "." + method}
- * @param {Expression} expression The matched expression
- * @param {Array} matchEntities The entities extracted from the matched expression
- * @returns {*|jQuery.promise|promise.promise|d.promise|promise} Should be resolved with a string (the response)
- * @private
- */
-Brain.prototype._handleInjector = function (injector, expression, matchEntities) {
-    var dfd = $q.defer();
-
-    if (!expression) {
-        dfd.reject('Brain Error: No expression to inject into.');
-    } else if (injector && this._injectors[injector]) {
-        expression = Expression.process(expression);
-        var entities = this._extractExpressionEntities(expression);
-        this._injectors[injector](dfd, expression, entities, matchEntities || []);
-    } else {
-        dfd.resolve(expression.value);
-    }
-
-    return dfd.promise;
+Brain.prototype._getBestResponse = function (responses) {
+    // TODO: Use something other than a random generator. Use the preference
+    return responses[Math.floor(Math.random() * responses.length)];
 };
 
 Brain.prototype._extractExpressionEntities = function (expression) {
     var entities = [];
 
-    var entity;
-    for (entity in this._entities) {
-        if (this._entities.hasOwnProperty(entity)) {
-            if (typeof this._entities[entity].extract === 'function') {
-                entities = entities.concat(this._entities[entity].extract(expression));
+    var extractor;
+    for (extractor in this._entityExtractors) {
+        if (this._entityExtractors.hasOwnProperty(extractor)) {
+            if (typeof this._entityExtractors[extractor].extract === 'function') {
+                entities = entities.concat(this._entityExtractors[extractor].extract(expression));
             }
         }
     }
@@ -523,10 +388,10 @@ Brain.prototype._initializeEntities = function () {
     fs.readdirSync(normalizedPath).forEach(function (file) {
         var module = require("./../entities/" + file);
         if (module.entity && module.namespace && typeof module.entity.extract === 'function' && module.namespace.indexOf('.') === -1) {
-            if (self._entities[module.namespace]) {
+            if (self._entityExtractors[module.namespace]) {
                 console.log('Brain Error: Entity Namespace conflict: ' + module.namespace);
             } else {
-                self._entities[module.namespace] = module.entity;
+                self._entityExtractors[module.namespace] = module.entity;
             }
         } else {
             console.log('Brain Error: Invalid Entity module: ' + module.namespace);
@@ -535,6 +400,8 @@ Brain.prototype._initializeEntities = function () {
 };
 
 Brain.prototype._initializeModules = function () {
+    console.log('Brain: Initializing Modules');
+
     var self = this;
     var normalizedPath = path.join(__dirname, "../modules");
 
@@ -544,47 +411,13 @@ Brain.prototype._initializeModules = function () {
             if (self._modules[module.namespace]) {
                 console.log('Brain Error: Module Namespace conflict: ' + module.namespace);
             } else {
-                self._modules[module.namespace] = new module.Constructor(function (value) {
-                    if (self._debug === true) {
-                        return;
+                self._modules[module.namespace] = new module.Constructor(
+                    function (name) {
+                        return memory.get(module.namespace + '.' + name);
+                    }, function (name, value, shortTerm) {
+                        return memory.set(module.namespace + '.' + name, value, shortTerm);
                     }
-                    if (!value) {
-                        console.log('Brain Error: Module: "' + module.namespace + '" attempted to create a trigger with invalid arguments.');
-                        return;
-                    }
-
-                    var query = [
-                        'MERGE (t:Trigger {value: {value}})'
-                    ];
-
-                    var params = {
-                        value: module.namespace + '.' + value
-                    };
-
-                    return db.executeCypher(query, params);
-                }, function (value) {
-                    if (self._debug === true) {
-                        return;
-                    }
-                    if (!value) {
-                        console.log('Brain Error: Module: "' + module.namespace + '" attempted to create an injector with invalid arguments.');
-                        return;
-                    }
-
-                    var query = [
-                        'MERGE (i:Injector {value: {value}})'
-                    ];
-
-                    var params = {
-                        value: module.namespace + '.' + value
-                    };
-
-                    return db.executeCypher(query, params);
-                }, function (name) {
-                    return memory.get(module.namespace + '.' + name);
-                }, function (name, value) {
-                    return memory.set(module.namespace + '.' + name, value, self._debug === true);
-                });
+                );
 
                 var method;
                 var theModule;
@@ -604,11 +437,13 @@ Brain.prototype._initializeModules = function () {
                             }
                         }
                     }
-                    if (theModule.injectors) {
-                        for (method in theModule.injectors) {
-                            if (theModule.injectors.hasOwnProperty(method) && typeof theModule.injectors[method] === 'function') {
-                                self._injectors[module.namespace + '.' + method] = theModule.injectors[method].bind(self);
-                            }
+                    if (theModule.intent && theModule.intent.length > 0) {
+                        var i;
+                        var intent;
+                        for (i = 0; i < theModule.intent.length; i++) {
+                            intent = new Intent(theModule.intent[i]);
+                            intent.namespace = module.namespace;
+                            self._intents.push(intent);
                         }
                     }
                 }
@@ -618,6 +453,8 @@ Brain.prototype._initializeModules = function () {
             console.log('Brain Error: Invalid Module: "' + module.namespace + '"');
         }
     });
+
+    console.log('Brain: Done Initializing Modules');
 };
 
-module.exports = Brain;
+module.exports = new Brain();
