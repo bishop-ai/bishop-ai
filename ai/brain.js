@@ -71,11 +71,11 @@ Brain.prototype.processExpression = function (input) {
 
         console.log(JSON.stringify({
             input: data.input.value,
-            intent: data.match.intent.value,
-            skill: data.match.intent.namespace,
-            confidence: data.match.confidence,
+            intent: data.match ? data.match.intent.value : "",
+            skill: data.match ? data.match.intent.namespace : "",
+            confidence: data.match ? data.match.confidence : 0,
             entities: data.entities,
-            trigger: data.match.intent.expression.trigger,
+            trigger: data.match ? data.match.intent.expression.trigger : "",
             response: data.response,
             context: data.context
         }, null, "  "));
