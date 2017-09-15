@@ -174,17 +174,22 @@ Brain.prototype._getConfidence = function (intent, inputExpression) {
 Brain.prototype._processIntent = function (intent, inputExpression, inputEntities) {
     var intentExpression = intent.expression;
 
-    var getMemory = function (namespace, name) {
-        return memory.get(namespace + '.' + name);
-    };
-    var setMemory = function (namespace, name, value, shortTerm) {
-        memory.set(namespace + '.' + name, value, shortTerm);
-    };
-
     if (intentExpression.trigger && Brain.triggers[intentExpression.trigger]) {
         var dfd = $q.defer();
 
-        Brain.triggers[intentExpression.trigger](dfd, inputExpression, inputEntities || [], getMemory, setMemory);
+        var trigger = Brain.triggers[intentExpression.trigger];
+
+        var getMemory = function (name) {
+            return memory.get(trigger.namespace + '.' + name);
+        };
+        var setMemory = function (name, value, shortTerm) {
+            memory.set(trigger.namespace + '.' + name, value, shortTerm);
+        };
+        var setConfiguration = function (key, value) {
+            configuration.setSkillSetting(trigger.namespace, key, value);
+        };
+
+        trigger.method(dfd, inputExpression, inputEntities || [], getMemory, setMemory, setConfiguration);
 
         var self = this;
         return dfd.promise.then(function (triggerResponses) {
@@ -339,7 +344,10 @@ Brain.registerSkill = function (namespace, service) {
     var trigger;
     for (trigger in service.triggers) {
         if (service.triggers.hasOwnProperty(trigger) && typeof service.triggers[trigger] === "function") {
-            Brain.triggers[namespace + "." + trigger] = service.triggers[trigger];
+            Brain.triggers[namespace + "." + trigger] = {
+                method: service.triggers[trigger],
+                namespace: namespace
+            };
         }
     }
 

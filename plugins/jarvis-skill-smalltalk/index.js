@@ -1,7 +1,5 @@
 var moment = require('moment');
 
-var namespace = "smalltalk";
-
 var SmallTalk = function () {
 
     this.intent = [
@@ -45,7 +43,7 @@ var SmallTalk = function () {
     this.triggers = {
 
         greeting: function (dfd, expression, entities, getMemory) {
-            var name = getMemory(namespace, 'userName');
+            var name = getMemory('userName');
 
             var responses = [
                 "Hello. What can I help you with?",
@@ -80,7 +78,7 @@ var SmallTalk = function () {
         },
 
         compliment: function (dfd, expression, entities, getMemory) {
-            var name = getMemory(namespace, 'userName');
+            var name = getMemory('userName');
 
             var responses = [
                 "You shouldn't...",
@@ -99,7 +97,7 @@ var SmallTalk = function () {
         },
 
         gratitude: function (dfd, expression, entities, getMemory) {
-            var name = getMemory(namespace, 'userName');
+            var name = getMemory('userName');
 
             var responses = [
                 "You're welcome.",
@@ -137,7 +135,7 @@ var SmallTalk = function () {
             }
 
             if (birthday) {
-                setMemory(namespace, 'aIBirthday', birthday);
+                setMemory('aIBirthday', birthday);
                 dfd.resolve();
             } else {
                 dfd.reject();
@@ -156,7 +154,7 @@ var SmallTalk = function () {
                 }
             }
 
-            var birthday = getMemory(namespace, 'aIBirthday');
+            var birthday = getMemory('aIBirthday');
             if (birthday) {
                 var timeFrom;
                 if (timeFromNow) {
@@ -184,7 +182,7 @@ var SmallTalk = function () {
             }
 
             if (name) {
-                setMemory(namespace, 'aiName', name);
+                setMemory('aiName', name);
                 dfd.resolve([
                     "That's a great name. You can now call me " + name + ".",
                     "From hence forth, I shall be " + name + " the magnificent!"
@@ -197,7 +195,7 @@ var SmallTalk = function () {
         getAiName: function (dfd, expression, entities, getMemory) {
             var responses = [];
 
-            var name = getMemory(namespace, 'aiName');
+            var name = getMemory('aiName');
 
             if (name) {
                 responses.push("My name is " + name + ".");
@@ -218,7 +216,7 @@ var SmallTalk = function () {
         getAiInfo: function (dfd, expression, entities, getMemory) {
             var responses = [];
 
-            var name = getMemory(namespace, 'aiName');
+            var name = getMemory('aiName');
 
             if (name) {
                 responses = responses.concat([
@@ -247,7 +245,7 @@ var SmallTalk = function () {
             }
 
             if (birthday) {
-                setMemory(namespace, 'userBirthday', birthday, true);
+                setMemory('userBirthday', birthday, true);
                 dfd.resolve();
             } else {
                 dfd.reject();
@@ -266,7 +264,7 @@ var SmallTalk = function () {
                 }
             }
 
-            var birthday = getMemory(namespace, 'userBirthday');
+            var birthday = getMemory('userBirthday');
             if (birthday) {
                 var timeFrom;
                 if (timeFromNow) {
@@ -294,7 +292,7 @@ var SmallTalk = function () {
             }
 
             if (name) {
-                setMemory(namespace, 'userName', name, true);
+                setMemory('userName', name, true);
                 var responses = [
                     "It's nice to meet you, " + name + ".",
                     "It's a pleasure to meet you, " + name + "."
@@ -308,7 +306,7 @@ var SmallTalk = function () {
         getUserName: function (dfd, expression, entities, getMemory) {
             var responses = [];
 
-            var name = getMemory(namespace, 'userName');
+            var name = getMemory('userName');
 
             if (name) {
                 responses.push("Your name is " + name + ".");
@@ -327,7 +325,7 @@ var SmallTalk = function () {
 };
 
 module.exports = {
-    namespace: namespace,
+    namespace: "smalltalk",
     type: 'SKILL',
     register: function () {
         return new SmallTalk();

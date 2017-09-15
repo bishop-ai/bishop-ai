@@ -62,8 +62,9 @@ configuration.enableAudio = function () {
     this._commit();
 };
 
-configuration.setVoice = function (voice) {
-    this.settings.tts.voice = voice;
+configuration.setSkillSetting = function (namespace, key, value) {
+    this.settings.plugins.SKILL[namespace] = this.settings.plugins.SKILL[namespace] || {};
+    this.settings.plugins.SKILL[namespace][key] = value;
     this._commit();
 };
 
