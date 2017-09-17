@@ -61,6 +61,14 @@ var Spotify = function () {
             dfd.resolve();
         }
     };
+
+    this.context = {};
+
+    this.examples = [
+        "Play music",
+        "Next song",
+        "Turn the volume up"
+    ];
 };
 
 Spotify.sendCmd = function (commandCode) {

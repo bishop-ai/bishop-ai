@@ -163,6 +163,15 @@ var Weather = function (config) {
             });
         }
     };
+
+    this.context = {};
+
+    this.examples = [
+        "What is the weather like",
+        "What's the temperature",
+        "How hot will it be tomorrow",
+        "Is it going to snow?"
+    ];
 };
 
 Weather.extractCurrentTempRangeResponses = function (weather) {

@@ -1,12 +1,22 @@
 var router = require('express').Router();
 
-var Brain = new require('./brain');
+var Brain = require('./brain');
+var classifier = require('./classifier');
+
 var brain = new Brain();
 
 router.get('/test/:message', function (req, res) {
     var message = decodeURIComponent(req.params.message);
     brain.processExpression(message).then(function (result) {
         res.send(result);
+    }, function (err) {
+        res.status(500).send(err);
+    });
+});
+
+router.post('/train', function (req, res) {
+    classifier.train(Brain.intents).then(function () {
+        res.send();
     }, function (err) {
         res.status(500).send(err);
     });

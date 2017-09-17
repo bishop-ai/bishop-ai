@@ -1,42 +1,44 @@
 var moment = require('moment');
+var speak = require("speakeasy-nlp");
 
 var SmallTalk = function () {
 
     this.intent = [
         {value: "Hi", trigger: "smalltalk.greeting"},
+        {value: "hi", trigger: "smalltalk.greeting"},
         {value: "Hello", trigger: "smalltalk.greeting"},
+        {value: "hello", trigger: "smalltalk.greeting"},
         {value: "Hey", trigger: "smalltalk.greeting"},
         {value: "You are awesome", trigger: "smalltalk.compliment"},
-        {value: "You're the best", trigger: "smalltalk.compliment"},
-        {value: "You have a great personality", trigger: "smalltalk.compliment"},
-        {value: "Thank you!", trigger: "smalltalk.gratitude"},
-        {value: "Thanks!", trigger: "smalltalk.gratitude"},
-        {value: "How are you?", trigger: "smalltalk.getAiFeeling"},
-        {value: "How are you doing?", trigger: "smalltalk.getAiFeeling"},
-        {value: "I'm doing alright.", trigger: "smalltalk.setUserFeeling", context: "smalltalk.howAreYou"},
-        {value: "What is your name?", trigger: "smalltalk.getAiName"},
-        {value: "Who are you?", trigger: "smalltalk.getAiInfo"},
-        {value: "Your name is David", trigger: "smalltalk.setAiName"},
-        {value: "I'll call you Jarvis", trigger: "smalltalk.setAiName"},
-        {value: "My name is David", trigger: "smalltalk.setUserName"},
-        {value: "You can call me Jarvis", trigger: "smalltalk.setUserName"},
-        {value: "Call me Jude", trigger: "smalltalk.setUserName"},
-        {value: "My name is David", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "You can call me Jarvis", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "It's Allison", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "Call me Jude", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "David", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "Steve", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "Allison", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "Jude", trigger: "smalltalk.setUserName", context: "smalltalk.whatIsYourName"},
-        {value: "Your name is David", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "I'll call you Jarvis", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "It's Allison", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "You can be Jude", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "David", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "Steve", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "Allison", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
-        {value: "Jude", trigger: "smalltalk.setAiName", context: "smalltalk.whatIsMyName"},
+        {value: "You are the best", trigger: "smalltalk.compliment"},
+        {value: "You are good at this", trigger: "smalltalk.compliment"},
+        {value: "You are brilliant", trigger: "smalltalk.compliment"},
+        {value: "You are smart", trigger: "smalltalk.compliment"},
+        {value: "You are great", trigger: "smalltalk.compliment"},
+        {value: "Thank you", trigger: "smalltalk.gratitude"},
+        {value: "Thanks", trigger: "smalltalk.gratitude"},
+        {value: [["how", "are", "you"], "doing", "?"], trigger: "smalltalk.getAiInfo"},
+        {value: "your name", trigger: "smalltalk.getAiInfo"},
+        {value: "What is your name?", trigger: "smalltalk.getAiInfo"},
+        {value: "What do you call yourself?", trigger: "smalltalk.getAiInfo"},
+        {value: "What should I call you?", trigger: "smalltalk.getAiInfo"},
+        {value: [["who", "are", "you"], "?"], trigger: "smalltalk.getAiInfo"},
+        {value: "Who am I talking to?", trigger: "smalltalk.getAiInfo"},
+        {value: "Do I know you?", trigger: "smalltalk.getAiInfo"},
+        {value: "Do I know who you are?", trigger: "smalltalk.getAiInfo"},
+        {value: "What are you able to do?", trigger: "smalltalk.getAiInfo"},
+        {value: "What can you do?", trigger: "smalltalk.getAiInfo"},
+        {value: "What things can you do?", trigger: "smalltalk.getAiInfo"},
+        {value: "What kind of things can you do for me?", trigger: "smalltalk.getAiInfo"},
+        {value: "What things can I ask you about?", trigger: "smalltalk.getAiInfo"},
+        {value: "What can I ask you about?", trigger: "smalltalk.getAiInfo"},
+        {value: "What can you answer for me?", trigger: "smalltalk.getAiInfo"},
+        {value: "What questions can I ask?", trigger: "smalltalk.getAiInfo"},
+        {value: "What questions can you answer?", trigger: "smalltalk.getAiInfo"},
+        {value: "What tasks can you do?", trigger: "smalltalk.getAiInfo"},
+        {value: "Do you know my name?", trigger: "smalltalk.getUserName"},
+        {value: "Do you know who I am?", trigger: "smalltalk.getUserName"},
+        {value: "Do you know me?", trigger: "smalltalk.getUserName"},
         {value: "What is my name?", trigger: "smalltalk.getUserName"}
     ];
 
@@ -49,7 +51,7 @@ var SmallTalk = function () {
                 "Hello. What can I help you with?",
                 "Hello. How can I be of assistance?",
                 "Hi. What can I do for you?",
-                "Hi. How can I help?",
+                "Hi. How can I help you?",
                 "Hi.",
                 "Hello.",
                 "Hey there!"
@@ -60,7 +62,7 @@ var SmallTalk = function () {
                     {value: "Hello. What can I help you with, " + name + "?", preference: 1},
                     {value: "Hi " + name + ". How can I be of assistance?", preference: 1},
                     {value: "Hi. What can I do for you, " + name + "?", preference: 1},
-                    {value: "Hi " + name + ". How can I help?", preference: 1},
+                    {value: "Hi " + name + ". How can I help you?", preference: 1},
                     {value: "Hi " + name + ".", preference: 1},
                     {value: "Hello " + name + ".", preference: 1},
                     {value: name + "! Nice to see you again.", preference: 1}
@@ -101,25 +103,62 @@ var SmallTalk = function () {
 
             var responses = [
                 "You're welcome.",
-                "No problem!",
-                "Happy to help!",
-                "I do what I can."
+                "No problem.",
+                "I'm happy to help!"
             ];
 
             if (name) {
                 responses = responses.concat([
                     {value: "You're welcome, " + name + ".", preference: 1},
-                    {value: "Of course, " + name + ".", preference: 1}
+                    {value: "No problem, " + name + ".", preference: 1}
                 ]);
             }
 
             dfd.resolve(responses);
         },
 
-        getAiFeeling: function (dfd) {
-            var responses = [
-                {value: "I'm doing well, how are you?", context: "smalltalk.howAreYou"}
-            ];
+        getAiInfo: function (dfd, expression, entities, getMemory, setMemory, setConfig, getExamples) {
+            var responses = [];
+
+            var name = getMemory('aiName');
+
+            if (expression.contains('who')) {
+                if (name) {
+                    responses = responses.concat([
+                        {value: "I am your personal assistant, " + name + ".", preference: 1}
+                    ]);
+                } else {
+                    responses = responses.concat([
+                        "I am your personal assistant.",
+                        "I'm here to help.",
+                        {value: "I am your personal assistant. What would you like to call me?", context: "smalltalk.whatIsMyName"},
+                        {value: "I am your personal assistant. What should my name be?", context: "smalltalk.whatIsMyName"}
+                    ]);
+                }
+            } else if (expression.contains('how')) {
+                responses = [
+                    {value: "I'm doing well, how are you?", context: "smalltalk.howAreYou"}
+                ];
+            } else if (expression.contains("what") && expression.contains("skills", "you do", "ask", "questions", "answer")) {
+                var i;
+                var examples = getExamples();
+                for (i = 0; i < examples.length; i++) {
+                    responses.push("Say: " + examples[i]);
+                }
+            } else {
+                if (name) {
+                    responses.push("My name is " + name + ".");
+                    responses.push("You can call me " + name + ".");
+                } else {
+                    responses = responses.concat([
+                        "I don't know what my name is.",
+                        "No one has ever given me a name.",
+                        "I'm not sure what my name is.",
+                        {value: "What would you like to call me?", context: "smalltalk.whatIsMyName"},
+                        {value: "What should my name be?", context: "smalltalk.whatIsMyName"}
+                    ]);
+                }
+            }
 
             dfd.resolve(responses);
         },
@@ -190,48 +229,6 @@ var SmallTalk = function () {
             } else {
                 dfd.reject();
             }
-        },
-
-        getAiName: function (dfd, expression, entities, getMemory) {
-            var responses = [];
-
-            var name = getMemory('aiName');
-
-            if (name) {
-                responses.push("My name is " + name + ".");
-            } else {
-                responses = responses.concat([
-                    "I'm not sure.",
-                    "I don't know what my name is.",
-                    "No one has ever given me a name.",
-                    "I'm not sure what my name is.",
-                    {value: "What would you like to call me?", context: "smalltalk.whatIsMyName"},
-                    {value: "What should my name be?", context: "smalltalk.whatIsMyName"}
-                ]);
-            }
-
-            dfd.resolve(responses);
-        },
-
-        getAiInfo: function (dfd, expression, entities, getMemory) {
-            var responses = [];
-
-            var name = getMemory('aiName');
-
-            if (name) {
-                responses = responses.concat([
-                    {value: "I am your personal assistant, " + name + ".", preference: 1}
-                ]);
-            } else {
-                responses = responses.concat([
-                    "I am your personal assistant.",
-                    "I'm here to help.",
-                    {value: "I am your personal assistant. What would you like to call me?", context: "smalltalk.whatIsMyName"},
-                    {value: "I am your personal assistant. What should my name be?", context: "smalltalk.whatIsMyName"}
-                ]);
-            }
-
-            dfd.resolve(responses);
         },
 
         setUserBirthday: function (dfd, expression, entities, getMemory, setMemory) {
@@ -317,11 +314,32 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        setUserFeeling: function (dfd) {
-            // TODO: Extract the entity, determine if it is positive or negative, store this, return responses
-            dfd.resolve([]);
+        setUserFeeling: function (dfd, expression) {
+            var responses = [];
+
+            var sentiment = speak.sentiment.analyze(expression.normalized).score;
+
+            if (sentiment < 0) {
+                responses.push("I'm sorry to hear that.");
+            } else {
+                responses.push("Glad to hear that.");
+            }
+
+            dfd.resolve(responses);
         }
     };
+
+    this.context = {
+        "howAreYou": "smalltalk.setUserFeeling",
+        "whatIsYourName": "smalltalk.setUserName",
+        "whatIsMyName": "smalltalk.setAiName"
+    };
+
+    this.examples = [
+        "What is your name?",
+        "What can you do?",
+        "How are you?"
+    ];
 };
 
 module.exports = {

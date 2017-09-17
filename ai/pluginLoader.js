@@ -20,7 +20,9 @@ var pluginLoader = {
         },
         "SKILL": {
             "intent": "object",
-            "triggers": "object"
+            "triggers": "object",
+            "examples": "object",
+            "context": "object"
         }
     }
 };

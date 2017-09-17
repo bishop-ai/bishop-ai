@@ -1,0 +1,11 @@
+{
+    "name": "jarvis-skill-coinflip",
+    "version": "1.0.0",
+    "description": "Skill plugin for Jarvis for flipping a coin.",
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {}
+}

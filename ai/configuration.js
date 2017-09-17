@@ -25,25 +25,29 @@ configuration.skillService = {
     namespace: 'ai.configuration',
 
     intent: [
-        {value: "Stop talking", trigger: "ai.configuration.disableAudio"},
-        {value: "Be quiet", trigger: "ai.configuration.disableAudio"},
-        {value: "Disable Audio", trigger: "ai.configuration.disableAudio"},
-        {value: "Resume talking", trigger: "ai.configuration.enableAudio"},
-        {value: "Enable audio", trigger: "ai.configuration.enableAudio"}
+        {value: "Stop talking", trigger: "ai.configuration.configureAudio"},
+        {value: "Be quiet", trigger: "ai.configuration.configureAudio"},
+        {value: "Disable Audio", trigger: "ai.configuration.configureAudio"},
+        {value: "Resume talking", trigger: "ai.configuration.configureAudio"},
+        {value: "Enable audio", trigger: "ai.configuration.configureAudio"},
+        {value: "Speak up", trigger: "ai.configuration.configureAudio"}
     ],
 
     triggers: {
-        enableAudio: function (dfd) {
-            configuration.enableAudio();
-            dfd.resolve([
-                "Can you hear me now?",
-                "Is that better?"
-            ]);
-        },
-
-        disableAudio: function (dfd) {
-            configuration.disableAudio();
-            dfd.resolve();
+        configureAudio: function (dfd, expression) {
+            if (expression.contains("start", "enable", "louder", "up", "hear")) {
+                configuration.enableAudio();
+                dfd.resolve([
+                    "Can you hear me now?",
+                    "Is that better?"
+                ]);
+            } else {
+                configuration.disableAudio();
+                dfd.resolve([
+                    "Done.",
+                    "Of course."
+                ]);
+            }
         }
     }
 };

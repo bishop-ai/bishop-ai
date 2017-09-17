@@ -2,11 +2,10 @@ var fs = require("fs");
 var path = require("path");
 var $q = require('q');
 
+var classifier = require('./classifier');
 var configuration = require('./configuration');
 var Expression = require('./expression');
-var Intent = require('./intent');
 var memory = require('./memory');
-var nlp = require('./../nlp');
 var pluginLoader = require('./pluginLoader');
 var Response = require('./response');
 
@@ -26,17 +25,20 @@ var Brain = function () {
 // throughout the process to provide a more accurate experience.
 Brain.entityExtractors = [];
 
-// Intents are registered by skills. Intents represent a value to match the input on, a condition to validate the match
-// and either a trigger to act on or static responses. All intents must provide a value. If a trigger is set, the
-// registered trigger will be called. If there is no trigger, but there are static responses, one of the responses
-// will be used. If there is not condition is present, the match will not be validated and only the scored confidence
-// will be used to select the match.
+// Intents are registered by skills. Intents represent a value to match the input on and a trigger to act on. All
+// intents must provide a value and a trigger.
 Brain.intents = [];
 
 // Triggers are registered by the skill. The skill then registers intents which correspond to a given trigger
-// When the intent is matched to the input, the registered trigger referenced by the matched intent is called and
-// can provide a response.
+// When the input is matched to a trigger, the trigger is called and can provide a response.
 Brain.triggers = {};
+
+// Context triggers are a mapping of skill context to a skill trigger. When the context is set by a response, the next input
+// will call the trigger registered for the context.
+Brain.contextTriggers = {};
+
+// Examples of phrases that the user can send to initiate an action. These are supplied by the Skill plugins.
+Brain.examples = [];
 
 Brain.prototype.processExpression = function (input) {
     var dfd = $q.defer();
@@ -46,36 +48,26 @@ Brain.prototype.processExpression = function (input) {
 
     var inputEntities = this._extractExpressionEntities(inputExpression);
 
-    var matchedIntent;
-
     var self = this;
-    var processIntent = function (match) {
-        if (match && match.confidence > 0.5) {
-            matchedIntent = match;
-            return self._processIntent(match.intent, inputExpression, inputEntities);
-        } else {
-            return self._handleUnknownIntent(inputExpression);
-        }
-    };
+    this._processIntent(inputExpression, inputEntities).then(function (result) {
+        var response = result.response;
+        var matchedClassification = result.matchedClassification;
 
-    processIntent(this._findMatchingIntent(inputExpression)).then(function (response) {
-        self._setContext(response.context);
+        self._context = response.context || "";
 
         var data = {
             input: inputExpression,
             entities: inputEntities,
-            match: matchedIntent,
+            classification: matchedClassification,
             response: response.value,
             context: self._context
         };
 
         console.log(JSON.stringify({
             input: data.input.value,
-            intent: data.match ? data.match.intent.value : "",
-            skill: data.match ? data.match.intent.namespace : "",
-            confidence: data.match ? data.match.confidence : 0,
             entities: data.entities,
-            trigger: data.match ? data.match.intent.expression.trigger : "",
+            trigger: data.classification ? data.classification.trigger : "",
+            confidence: data.classification ? data.classification.confidence : 0,
             response: data.response,
             context: data.context
         }, null, "  "));
@@ -89,95 +81,64 @@ Brain.prototype.processExpression = function (input) {
     return dfd.promise;
 };
 
-Brain.prototype._setContext = function (context) {
-    this._context = context || "";
-};
+Brain.prototype._processIntent = function (inputExpression, inputEntities) {
+    var dfd = $q.defer();
 
-Brain.prototype._findMatchingIntent = function (inputExpression) {
-    var i;
-    var matches = [];
-    var match;
-
-    for (i = 0; i < Brain.intents.length; i++) {
-        match = {
-            intent: Brain.intents[i],
-            confidence: this._getConfidence(Brain.intents[i], inputExpression)
-        };
-
-        matches.push(match);
-    }
-
-    matches.sort(function (a, b) {
-        if (a.confidence > b.confidence) {
-            return -1;
-        }
-        if (a.confidence < b.confidence) {
-            return 1;
-        }
-        return 0;
-    });
-
-    var bestMatch = null;
-    if (matches.length > 0) {
-        bestMatch = matches[0];
-    }
-
-    return bestMatch;
-};
-
-Brain.prototype._getConfidence = function (intent, inputExpression) {
-    var lDistWeight = 4;
-    var jwDistWeight = 4;
-    var dcDistWeight = 4;
-    var totalWeight = lDistWeight + jwDistWeight + dcDistWeight;
-
-    var lDist = nlp.LevenshteinDistance(intent.expression.normalized, inputExpression.normalized);
-    var jwDist = nlp.JaroWinklerDistance(intent.expression.normalized, inputExpression.normalized);
-    var dcDist = nlp.DiceCoefficient(intent.expression.normalized, inputExpression.normalized);
-
-    if (lDist === 0) {
-        lDist = 1;
-    } else {
-        lDist = 1 / lDist;
-    }
-
-    lDist *= lDistWeight;
-    jwDist *= jwDistWeight;
-    dcDist *= dcDistWeight;
-
-    var confidence = (lDist + jwDist + dcDist) / totalWeight;
+    var matchedClassification;
 
     if (this._context) {
-        if (this._context === intent.expression.context) {
-            confidence *= 1.5;
-        } else {
-            confidence *= 0.5;
+        if (Brain.contextTriggers[this._context]) {
+            matchedClassification = {
+                trigger: Brain.contextTriggers[this._context],
+                confidence: 1
+            };
         }
-    } else if (intent.expression.context) {
-        // Assign no confidence to intents that have context when there is no global context set.
-        confidence *= 0;
+    } else {
+        matchedClassification = this._classifyInput(inputExpression);
     }
 
-    return confidence;
+    if (matchedClassification && matchedClassification.confidence > 0.6) {
+
+        this._processTrigger(matchedClassification.trigger, inputExpression, inputEntities).then(function (response) {
+            dfd.resolve({
+                response: response,
+                matchedClassification: matchedClassification
+            });
+        });
+    } else {
+
+        if (matchedClassification) {
+            console.log("Brain: Classification found but low confidence: " + matchedClassification.trigger + " = " + matchedClassification.confidence);
+        }
+
+        dfd.resolve({
+            response: this._getUnknownResponse(inputExpression),
+            matchedClassification: matchedClassification
+        });
+    }
+
+    return dfd.promise;
+};
+
+Brain.prototype._classifyInput = function (inputExpression) {
+    return classifier.classify(inputExpression);
 };
 
 /**
- * Takes the matched intent and resolves a Response. If the intent expression has a trigger, the registered trigger is called.
- * This takes String or Object responses and wraps them in a Response object.
+ * Takes the matched trigger and resolves a Response.
+ * This takes String or Object responses, gets a single response from the set and wraps it in a Response object.
  *
- * @param intent
+ * @param triggerKey
  * @param inputExpression
  * @param inputEntities
  * @returns {Promise.<Response>}
  * @private
  */
-Brain.prototype._processIntent = function (intent, inputExpression, inputEntities) {
-    var intentExpression = intent.expression;
-
-    if (intentExpression.trigger && Brain.triggers[intentExpression.trigger]) {
+Brain.prototype._processTrigger = function (triggerKey, inputExpression, inputEntities) {
+    if (triggerKey && Brain.triggers[triggerKey]) {
         var dfd = $q.defer();
 
-        var trigger = Brain.triggers[intentExpression.trigger];
+        var trigger = Brain.triggers[triggerKey];
 
         var getMemory = function (name) {
             return memory.get(trigger.namespace + '.' + name);
@@ -188,8 +149,11 @@ Brain.prototype._processIntent = function (intent, inputExpression, inputEntitie
         var setConfiguration = function (key, value) {
             configuration.setSkillSetting(trigger.namespace, key, value);
         };
+        var getExamples = function () {
+            return Brain.examples;
+        };
 
-        trigger.method(dfd, inputExpression, inputEntities || [], getMemory, setMemory, setConfiguration);
+        trigger.method(dfd, inputExpression, inputEntities || [], getMemory, setMemory, setConfiguration, getExamples);
 
         var self = this;
         return dfd.promise.then(function (triggerResponses) {
@@ -208,16 +172,14 @@ Brain.prototype._processIntent = function (intent, inputExpression, inputEntitie
 
             return response;
         }, function () {
-            return self._handleUnknownIntent(inputExpression);
+            return self._getUnknownResponse(inputExpression);
         });
     }
 
-    return this._handleUnknownIntent(inputExpression);
+    return $q.resolve(this._getUnknownResponse(inputExpression));
 };
 
-Brain.prototype._handleUnknownIntent = function (inputExpression) {
-    var dfd = $q.defer();
-
+Brain.prototype._getUnknownResponse = function (inputExpression) {
     var responses = [
         "I didn't quite get that.",
         "I'm not sure I understand.",
@@ -264,9 +226,7 @@ Brain.prototype._handleUnknownIntent = function (inputExpression) {
         res.push(new Response(responses[i]));
     }
 
-    dfd.resolve(this._getBestResponse(res));
-
-    return dfd.promise;
+    return this._getBestResponse(res);
 };
 
 Brain.prototype._getBestResponse = function (responses) {
@@ -351,20 +311,26 @@ Brain.registerSkill = function (namespace, service) {
         }
     }
 
-    // Register all intents
-    var i;
-    if (service.intent.length > 0) {
-        var intent;
-        for (i = 0; i < service.intent.length; i++) {
-
-            // Currently, only intents with triggers are registered
-            if (service.intent[i].trigger) {
-                intent = new Intent(service.intent[i]);
-                intent.namespace = namespace;
-                Brain.intents.push(intent);
-            }
+    // Register all context triggers with their trigger
+    var context;
+    for (context in service.context) {
+        if (service.context.hasOwnProperty(context) && Brain.triggers.hasOwnProperty(service.context[context])) {
+            Brain.contextTriggers[namespace + "." + context] = service.context[context];
         }
     }
+
+    // Register all intents
+    var i;
+    for (i = 0; i < service.intent.length; i++) {
+
+        // Only intents with triggers are registered
+        if (service.intent[i].trigger) {
+            Brain.intents.push(service.intent[i]);
+        }
+    }
+
+    // Register all examples
+    Brain.examples = Brain.examples.concat(service.examples);
 };
 
 module.exports = Brain;

@@ -5,6 +5,11 @@ angular.module('AI').controller('InterfaceCtrl', [
     function ($scope,
               socket) {
 
+        var voice;
+        window.speechSynthesis.onvoiceschanged = function() {
+            voice = window.speechSynthesis.getVoices().filter(function(voice) { return voice.name === 'Google UK English Male'; })[0];
+        };
+
         $scope.message = "";
         $scope.transcript = [];
         $scope.audioFile = null;
@@ -14,6 +19,9 @@ angular.module('AI').controller('InterfaceCtrl', [
         $scope.$on('socket:response', function (ev, data) {
             $scope.audioFile = data.audio;
             if (data.message) {
+                var msg = new SpeechSynthesisUtterance(data.message);
+                msg.voice = voice;
+                window.speechSynthesis.speak(msg);
                 $scope.transcript.push({m: '> ' + data.message, ai: true});
             }
         });

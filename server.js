@@ -7,7 +7,9 @@ var socket = require('socket.io');
 var path = require('path');
 
 var Brain = require('./ai/brain');
+var classifier = require('./ai/classifier');
 var Core = require('./ai/core');
+var pluginLoader = require('./ai/pluginLoader');
 
 var Server = function () {
 
@@ -35,10 +37,12 @@ var Server = function () {
         console.log('Server started on %s:%d ...', self.ipaddress, self.port);
     });
 
-    var pluginLoader = require('./ai/pluginLoader');
     pluginLoader.load();
 
     Brain.initialize();
+
+    classifier.load();
+    classifier.train(Brain.intents);
 
     this.io = socket(this.server);
     this.Core = new Core(this.io);

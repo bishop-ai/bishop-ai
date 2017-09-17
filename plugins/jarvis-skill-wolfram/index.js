@@ -19,6 +19,12 @@ var Wolfram = function (config) {
             });
         }
     };
+
+    this.context = {};
+
+    this.examples = [
+        "How big is the earth?"
+    ];
 };
 
 Wolfram.prototype.query = function (query, params, cb) {

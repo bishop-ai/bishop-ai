@@ -25,6 +25,19 @@ var Expression = function (value, trigger, condition, context) {
     }
 };
 
+Expression.prototype.contains = function (v1, v2, v3) {
+    var args = Array.prototype.slice.call(arguments);
+
+    var i;
+    for (i = 0; i < args.length; i++) {
+        if (this.value.indexOf(args[i]) >= 0 || this.normalized.indexOf(args[i]) >= 0) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
 Expression.prototype.process = function () {
     if (this.value) {
         var value = this.value;
