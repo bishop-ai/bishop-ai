@@ -76,10 +76,6 @@ body {
     padding-right: 40px;
     padding-left: 0;
 }
-.transcript-container .transcript .message:not(.ai) + .message.ai,
-.transcript-container .transcript .message.ai + .message:not(.ai) {
-    padding-top: 10px;
-}
 
 .vz-wrapper {
     position: relative;

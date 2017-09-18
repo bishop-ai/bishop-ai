@@ -8,7 +8,7 @@ angular.module('AI').directive('scrollBottom', [
             link: function (scope, elem) {
 
                 scope.$watch('updateOn', function () {
-                    elem.animate({ scrollTop: elem[0].scrollHeight}, 1000);
+                    elem.scrollTop(Number.MAX_SAFE_INTEGER);
                 }, true);
 
             }

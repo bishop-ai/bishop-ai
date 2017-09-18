@@ -15,6 +15,7 @@ var SmallTalk = function () {
         {value: "You are brilliant", trigger: "smalltalk.compliment"},
         {value: "You are smart", trigger: "smalltalk.compliment"},
         {value: "You are great", trigger: "smalltalk.compliment"},
+        {value: "I love you", trigger: "smalltalk.compliment"},
         {value: "Thank you", trigger: "smalltalk.gratitude"},
         {value: "Thanks", trigger: "smalltalk.gratitude"},
         {value: [["how", "are", "you"], "doing", "?"], trigger: "smalltalk.getAiInfo"},
@@ -56,6 +57,15 @@ var SmallTalk = function () {
                 "Hello.",
                 "Hey there!"
             ];
+
+            var dt = new Date().getHours();
+            if (dt >= 0 && dt <= 11) {
+                responses.push({value: "Good morning.", preference: 0.9});
+            } else if (dt >= 12 && dt <= 17) {
+                responses.push({value: "Good afternoon.", preference: 0.9});
+            } else {
+                responses.push({value: "Good evening.", preference: 0.9});
+            }
 
             if (name) {
                 responses = responses.concat([
