@@ -69,6 +69,7 @@ body {
 .transcript-container .transcript .message {
     text-align: right;
     padding-left: 40px;
+    margin-top: 10px;
 }
 .transcript-container .transcript .message.ai {
     font-weight: bold;
