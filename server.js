@@ -33,7 +33,7 @@ var Server = function () {
 
     this.server = http.createServer(this.app);
 
-    this.server.listen(this.port, this.ipaddress, function () {
+    this.server.listen(this.port, function () {
         console.log('Server started on %s:%d ...', self.ipaddress, self.port);
     });
 
