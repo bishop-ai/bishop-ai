@@ -1,46 +1,24 @@
 var moment = require('moment');
 var speak = require("speakeasy-nlp");
+var shuffle = require('knuth-shuffle').knuthShuffle;
 
 var SmallTalk = function () {
 
     this.intent = [
-        {value: "Hi", trigger: "smalltalk.greeting"},
-        {value: "hi", trigger: "smalltalk.greeting"},
-        {value: "Hello", trigger: "smalltalk.greeting"},
-        {value: "hello", trigger: "smalltalk.greeting"},
-        {value: "Hey", trigger: "smalltalk.greeting"},
-        {value: "You are awesome", trigger: "smalltalk.compliment"},
-        {value: "You are the best", trigger: "smalltalk.compliment"},
-        {value: "You are good at this", trigger: "smalltalk.compliment"},
-        {value: "You are brilliant", trigger: "smalltalk.compliment"},
-        {value: "You are smart", trigger: "smalltalk.compliment"},
-        {value: "You are great", trigger: "smalltalk.compliment"},
-        {value: "I love you", trigger: "smalltalk.compliment"},
-        {value: "Thank you", trigger: "smalltalk.gratitude"},
-        {value: "Thanks", trigger: "smalltalk.gratitude"},
-        {value: [["how", "are", "you"], "doing", "?"], trigger: "smalltalk.getAiInfo"},
-        {value: "your name", trigger: "smalltalk.getAiInfo"},
-        {value: "What is your name?", trigger: "smalltalk.getAiInfo"},
-        {value: "What do you call yourself?", trigger: "smalltalk.getAiInfo"},
-        {value: "What should I call you?", trigger: "smalltalk.getAiInfo"},
-        {value: [["who", "are", "you"], "?"], trigger: "smalltalk.getAiInfo"},
-        {value: "Who am I talking to?", trigger: "smalltalk.getAiInfo"},
-        {value: "Do I know you?", trigger: "smalltalk.getAiInfo"},
-        {value: "Do I know who you are?", trigger: "smalltalk.getAiInfo"},
-        {value: "What are you able to do?", trigger: "smalltalk.getAiInfo"},
-        {value: "What can you do?", trigger: "smalltalk.getAiInfo"},
-        {value: "What things can you do?", trigger: "smalltalk.getAiInfo"},
-        {value: "What kind of things can you do for me?", trigger: "smalltalk.getAiInfo"},
-        {value: "What things can I ask you about?", trigger: "smalltalk.getAiInfo"},
-        {value: "What can I ask you about?", trigger: "smalltalk.getAiInfo"},
-        {value: "What can you answer for me?", trigger: "smalltalk.getAiInfo"},
-        {value: "What questions can I ask?", trigger: "smalltalk.getAiInfo"},
-        {value: "What questions can you answer?", trigger: "smalltalk.getAiInfo"},
-        {value: "What tasks can you do?", trigger: "smalltalk.getAiInfo"},
-        {value: "Do you know my name?", trigger: "smalltalk.getUserName"},
-        {value: "Do you know who I am?", trigger: "smalltalk.getUserName"},
-        {value: "Do you know me?", trigger: "smalltalk.getUserName"},
-        {value: "What is my name?", trigger: "smalltalk.getUserName"}
+        {value: "(hi|hello|hey) *", trigger: "smalltalk.greeting"},
+        {value: "You are *", trigger: "smalltalk.compliment"},
+        {value: "I (love|adore|can not live without|like|dislike|can not stand|despise|hate) you", trigger: "smalltalk.compliment"},
+        {value: "(thank you|thanks)", trigger: "smalltalk.gratitude"},
+        {value: "how (are|have) you [been] [(doing|feeling)]", trigger: "smalltalk.getAiInfo"},
+        {value: "what (is your name|do you call yourself|should I call you)", trigger: "smalltalk.getAiInfo"},
+        {value: "who are you", trigger: "smalltalk.getAiInfo"},
+        {value: "who am I talking to", trigger: "smalltalk.getAiInfo"},
+        {value: "where are you", trigger: "smalltalk.getAiInfo"},
+        {value: "do I know [who] you [are]", trigger: "smalltalk.getAiInfo"},
+        {value: "what [(other|else|[kind of] (things|tasks|jobs))] (can I ask you to|are you able to|can you) do [for me]", trigger: "smalltalk.getAiInfo"},
+        {value: "what [(other|else|[kind of] (things|questions))] can (I ask [you [about]]|you answer [for me])", trigger: "smalltalk.getAiInfo"},
+        {value: "do you know ([what] my name [is]|who I am|me|who you are (talking|speaking) (to|with))", trigger: "smalltalk.getUserName"},
+        {value: "(what is my name|who am I)", trigger: "smalltalk.getUserName"}
     ];
 
     this.triggers = {
@@ -49,40 +27,37 @@ var SmallTalk = function () {
             var name = getMemory('userName');
 
             var responses = [
-                "Hello. What can I help you with?",
-                "Hello. How can I be of assistance?",
-                "Hi. What can I do for you?",
-                "Hi. How can I help you?",
-                "Hi.",
-                "Hello.",
+                "(Hello|Hi). [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]",
                 "Hey there!"
             ];
 
             var dt = new Date().getHours();
             if (dt >= 0 && dt <= 11) {
-                responses.push({value: "Good morning.", preference: 0.9});
+                responses.push({value: "Good morning.", weight: 2});
             } else if (dt >= 12 && dt <= 17) {
-                responses.push({value: "Good afternoon.", preference: 0.9});
+                responses.push({value: "Good afternoon.", weight: 2});
             } else {
-                responses.push({value: "Good evening.", preference: 0.9});
+                responses.push({value: "Good evening.", weight: 2});
             }
 
             if (name) {
                 responses = responses.concat([
-                    {value: "Hello. What can I help you with, " + name + "?", preference: 1},
-                    {value: "Hi " + name + ". How can I be of assistance?", preference: 1},
-                    {value: "Hi. What can I do for you, " + name + "?", preference: 1},
-                    {value: "Hi " + name + ". How can I help you?", preference: 1},
-                    {value: "Hi " + name + ".", preference: 1},
-                    {value: "Hello " + name + ".", preference: 1},
-                    {value: name + "! Nice to see you again.", preference: 1}
+                    {value: "(Hello|Hi) " + name + ". [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]", weight: 3},
+                    {value: "(Hello|Hi). (How can I (help [you]|be of assistance)|What can I (help you with|do for you)), " + name + "?", weight: 3},
+                    {value: name + "! Nice to see you again.", weight: 3}
                 ]);
+                if (dt >= 0 && dt <= 11) {
+                    responses.push({value: "Good morning " + name + ". [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]", weight: 4});
+                } else if (dt >= 12 && dt <= 17) {
+                    responses.push({value: "Good afternoon " + name + ". [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]", weight: 4});
+                } else {
+                    responses.push({value: "Good evening " + name + ". [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]", weight: 4});
+                }
             }
 
             if (!name) {
                 responses = responses.concat([
-                    {value: "Hi. I don't think we've met. What is your name?", context: "smalltalk.whatIsYourName"},
-                    {value: "Hello. What's your name?", context: "smalltalk.whatIsYourName"}
+                    {value: "(Hi|Hello). [I don't (think|believe) we've (met|been [properly] introduced).] What is your name?", context: "smalltalk.whatIsYourName"}
                 ]);
             }
 
@@ -90,19 +65,38 @@ var SmallTalk = function () {
         },
 
         compliment: function (dfd, expression, entities, getMemory) {
+            var responses = [];
+
             var name = getMemory('userName');
 
-            var responses = [
-                "You shouldn't...",
-                "Thank you!",
-                "Why, thank you!"
-            ];
+            var sentiment = speak.sentiment.analyze(expression.normalized).score;
 
-            if (name) {
+            if (sentiment < 0) {
                 responses = responses.concat([
-                    {value: "That is nice of you, " + name + ".", preference: 1},
-                    {value: "Thank you, " + name + ".", preference: 1}
+                    "That wasn't [very] (nice|kind)."
                 ]);
+                if (name) {
+                    responses = responses.concat([
+                        {value: "That wasn't [very] (nice|kind), " + name + ".", weight: 2}
+                    ]);
+                }
+            } else if (sentiment === 0) {
+                responses = responses.concat([
+                    "I am a just a rather very intelligent system.",
+                    "I am your personal assistant."
+                ]);
+            } else {
+                responses = responses.concat([
+                    "You shouldn't...",
+                    "Thank you!",
+                    "Why, thank you!"
+                ]);
+                if (name) {
+                    responses = responses.concat([
+                        {value: "That is [very] (nice|kind) [of you], " + name + ".", weight: 2},
+                        {value: "Thank you, " + name + ".", weight: 2}
+                    ]);
+                }
             }
 
             dfd.resolve(responses);
@@ -112,15 +106,13 @@ var SmallTalk = function () {
             var name = getMemory('userName');
 
             var responses = [
-                "You're welcome.",
-                "No problem.",
+                "(You're welcome|No problem).",
                 "I'm happy to help!"
             ];
 
             if (name) {
                 responses = responses.concat([
-                    {value: "You're welcome, " + name + ".", preference: 1},
-                    {value: "No problem, " + name + ".", preference: 1}
+                    {value: "(You're welcome|No problem), " + name + ".", weight: 2}
                 ]);
             }
 
@@ -133,39 +125,54 @@ var SmallTalk = function () {
             var name = getMemory('aiName');
 
             if (expression.contains('who')) {
+                responses = responses.concat([
+                    "I am your personal assistant.",
+                    "I'm here to help."
+                ]);
                 if (name) {
                     responses = responses.concat([
-                        {value: "I am your personal assistant, " + name + ".", preference: 1}
+                        {value: "I am your personal assistant, " + name + ".", weight: 2}
                     ]);
                 } else {
                     responses = responses.concat([
-                        "I am your personal assistant.",
-                        "I'm here to help.",
-                        {value: "I am your personal assistant. What would you like to call me?", context: "smalltalk.whatIsMyName"},
-                        {value: "I am your personal assistant. What should my name be?", context: "smalltalk.whatIsMyName"}
+                        {value: "I am your personal assistant. What ((would you like|do you want) to (call|name) me|should my name be)?", weight: 2, context: "smalltalk.whatIsMyName"}
                     ]);
                 }
             } else if (expression.contains('how')) {
                 responses = [
-                    {value: "I'm doing well, how are you?", context: "smalltalk.howAreYou"}
+                    {value: "I'm doing (well|fine|great), (how about you|how are you [doing]|and yourself)?", context: "smalltalk.howAreYou"}
                 ];
             } else if (expression.contains("what") && expression.contains("skills", "you do", "ask", "questions", "answer")) {
+                var examples = shuffle(getExamples().slice(0));
+                var max = Math.min(examples.length, 5);
+
+                var response = "Here are [(some|a (few|couple))] [examples of] things you can say or ask: ";
+                var addComma = false;
+
                 var i;
-                var examples = getExamples();
-                for (i = 0; i < examples.length; i++) {
-                    responses.push("Say: " + examples[i]);
+                for (i = 0; i < max; i++) {
+                    if (examples[i]) {
+                        if (addComma) {
+                            response += ", ";
+                        }
+                        response += "'" + examples[i] + "'";
+                        addComma = true;
+                    }
                 }
+
+                responses.push(response);
+            } else if (expression.contains('where')) {
+                responses = [
+                    {value: "I exist within the constructs of a computer program."}
+                ];
             } else {
                 if (name) {
-                    responses.push("My name is " + name + ".");
-                    responses.push("You can call me " + name + ".");
+                    responses.push("[(My name is|You can call me)] " + name + ".");
                 } else {
                     responses = responses.concat([
-                        "I don't know what my name is.",
+                        "(I don't know|I'm not sure) what my name is.",
                         "No one has ever given me a name.",
-                        "I'm not sure what my name is.",
-                        {value: "What would you like to call me?", context: "smalltalk.whatIsMyName"},
-                        {value: "What should my name be?", context: "smalltalk.whatIsMyName"}
+                        {value: "[(I don't know|I'm not sure) what my name is.] What ((would you like|do you want) to (call|name) me|should my name be)?", context: "smalltalk.whatIsMyName"}
                     ]);
                 }
             }
@@ -214,7 +221,7 @@ var SmallTalk = function () {
                     responses.push("You are " + timeFrom + " old.");
                 }
             } else {
-                responses.push("I'm not sure how old I am.");
+                responses.push("(I'm not sure|I don't know) (how old|what age) I am.");
             }
 
             dfd.resolve(responses);
@@ -233,8 +240,8 @@ var SmallTalk = function () {
             if (name) {
                 setMemory('aiName', name);
                 dfd.resolve([
-                    "That's a great name. You can now call me " + name + ".",
-                    "From hence forth, I shall be " + name + " the magnificent!"
+                    "[That's a (great|good) name.] You (can|may) now call me " + name + ".",
+                    "From hence forth, I shall be " + name + ", the (mighty|magnificent|omnipotent|all knowing|all powerful)!"
                 ]);
             } else {
                 dfd.reject();
@@ -282,7 +289,7 @@ var SmallTalk = function () {
                     responses.push("You are " + timeFrom + " old.");
                 }
             } else {
-                responses.push("I'm not sure how old you am.");
+                responses.push("(I'm not sure|I don't know) (how old|what age) you are.");
             }
 
             dfd.resolve(responses);
@@ -301,8 +308,7 @@ var SmallTalk = function () {
             if (name) {
                 setMemory('userName', name, true);
                 var responses = [
-                    "It's nice to meet you, " + name + ".",
-                    "It's a pleasure to meet you, " + name + "."
+                    "It's (nice|great|a pleasure) to (meet you|make your acquaintance), " + name + "."
                 ];
                 dfd.resolve(responses);
             } else {
@@ -318,7 +324,7 @@ var SmallTalk = function () {
             if (name) {
                 responses.push("Your name is " + name + ".");
             } else {
-                responses.push({value: "I'm not sure. What is your name?", context: "smalltalk.whatIsYourName"});
+                responses.push({value: "(I'm not sure|I don't know). What is your name?", context: "smalltalk.whatIsYourName"});
             }
 
             dfd.resolve(responses);
@@ -330,9 +336,11 @@ var SmallTalk = function () {
             var sentiment = speak.sentiment.analyze(expression.normalized).score;
 
             if (sentiment < 0) {
-                responses.push("I'm sorry to hear that.");
+                responses.push("I'm [very] (sorry|sad) to hear that.");
+            } else if (sentiment === 0) {
+                responses.push({value: "[I'm not sure I understand. ]What do you mean?", context: "smalltalk.howAreYou"});
             } else {
-                responses.push("Glad to hear that.");
+                responses.push("I'm [very] (glad|happy) to hear that.");
             }
 
             dfd.resolve(responses);

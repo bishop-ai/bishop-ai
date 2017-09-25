@@ -1,17 +1,17 @@
-var Response = function (value, context, preference) {
+var Response = function (value, context, weight) {
     this.value = "";
     this.context = "";
-    this.preference = 0;
+    this.weight = 1;
 
     if (typeof value === "object" && value.hasOwnProperty("value")) {
         var response = value;
         this.value = response.value;
         this.context = response.context || "";
-        this.preference = response.preference || 0;
+        this.weight = response.weight || 1;
     } else {
         this.value = value || "";
         this.context = context || "";
-        this.preference = preference || 0;
+        this.weight = weight || 1;
     }
 };
 

@@ -1,13 +1,16 @@
 var fs = require("fs");
 var path = require("path");
 var $q = require('q');
+var shuffle = require('knuth-shuffle').knuthShuffle;
 
 var classifier = require('./classifier');
 var configuration = require('./configuration');
 var Expression = require('./expression');
+var intentMatcher = require('./intentMatcher');
 var memory = require('./memory');
 var pluginLoader = require('./pluginLoader');
 var Response = require('./response');
+var responseBuilder = require('./responseBuilder');
 
 var Brain = function () {
 
@@ -24,10 +27,6 @@ var Brain = function () {
 // to create a Date object that represents a spoken date ("The fifth of January"). This date object can then be used
 // throughout the process to provide a more accurate experience.
 Brain.entityExtractors = [];
-
-// Intents are registered by skills. Intents represent a value to match the input on and a trigger to act on. All
-// intents must provide a value and a trigger.
-Brain.intents = [];
 
 // Triggers are registered by the skill. The skill then registers intents which correspond to a given trigger
 // When the input is matched to a trigger, the trigger is called and can provide a response.
@@ -94,10 +93,18 @@ Brain.prototype._processIntent = function (inputExpression, inputEntities) {
             };
         }
     } else {
-        matchedClassification = this._classifyInput(inputExpression);
+        var matchedIntent = intentMatcher.matchInputToIntent(inputExpression.normalized);
+        if (matchedIntent.confidence > 0.6) {
+            matchedClassification = {
+                trigger: matchedIntent.intent,
+                confidence: matchedIntent.confidence
+            };
+        } else {
+            matchedClassification = this._classifyInput(inputExpression);
+        }
     }
 
-    if (matchedClassification && matchedClassification.confidence > 0.6) {
+    if (matchedClassification && matchedClassification.confidence > 0.5) {
 
         this._processTrigger(matchedClassification.trigger, inputExpression, inputEntities).then(function (response) {
             dfd.resolve({
@@ -157,20 +164,8 @@ Brain.prototype._processTrigger = function (triggerKey, inputExpression, inputEn
 
         var self = this;
         return dfd.promise.then(function (triggerResponses) {
-            var response;
-
-            if (triggerResponses instanceof Array) {
-                var i;
-                var responses = [];
-                for (i = 0; i < triggerResponses.length; i++) {
-                    responses.push(new Response(triggerResponses[i]));
-                }
-                response = self._getBestResponse(responses);
-            } else {
-                response = new Response(triggerResponses);
-            }
-
-            return response;
+            var responses = responseBuilder.getResponses(triggerResponses);
+            return self._getBestResponse(responses);
         }, function () {
             return self._getUnknownResponse(inputExpression);
         });
@@ -180,45 +175,8 @@ Brain.prototype._processTrigger = function (triggerKey, inputExpression, inputEn
 };
 
 Brain.prototype._getUnknownResponse = function (inputExpression) {
-    var responses = [
-        "I didn't quite get that.",
-        "I'm not sure I understand.",
-        "I'm not sure I understand what you mean.",
-        "I'm not sure I know what you mean.",
-        "I'm not sure I understand what you're saying.",
-        "I'm not sure I know what you're saying.",
-        "I'm not sure I understand what you mean by '" + inputExpression.value + "'.",
-        "I'm not sure I know what you mean by '" + inputExpression.value + "'.",
-        "I'm not sure I understand what you mean when you say, '" + inputExpression.value + "'.",
-        "I'm not sure I know what you mean when you say, '" + inputExpression.value + "'.",
-        "I don't understand.",
-        "I don't understand what you mean.",
-        "I don't know what you mean.",
-        "I don't understand what you're saying.",
-        "I don't know what you're saying.",
-        "I don't understand what you mean by '" + inputExpression.value + "'.",
-        "I don't know what you mean by '" + inputExpression.value + "'.",
-        "I don't understand what you mean when you say, '" + inputExpression.value + "'.",
-        "I don't know what you mean when you say, '" + inputExpression.value + "'.",
-        "I'm sorry, I'm not sure I understand.",
-        "I'm sorry, I'm not sure I understand what you mean.",
-        "I'm sorry, I'm not sure I know what you mean.",
-        "I'm sorry, I'm not sure I understand what you're saying.",
-        "I'm sorry, I'm not sure I know what you're saying.",
-        "I'm sorry, I'm not sure I understand what you mean by '" + inputExpression.value + "'.",
-        "I'm sorry, I'm not sure I know what you mean by '" + inputExpression.value + "'.",
-        "I'm sorry, I'm not sure I understand what you mean when you say, '" + inputExpression.value + "'.",
-        "I'm sorry, I'm not sure I know what you mean when you say, '" + inputExpression.value + "'.",
-        "I'm sorry, I don't understand.",
-        "I'm sorry, I don't understand what you mean.",
-        "I'm sorry, I don't know what you mean.",
-        "I'm sorry, I don't understand what you're saying.",
-        "I'm sorry, I don't know what you're saying.",
-        "I'm sorry, I don't understand what you mean by '" + inputExpression.value + "'.",
-        "I'm sorry, I don't know what you mean by '" + inputExpression.value + "'.",
-        "I'm sorry, I don't understand what you mean when you say, '" + inputExpression.value + "'.",
-        "I'm sorry, I don't know what you mean when you say, '" + inputExpression.value + "'."
-    ];
+    var template = "[I'm sorry,] (I('m not sure I|don't) (understand|know) [what (you mean [by '" + inputExpression.value + "']|you're saying [when you say, '" + inputExpression.value + "'])]|I didn't quite get that).";
+    var responses = responseBuilder.getResponses(template);
 
     var res = [];
     var i;
@@ -230,8 +188,27 @@ Brain.prototype._getUnknownResponse = function (inputExpression) {
 };
 
 Brain.prototype._getBestResponse = function (responses) {
-    // TODO: Use something other than a random generator. Use the preference
-    return responses[Math.floor(Math.random() * responses.length)];
+    console.log("Choosing 1 of " + responses.length + " responses.");
+
+    // First shuffle the array so that any items with the same weight will appear with the same frequency
+    responses = shuffle(responses.slice(0));
+
+    // Get the sum of the weights
+    var sumOfWeights = responses.reduce(function(memo, response) {
+        return memo + response.weight;
+    }, 0);
+
+    // Get a random weighted response
+    var getRandom = function (sumOfWeights) {
+        var random = Math.floor(Math.random() * (sumOfWeights + 1));
+
+        return function (response) {
+            random -= response.weight;
+            return random <= 0;
+        };
+    };
+
+    return responses.find(getRandom(sumOfWeights));
 };
 
 Brain.prototype._extractExpressionEntities = function (expression) {
@@ -325,7 +302,7 @@ Brain.registerSkill = function (namespace, service) {
 
         // Only intents with triggers are registered
         if (service.intent[i].trigger) {
-            Brain.intents.push(service.intent[i]);
+            intentMatcher.addIntent(service.intent[i].value, service.intent[i].trigger, service.intent[i].context);
         }
     }
 

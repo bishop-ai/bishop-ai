@@ -15,7 +15,7 @@ router.get('/test/:message', function (req, res) {
 });
 
 router.post('/train', function (req, res) {
-    classifier.train(Brain.intents).then(function () {
+    classifier.train().then(function () {
         res.send();
     }, function (err) {
         res.status(500).send(err);
