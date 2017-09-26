@@ -1,0 +1,15 @@
+{
+    "bitwise": true,
+    "curly": true,
+    "eqeqeq": true,
+    "forin": true,
+    "latedef": true,
+    "noarg": true,
+    "nonew": true,
+    "undef": true,
+    "browser": true,
+    "devel": true,
+    "laxbreak": true,
+    "mocha": true,
+    "predef": [ "module", "require", "__dirname" ]
+}
