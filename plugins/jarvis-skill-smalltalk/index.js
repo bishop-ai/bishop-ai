@@ -5,11 +5,11 @@ var shuffle = require('knuth-shuffle').knuthShuffle;
 var SmallTalk = function () {
 
     this.intent = [
-        {value: "(hi|hello|hey) *", trigger: "smalltalk.greeting"},
+        {value: "(hi|hello|hey|what's up|yo|sup) *", trigger: "smalltalk.greeting"},
         {value: "You are *", trigger: "smalltalk.compliment"},
         {value: "I (love|adore|can not live without|like|dislike|can not stand|despise|hate) you", trigger: "smalltalk.compliment"},
         {value: "(thank you|thanks)", trigger: "smalltalk.gratitude"},
-        {value: "how (are|have) you [been] [(doing|feeling)]", trigger: "smalltalk.getAiInfo"},
+        {value: "how (are|have) you [been] [(doing|feeling)] *", trigger: "smalltalk.getAiInfo"},
         {value: "what (is your name|do you call yourself|should I call you)", trigger: "smalltalk.getAiInfo"},
         {value: "who are you", trigger: "smalltalk.getAiInfo"},
         {value: "who am I talking to", trigger: "smalltalk.getAiInfo"},
@@ -18,7 +18,8 @@ var SmallTalk = function () {
         {value: "what [(other|else|[kind of] (things|tasks|jobs))] (can I ask you to|are you able to|can you) do [for me]", trigger: "smalltalk.getAiInfo"},
         {value: "what [(other|else|[kind of] (things|questions))] can (I ask [you [about]]|you answer [for me])", trigger: "smalltalk.getAiInfo"},
         {value: "do you know ([what] my name [is]|who I am|me|who you are (talking|speaking) (to|with))", trigger: "smalltalk.getUserName"},
-        {value: "(what is my name|who am I)", trigger: "smalltalk.getUserName"}
+        {value: "(what is my name|who am I)", trigger: "smalltalk.getUserName"},
+        {value: "I [already] (said|told you) that [already] *", trigger: "smalltalk.apologize"}
     ];
 
     this.triggers = {
@@ -80,7 +81,7 @@ var SmallTalk = function () {
                         {value: "That wasn't [very] (nice|kind), " + name + ".", weight: 2}
                     ]);
                 }
-            } else if (sentiment === 0) {
+            } else if (sentiment === 0 && !expression.contains("friend")) {
                 responses = responses.concat([
                     "I am a just a rather very intelligent system.",
                     "I am your personal assistant."
@@ -88,13 +89,13 @@ var SmallTalk = function () {
             } else {
                 responses = responses.concat([
                     "You shouldn't...",
-                    "Thank you!",
+                    "(Thank you|Thanks)!",
                     "Why, thank you!"
                 ]);
                 if (name) {
                     responses = responses.concat([
-                        {value: "That is [very] (nice|kind) [of you], " + name + ".", weight: 2},
-                        {value: "Thank you, " + name + ".", weight: 2}
+                        {value: "[(Thanks|Thank you)!] That is [very] (nice|kind) [of you], " + name + ".", weight: 2},
+                        {value: "(Thank you|Thanks), " + name + ".", weight: 2}
                     ]);
                 }
             }
@@ -106,13 +107,13 @@ var SmallTalk = function () {
             var name = getMemory('userName');
 
             var responses = [
-                "(You're welcome|No problem).",
+                "(You're [very] welcome|No problem).",
                 "I'm happy to help!"
             ];
 
             if (name) {
                 responses = responses.concat([
-                    {value: "(You're welcome|No problem), " + name + ".", weight: 2}
+                    {value: "(You're [very] welcome|No problem), " + name + ".", weight: 2}
                 ]);
             }
 
@@ -126,8 +127,7 @@ var SmallTalk = function () {
 
             if (expression.contains('who')) {
                 responses = responses.concat([
-                    "I am your personal assistant.",
-                    "I'm here to help."
+                    "I am your personal assistant."
                 ]);
                 if (name) {
                     responses = responses.concat([
@@ -140,7 +140,7 @@ var SmallTalk = function () {
                 }
             } else if (expression.contains('how')) {
                 responses = [
-                    {value: "I'm doing (well|fine|great), (how about you|how are you [doing]|and yourself)?", context: "smalltalk.howAreYou"}
+                    {value: "I'm doing (well|fine|great), [(thanks|thank you) and] ((how|what) about you|how are you [doing]|and yourself)?", context: "smalltalk.howAreYou"}
                 ];
             } else if (expression.contains("what") && expression.contains("skills", "you do", "ask", "questions", "answer")) {
                 var examples = shuffle(getExamples().slice(0));
@@ -337,10 +337,32 @@ var SmallTalk = function () {
 
             if (sentiment < 0) {
                 responses.push("I'm [very] (sorry|sad) to hear that.");
-            } else if (sentiment === 0) {
+            } else if (sentiment === 0 && !expression.contains("ok")) {
                 responses.push({value: "[I'm not sure I understand. ]What do you mean?", context: "smalltalk.howAreYou"});
             } else {
                 responses.push("I'm [very] (glad|happy) to hear that.");
+            }
+
+            dfd.resolve(responses);
+        },
+
+        apologize: function (dfd, expression) {
+            var responses = [];
+
+            var sentiment = speak.sentiment.analyze(expression.normalized).score;
+
+            if (sentiment < 0) {
+                responses.push("I'm (very|terribly) sorry.");
+            } else {
+                responses.push("(I'm sorry|I apologize).");
+            }
+
+            if (expression.contains("already") && expression.contains("said", "told")) {
+                if (sentiment < 0) {
+                    responses.push("I'm (very|terribly) sorry. I must have forgotten [that you (said|told me) that].");
+                } else {
+                    responses.push("(I'm sorry|I apologize). I must have forgotten [that you (said|told me) that].");
+                }
             }
 
             dfd.resolve(responses);
