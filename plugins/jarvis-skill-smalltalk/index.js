@@ -5,7 +5,7 @@ var shuffle = require('knuth-shuffle').knuthShuffle;
 var SmallTalk = function () {
 
     this.intent = [
-        {value: "(hi|hello|hey|what's up|yo|sup) *", trigger: "smalltalk.greeting"},
+        {value: "(hi|hello|hey|what [is] up|what is happening|yo|sup) *", trigger: "smalltalk.greeting"},
         {value: "You are *", trigger: "smalltalk.compliment"},
         {value: "I (love|adore|can not live without|like|dislike|can not stand|despise|hate) you", trigger: "smalltalk.compliment"},
         {value: "(thank you|thanks)", trigger: "smalltalk.gratitude"},
@@ -17,6 +17,7 @@ var SmallTalk = function () {
         {value: "do I know [who] you [are]", trigger: "smalltalk.getAiInfo"},
         {value: "what [(other|else|[kind of] (things|tasks|jobs))] (can I ask you to|are you able to|can you) do [for me]", trigger: "smalltalk.getAiInfo"},
         {value: "what [(other|else|[kind of] (things|questions))] can (I ask [you [about]]|you answer [for me])", trigger: "smalltalk.getAiInfo"},
+        {value: "what are you (doing|up to|working on|thinking about)", trigger: "smalltalk.getAiThoughts"},
         {value: "do you know ([what] my name [is]|who I am|me|who you are (talking|speaking) (to|with))", trigger: "smalltalk.getUserName"},
         {value: "(what is my name|who am I)", trigger: "smalltalk.getUserName"},
         {value: "I [already] (said|told you) that [already] *", trigger: "smalltalk.apologize"}
@@ -175,6 +176,22 @@ var SmallTalk = function () {
                         {value: "[(I don't know|I'm not sure) what my name is.] What ((would you like|do you want) to (call|name) me|should my name be)?", context: "smalltalk.whatIsMyName"}
                     ]);
                 }
+            }
+
+            dfd.resolve(responses);
+        },
+
+        getAiThoughts: function (dfd, expression) {
+            var responses = [];
+
+            responses = responses.concat([
+                "(About|I'm (thinking about|pondering)) (life|gravity|the mysteries of the universe|the meaning of life)."
+            ]);
+
+            if (expression.contains("doing")) {
+                responses = responses.concat([
+                    "I'm thinking."
+                ]);
             }
 
             dfd.resolve(responses);
