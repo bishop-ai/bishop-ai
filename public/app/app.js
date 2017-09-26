@@ -1,4 +1,4 @@
-angular.module('AI', ['ngRoute']);
+angular.module('AI', ['ngRoute', 'ngSanitize']);
 
 angular.module('AI').constant('version', "1.0.0");
 angular.module('AI').constant('debugMode', 0);

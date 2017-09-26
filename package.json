@@ -24,6 +24,7 @@
     "dependencies": {
         "angular": "~1.5.0",
         "angular-route": "~1.5.0",
+        "angular-sanitize": "~1.5.0",
         "body-parser": "~1.15.0",
         "bootstrap": "~3.3.6",
         "express": "~4.10.2",
@@ -34,6 +35,7 @@
         "moment": "~2.11.2",
         "natural": "~0.5.4",
         "node-phantom-simple": "~2.2.4",
+        "particles.js": "^2.0.0",
         "phantomjs": "^1.9.19",
         "q": "1.2.0",
         "qtypes": "~0.1.6",

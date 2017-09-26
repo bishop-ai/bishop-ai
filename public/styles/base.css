@@ -24,84 +24,128 @@ body {
     background-image: url("images/mic.png");
 }
 
-.input,
-.input:focus {
+.input {
     position: absolute;
-    width: 220px;
+    width: 500px;
     left: 50%;
-    top: 50%;
-    margin-left: -110px;
+    bottom: 100px;
+    margin-top: 20px;
+    margin-left: -250px;
     z-index: 1;
     color: rgb(202,253,255);
     text-shadow: 0 0 5px rgba(202,253,255,0.5);
+    background-color: rgba(109, 171, 170,0.8);
+    padding: 20px;
+    border-radius: 10px;
 }
 
 .input input,
 .input input:focus {
+    position: absolute;
+    top: 0;
+    padding: 20px 0;
+    margin-left: 20px;
+    width: 400px;
     background: transparent;
     outline: none;
     border: none;
     text-shadow: 0 0 5px rgba(202,253,255,0.5);
 }
+.input input:placeholder-shown {
+    text-shadow: none;
+}
+.input input::placeholder {
+    color: #ADD;
+}
 
 .transcript-container {
     position: absolute;
-    bottom: 50%;
+    bottom: 200px;
     left: 50%;
-    width: 300px;
+    width: 600px;
     top: 0;
-    margin-left: -150px;
-    margin-bottom: 180px;
+    margin-left: -300px;
     z-index: 1;
     text-align: center;
     color: black;
     text-shadow: 0 0 5px rgba(0,0,0,0.2);
-    -webkit-mask-image: -webkit-gradient(linear, left 30%, left top, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)))
+    -webkit-mask-image: -webkit-gradient(linear, left 20%, left 70%, from(rgba(0,0,0,0)), to(rgba(0,0,0,1)))
 }
 .transcript-container .transcript {
     overflow: auto;
-    height: 100%;
-    padding-top: 70%;
+    position: absolute;
+    bottom: 0;
+    max-height: 100%;
+    width: 100%;
+    padding-top: 100%;
+    padding-bottom: 40px;
+    -webkit-mask-image: -webkit-gradient(linear, left 95%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)))
 }
 .transcript-container .transcript::-webkit-scrollbar {
     display: none;
 }
 .transcript-container .transcript .message {
     text-align: right;
-    padding-left: 40px;
-    margin-top: 10px;
+    margin: 20px 0 20px 100px;
 }
 .transcript-container .transcript .message.ai {
     font-weight: bold;
     text-align: left;
-    padding-right: 40px;
-    padding-left: 0;
+    margin-right: 100px;
+    margin-left: 0;
+}
+.transcript-container .transcript .message .contents {
+    display: inline-block;
+    color: rgb(202,253,255);
+    text-shadow: 0 0 5px rgba(202,253,255,0.5);
+    background-color: rgba(57, 99, 98, 0.8);
+    padding: 15px 20px;
+    border-radius: 10px;
+    opacity: .8;
+}
+.transcript-container .transcript .message.ai .contents {
+    opacity: 1;
+    min-width: 70px;
 }
 
 .vz-wrapper {
     position: relative;
     height: 100vh;
     width: 100%;
-    background: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 460, from(#396362), to(#000000));
+    background: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 1000, from(#396362), to(#000000));
     background: -webkit-radial-gradient(circle, #396362, #000000);
     background: -moz-radial-gradient(circle, #396362, #000000);
     background: -ms-radial-gradient(circle, #396362, #000000);
-    box-shadow: inset 0 0 160px 0 #000;
+    overflow: hidden;
 }
 
-.vz-wrapper .canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: initial;
-    width: initial;
-    background: transparent;
-    box-shadow: none;
+.ellipsis-anim span {
+    opacity: 0;
+    -webkit-animation: ellipsis-dot 1s infinite;
+    animation: ellipsis-dot 1s infinite;
 }
 
-@media screen and (min-width: 420px) {
-    .vz-wrapper {
-        box-shadow: inset 0 0 200px 60px #000;
-    }
+.ellipsis-anim span:nth-child(1) {
+    -webkit-animation-delay: 0.0s;
+    animation-delay: 0.0s;
+}
+.ellipsis-anim span:nth-child(2) {
+    -webkit-animation-delay: 0.1s;
+    animation-delay: 0.1s;
+}
+.ellipsis-anim span:nth-child(3) {
+    -webkit-animation-delay: 0.2s;
+    animation-delay: 0.2s;
+}
+
+@-webkit-keyframes ellipsis-dot {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes ellipsis-dot {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
 }

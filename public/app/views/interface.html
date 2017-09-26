@@ -1,22 +1,15 @@
 <div class="input">
     <div class="recording-indicator" data-ng-click="toggleRecording()" data-ng-class="{active: recording}"></div>
     <span>&gt;</span>
-    <input id="input" autofocus autocomplete="off" type="text" data-ng-model="message" data-ng-keypress="handleKeyPress($event)"/>
+    <input id="input" autofocus autocomplete="off" type="text" data-ng-model="message" placeholder="Type message..." data-ng-keypress="handleKeyPress($event)"/>
 </div>
 
 <div class="transcript-container">
     <div class="transcript" data-scroll-bottom="transcript">
         <div data-ng-repeat="message in transcript track by $index" class="message" data-ng-class="{ai: message.ai}">
-            {{message.m}}
+            <div class="contents" data-fade-out="shouldFade($index)" data-ng-bind-html="message.m"></div>
         </div>
     </div>
 </div>
 
-<div class="vz-wrapper" ai-ux="audioFile">
-    <audio id="myAudio">
-        <source />
-    </audio>
-    <div class="canvas">
-        <canvas id="myCanvas" width="800" height="400"></canvas>
-    </div>
-</div>
+<div class="vz-wrapper" particles data-fire="fire"></div>
