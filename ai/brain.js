@@ -175,7 +175,7 @@ Brain.prototype._processTrigger = function (triggerKey, inputExpression, inputEn
 };
 
 Brain.prototype._getUnknownResponse = function (inputExpression) {
-    var template = "[I'm sorry,] (I('m not sure I|don't) understand [what (you mean [by '" + inputExpression.value + "']|you're saying [when you say, '" + inputExpression.value + "'])]|I didn't quite get that).";
+    var template = "[I'm sorry,] ((I'm not sure I|I don't) understand [what (you mean [by '" + inputExpression.value + "']|you're saying [when you say, '" + inputExpression.value + "'])]|I didn't quite get that).";
     var responses = responseBuilder.getResponses(template);
 
     var res = [];

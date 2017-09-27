@@ -14,10 +14,15 @@ angular.module('AI').controller('InterfaceCtrl', [
         //var hotWord = "wheatley"; // TODO: Get this from the server and allow the server to update it at any time
         //var useHotWord = true; // TODO: Allow this to be set by the user
 
+        var speechSynthesis = window.speechSynthesis;
+        var SpeechSynthesisUtterance = window.SpeechSynthesisUtterance;
+
         var voice;
-        window.speechSynthesis.onvoiceschanged = function() {
-            voice = window.speechSynthesis.getVoices().filter(function(voice) { return voice.name === 'Google UK English Male'; })[0];
-        };
+        if (speechSynthesis && SpeechSynthesisUtterance) {
+            speechSynthesis.onvoiceschanged = function() {
+                voice = speechSynthesis.getVoices().filter(function(voice) { return voice.name === 'Google UK English Male'; })[0];
+            };
+        }
 
         $scope.message = "";
         $scope.transcript = [];
@@ -52,16 +57,21 @@ angular.module('AI').controller('InterfaceCtrl', [
             }
 
             var startWriting = function () {
-                var message = {m: $sanitize('<span class="ellipsis-anim"><span>.</span><span>.</span><span>.</span></span>'), ai: true};
+                var message = {m: '', html: $sanitize('<span class="ellipsis-anim"><span>.</span><span>.</span><span>.</span></span>'), ai: true};
                 $scope.transcript.push(message);
 
                 var handleMessage = function () {
                     $scope.audioFile = data.audio;
                     if (data.message) {
-                        var msg = new SpeechSynthesisUtterance(data.message);
-                        msg.voice = voice;
-                        window.speechSynthesis.speak(msg);
-                        message.m = $sanitize(data.message);
+
+                        if (speechSynthesis && SpeechSynthesisUtterance) {
+                            var msg = new SpeechSynthesisUtterance(data.message);
+                            msg.voice = voice;
+                            speechSynthesis.speak(msg);
+                        }
+
+                        message.m = data.message;
+                        message.html = $sanitize(data.html);
                         $scope.fire = !$scope.fire;
                     }
                 };
@@ -96,15 +106,13 @@ angular.module('AI').controller('InterfaceCtrl', [
             window.msSpeechRecognition ||
             window.oSpeechRecognition;
 
-        if (window.webkitSpeechRecognition) {
+        if (SpeechRecognition) {
             var recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.lang = 'en-US';
             recognition.interimResults = false;
 
-            recognition.onresult = function (event) {
-                console.log(event.results);
-
+            var handleResult = function (event) {
                 var i;
                 var finalTranscript = "";
                 var interimTranscript = "";
@@ -120,27 +128,33 @@ angular.module('AI').controller('InterfaceCtrl', [
                 var isMatch = true;
 
                 /*if (useHotWord) {
-                    isMatch = false;
-                    var trimmed = finalTranscript.trim().toLowerCase();
-                    if (trimmed.startsWith(hotWord) || trimmed.endsWith(hotWord)) {
+                 isMatch = false;
+                 var trimmed = finalTranscript.trim().toLowerCase();
+                 if (trimmed.startsWith(hotWord) || trimmed.endsWith(hotWord)) {
 
-                        isMatch = true;
-                        if (trimmed.startsWith(hotWord)) {
-                            finalTranscript = trimmed.replace(new RegExp("^" + hotWord,"i"), "");
-                        } else {
-                            finalTranscript = trimmed.replace(new RegExp(hotWord + "$","i"), "");
-                        }
-                    }
-                }*/
+                 isMatch = true;
+                 if (trimmed.startsWith(hotWord)) {
+                 finalTranscript = trimmed.replace(new RegExp("^" + hotWord,"i"), "");
+                 } else {
+                 finalTranscript = trimmed.replace(new RegExp(hotWord + "$","i"), "");
+                 }
+                 }
+                 }*/
 
                 if (isMatch) {
                     console.log('Voice Match: ' + finalTranscript);
                     socket.emit('command', finalTranscript);
-                    $scope.transcript.push({m: finalTranscript, ai: false});
+                    $scope.transcript.push({html: null, m: finalTranscript, ai: false});
                     messageSentTime = (new Date()).getTime();
                 }
 
                 $scope.message = "";
+            };
+
+            recognition.onresult = function (event) {
+                $scope.$apply(function () {
+                    handleResult(event);
+                });
             };
 
             // Start it if it ends
