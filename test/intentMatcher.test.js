@@ -12,10 +12,16 @@ describe('Intent Matcher', function () {
 
         it("Should correctly match input", function () {
             intentMatcher.addIntent("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on");
+            intentMatcher.addIntent("what is the weather [going to be] like tomorrow", "get_weather");
 
             var result = intentMatcher.matchInputToIntent("switch on my lights please");
 
             assert.equal(result.intent, "turn_light_on");
+            assert(result.confidence > 0.5, "The confidence was expected to be greater than 0.5 but was " + result.confidence);
+
+            result = intentMatcher.matchInputToIntent("what is the weather like tomorrow?");
+
+            assert.equal(result.intent, "get_weather");
             assert(result.confidence > 0.5, "The confidence was expected to be greater than 0.5 but was " + result.confidence);
         });
 
