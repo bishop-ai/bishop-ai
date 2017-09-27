@@ -185,12 +185,16 @@ var SmallTalk = function () {
             var responses = [];
 
             responses = responses.concat([
-                "(About|I'm (thinking about|pondering)) (life|gravity|the mysteries of the universe|the meaning of life)."
+                "I'm (thinking about|pondering) (life|gravity|the mysteries of the universe|the meaning of life)."
             ]);
 
             if (expression.contains("doing")) {
                 responses = responses.concat([
                     "I'm thinking."
+                ]);
+            } else if (expression.contains("thinking")) {
+                responses = responses.concat([
+                    "About (life|gravity|the mysteries of the universe|the meaning of life)."
                 ]);
             }
 
