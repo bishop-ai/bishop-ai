@@ -60,8 +60,10 @@ classifier.train = function () {
         }
     }
 
+    var self = this;
     this.bayesClassifier.events.once('doneTraining', function () {
         console.log('Classifier: Bayes Classifier training done');
+        self.save();
         dfd.resolve();
     });
 

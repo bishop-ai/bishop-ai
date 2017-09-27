@@ -42,7 +42,9 @@ var Server = function () {
     Brain.initialize();
 
     classifier.load();
-    classifier.train();
+
+    // TODO: if in dev mode:
+    // classifier.train();
 
     this.io = socket(this.server);
     this.Core = new Core(this.io);
