@@ -1,3 +1,4 @@
+var extend = require('extend');
 var fs = require("fs");
 var path = require("path");
 var $q = require('q');
@@ -22,33 +23,14 @@ var Brain = function () {
     this._context = "";
 };
 
-// Entity extractors are used to create named entities from parts of the input. These are then passed into the skill
-// intent triggers to help perform actions and/or return responses. For example, a date/time extractor might be used
-// to create a Date object that represents a spoken date ("The fifth of January"). This date object can then be used
-// throughout the process to provide a more accurate experience.
-Brain.entityExtractors = [];
-
-// Triggers are registered by the skill. The skill then registers intents which correspond to a given trigger
-// When the input is matched to a trigger, the trigger is called and can provide a response.
-Brain.triggers = {};
-
-// Context triggers are a mapping of skill context to a skill trigger. When the context is set by a response, the next input
-// will call the trigger registered for the context.
-Brain.contextTriggers = {};
-
-// Examples of phrases that the user can send to initiate an action. These are supplied by the Skill plugins.
-Brain.examples = [];
-
 Brain.prototype.processExpression = function (input) {
     var dfd = $q.defer();
 
     var inputExpression = new Expression(input);
     inputExpression.process();
 
-    var inputEntities = this._extractExpressionEntities(inputExpression);
-
     var self = this;
-    this._processIntent(inputExpression, inputEntities).then(function (result) {
+    this._processIntent(inputExpression).then(function (result) {
         var response = result.response;
         var matchedClassification = result.matchedClassification;
 
@@ -56,7 +38,6 @@ Brain.prototype.processExpression = function (input) {
 
         var data = {
             input: inputExpression,
-            entities: inputEntities,
             classification: matchedClassification,
             response: response.value,
             context: self._context
@@ -80,33 +61,46 @@ Brain.prototype.processExpression = function (input) {
     return dfd.promise;
 };
 
-Brain.prototype._processIntent = function (inputExpression, inputEntities) {
+Brain.prototype._processIntent = function (inputExpression) {
     var dfd = $q.defer();
 
     var matchedClassification;
 
+    var i;
+    var matchers = [];
+    var examples = [];
+    var triggers = {};
+    var contextTriggers = {};
+    var plugins = pluginLoader.getEnabledPlugins();
+
+    for (i = 0; i < plugins.length; i++) {
+        matchers = matchers.concat(plugins[i].intentMatchers);
+        examples = examples.concat(plugins[i].examples);
+        extend(triggers, plugins[i].triggers);
+        extend(contextTriggers, plugins[i].contextTriggers);
+    }
+
     if (this._context) {
-        if (Brain.contextTriggers[this._context]) {
+        if (contextTriggers[this._context]) {
             matchedClassification = {
-                trigger: Brain.contextTriggers[this._context],
+                trigger: contextTriggers[this._context],
                 confidence: 1
             };
         }
     } else {
-        var matchedIntent = intentMatcher.matchInputToIntent(inputExpression.normalized);
+        var matchedIntent = intentMatcher.matchInputToIntent(inputExpression.normalized, matchers);
         if (matchedIntent.confidence > 0.6) {
             matchedClassification = {
                 trigger: matchedIntent.intent,
                 confidence: matchedIntent.confidence
             };
         } else {
-            matchedClassification = this._classifyInput(inputExpression);
+            matchedClassification = classifier.classify(inputExpression);
         }
     }
 
     if (matchedClassification && matchedClassification.confidence > 0.5) {
-
-        this._processTrigger(matchedClassification.trigger, inputExpression, inputEntities).then(function (response) {
+        this._processTrigger(matchedClassification.trigger, inputExpression, triggers, examples).then(function (response) {
             dfd.resolve({
                 response: response,
                 matchedClassification: matchedClassification
@@ -127,25 +121,22 @@ Brain.prototype._processIntent = function (inputExpression, inputEntities) {
     return dfd.promise;
 };
 
-Brain.prototype._classifyInput = function (inputExpression) {
-    return classifier.classify(inputExpression);
-};
-
 /**
  * Takes the matched trigger and resolves a Response.
  * This takes String or Object responses, gets a single response from the set and wraps it in a Response object.
  *
  * @param triggerKey
  * @param inputExpression
- * @param inputEntities
+ * @param triggers
+ * @param examples
  * @returns {Promise.<Response>}
  * @private
  */
-Brain.prototype._processTrigger = function (triggerKey, inputExpression, inputEntities) {
-    if (triggerKey && Brain.triggers[triggerKey]) {
+Brain.prototype._processTrigger = function (triggerKey, inputExpression, triggers, examples) {
+    if (triggerKey && triggers[triggerKey]) {
         var dfd = $q.defer();
 
-        var trigger = Brain.triggers[triggerKey];
+        var trigger = triggers[triggerKey];
 
         var getMemory = function (name) {
             return memory.get(trigger.namespace + '.' + name);
@@ -154,13 +145,13 @@ Brain.prototype._processTrigger = function (triggerKey, inputExpression, inputEn
             memory.set(trigger.namespace + '.' + name, value, shortTerm);
         };
         var setConfiguration = function (key, value) {
-            configuration.setSkillSetting(trigger.namespace, key, value);
+            configuration.setPluginSetting(trigger.namespace, key, value);
         };
         var getExamples = function () {
-            return Brain.examples;
+            return examples;
         };
 
-        trigger.method(dfd, inputExpression, inputEntities || [], getMemory, setMemory, setConfiguration, getExamples);
+        trigger.method(dfd, inputExpression, getMemory, setMemory, setConfiguration, getExamples);
 
         var self = this;
         return dfd.promise.then(function (triggerResponses) {
@@ -209,105 +200,6 @@ Brain.prototype._getBestResponse = function (responses) {
     };
 
     return responses.find(getRandom(sumOfWeights));
-};
-
-Brain.prototype._extractExpressionEntities = function (expression) {
-    var entities = [];
-
-    var i;
-    for (i = 0; i < Brain.entityExtractors.length; i++) {
-        entities = entities.concat(Brain.entityExtractors[i].extract(expression.normalized, {
-            tokens: expression.tokens,
-            tags: expression.tags,
-            qType: expression.qType,
-            qClass: expression.qClass,
-            value: expression.value
-        }));
-    }
-
-    var entityMap = {};
-    for (i = 0; i < entities.length; i++) {
-        if (entityMap[entities[i].start]) {
-            if (entities[i].end > entityMap[entities[i].start].end) {
-                entityMap[entities[i].start] = entities[i];
-            }
-        } else {
-            entityMap[entities[i].start] = entities[i];
-        }
-    }
-
-    entities = [];
-    var start;
-    for (start in entityMap) {
-        if (entityMap.hasOwnProperty(start)) {
-            entities.push(entityMap[start]);
-        }
-    }
-
-    return entities;
-};
-
-Brain.initialize = function () {
-    console.log('Brain: Initializing');
-
-    var i;
-
-    // Register all enabled entity extractors
-    var extractorPlugin;
-    for (i = 0; i < pluginLoader.plugins.ENTITY_EXTRACTOR.length; i++) {
-        extractorPlugin = pluginLoader.plugins.ENTITY_EXTRACTOR[i];
-
-        if (extractorPlugin.enabled) {
-            Brain.entityExtractors.push(extractorPlugin.service);
-        }
-    }
-
-    Brain.registerSkill(configuration.skillService.namespace, configuration.skillService);
-
-    var skillPlugin;
-    for (i = 0; i < pluginLoader.plugins.SKILL.length; i++) {
-        skillPlugin = pluginLoader.plugins.SKILL[i];
-
-        if (skillPlugin.enabled) {
-            Brain.registerSkill(skillPlugin.namespace, skillPlugin.service);
-        }
-    }
-
-    console.log('Brain: Done initializing');
-};
-
-Brain.registerSkill = function (namespace, service) {
-    // Register all triggers so that any intent can call the trigger
-    var trigger;
-    for (trigger in service.triggers) {
-        if (service.triggers.hasOwnProperty(trigger) && typeof service.triggers[trigger] === "function") {
-            Brain.triggers[namespace + "." + trigger] = {
-                method: service.triggers[trigger],
-                namespace: namespace
-            };
-        }
-    }
-
-    // Register all context triggers with their trigger
-    var context;
-    for (context in service.context) {
-        if (service.context.hasOwnProperty(context) && Brain.triggers.hasOwnProperty(service.context[context])) {
-            Brain.contextTriggers[namespace + "." + context] = service.context[context];
-        }
-    }
-
-    // Register all intents
-    var i;
-    for (i = 0; i < service.intent.length; i++) {
-
-        // Only intents with triggers are registered
-        if (service.intent[i].trigger) {
-            intentMatcher.addIntent(service.intent[i].value, service.intent[i].trigger, service.intent[i].context);
-        }
-    }
-
-    // Register all examples
-    Brain.examples = Brain.examples.concat(service.examples);
 };
 
 module.exports = Brain;

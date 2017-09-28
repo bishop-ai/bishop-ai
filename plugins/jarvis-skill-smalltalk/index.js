@@ -2,7 +2,7 @@ var moment = require('moment');
 var speak = require("speakeasy-nlp");
 var shuffle = require('knuth-shuffle').knuthShuffle;
 
-var SmallTalk = function () {
+var SmallTalk = function (nlp) {
 
     this.intent = [
         {value: "(hi|hello|hey|what [is] up|what is happening|yo|sup) *", trigger: "smalltalk.greeting"},
@@ -25,7 +25,7 @@ var SmallTalk = function () {
 
     this.triggers = {
 
-        greeting: function (dfd, expression, entities, getMemory) {
+        greeting: function (dfd, expression, getMemory) {
             var name = getMemory('userName');
 
             var responses = [
@@ -66,7 +66,7 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        compliment: function (dfd, expression, entities, getMemory) {
+        compliment: function (dfd, expression, getMemory) {
             var responses = [];
 
             var name = getMemory('userName');
@@ -104,7 +104,7 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        gratitude: function (dfd, expression, entities, getMemory) {
+        gratitude: function (dfd, expression, getMemory) {
             var name = getMemory('userName');
 
             var responses = [
@@ -121,7 +121,7 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        getAiInfo: function (dfd, expression, entities, getMemory, setMemory, setConfig, getExamples) {
+        getAiInfo: function (dfd, expression, getMemory, setMemory, setConfig, getExamples) {
             var responses = [];
 
             var name = getMemory('aiName');
@@ -201,9 +201,11 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        setAiBirthday: function (dfd, expression, entities, getMemory, setMemory) {
+        setAiBirthday: function (dfd, expression, getMemory, setMemory) {
             var i;
             var birthday;
+
+            var entities = nlp.personNer.extract(expression.normalized, expression);
             for (i = 0; i < entities.length; i++) {
                 if (entities[i].type === 'person.age') {
                     birthday = entities[i].value;
@@ -219,11 +221,12 @@ var SmallTalk = function () {
             }
         },
 
-        getAiAge: function (dfd, expression, entities, getMemory) {
+        getAiAge: function (dfd, expression, getMemory) {
             var responses = [];
             var i;
             var timeFromNow;
 
+            var entities = nlp.datetimeNer.extract(expression.normalized);
             for (i = 0; i < entities.length; i++) {
                 if (entities[i].type === 'datetime.datetime') {
                     timeFromNow = entities[i].value;
@@ -248,9 +251,11 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        setAiName: function (dfd, expression, entities, getMemory, setMemory) {
+        setAiName: function (dfd, expression, getMemory, setMemory) {
             var i;
             var name;
+
+            var entities = nlp.personNer.extract(expression.normalized, expression);
             for (i = 0; i < entities.length; i++) {
                 if (entities[i].type === 'person.name') {
                     name = entities[i].value;
@@ -269,9 +274,11 @@ var SmallTalk = function () {
             }
         },
 
-        setUserBirthday: function (dfd, expression, entities, getMemory, setMemory) {
+        setUserBirthday: function (dfd, expression, getMemory, setMemory) {
             var i;
             var birthday;
+
+            var entities = nlp.personNer.extract(expression.normalized, expression);
             for (i = 0; i < entities.length; i++) {
                 if (entities[i].type === 'person.age') {
                     birthday = entities[i].value;
@@ -287,11 +294,12 @@ var SmallTalk = function () {
             }
         },
 
-        getUserAge: function (dfd, expression, entities, getMemory) {
+        getUserAge: function (dfd, expression, getMemory) {
             var responses = [];
             var i;
             var timeFromNow;
 
+            var entities = nlp.datetimeNer.extract(expression.normalized);
             for (i = 0; i < entities.length; i++) {
                 if (entities[i].type === 'datetime.datetime') {
                     timeFromNow = entities[i].value;
@@ -316,9 +324,11 @@ var SmallTalk = function () {
             dfd.resolve(responses);
         },
 
-        setUserName: function (dfd, expression, entities, getMemory, setMemory) {
+        setUserName: function (dfd, expression, getMemory, setMemory) {
             var i;
             var name;
+
+            var entities = nlp.personNer.extract(expression.normalized, expression);
             for (i = 0; i < entities.length; i++) {
                 if (entities[i].type === 'person.name') {
                     name = entities[i].value;
@@ -337,7 +347,7 @@ var SmallTalk = function () {
             }
         },
 
-        getUserName: function (dfd, expression, entities, getMemory) {
+        getUserName: function (dfd, expression, getMemory) {
             var responses = [];
 
             var name = getMemory('userName');
@@ -405,8 +415,7 @@ var SmallTalk = function () {
 
 module.exports = {
     namespace: "smalltalk",
-    type: 'SKILL',
-    register: function () {
-        return new SmallTalk();
+    register: function (config, nlp) {
+        return new SmallTalk(nlp);
     }
 };

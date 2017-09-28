@@ -1,6 +1,9 @@
-var UrlExtractor = function (commonExtractor, commonExpressions) {
-    this.extractor = commonExtractor;
-    this.expressions = commonExpressions;
+var entityExtractor = require("./../entityExtractor");
+var expressions = require("./../expressions");
+
+var UrlExtractor = function () {
+    this.extractor = entityExtractor;
+    this.expressions = expressions;
 };
 
 /**
@@ -23,10 +26,4 @@ UrlExtractor.prototype.extractUrl = function (string) {
     return string;
 };
 
-module.exports = {
-    namespace: 'url',
-    type: 'ENTITY_EXTRACTOR',
-    register: function (config) {
-        return new UrlExtractor(config.commonExtractor, config.commonExpressions);
-    }
-};
+module.exports = new UrlExtractor();

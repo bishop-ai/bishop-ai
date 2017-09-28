@@ -1,10 +1,8 @@
 var nlp = require('../nlp');
 
-var intentMatcher = {
-    matchers: []
-};
+var intentMatcher = {};
 
-intentMatcher.matchInputToIntent = function (input) {
+intentMatcher.matchInputToIntent = function (input, matchers) {
     var result = {
         intent: "",
         confidence: 0
@@ -14,11 +12,11 @@ intentMatcher.matchInputToIntent = function (input) {
 
     var i;
     var matchAmount;
-    for (i = 0; i < this.matchers.length; i++) {
-        matchAmount = this.matchers[i].matchesInput(tokens);
+    for (i = 0; i < matchers.length; i++) {
+        matchAmount = matchers[i].matchesInput(tokens);
 
         if (matchAmount >= 0) {
-            result.intent = this.matchers[i].intent;
+            result.intent = matchers[i].intent;
             result.confidence = matchAmount / tokens.length;
             break;
         }
@@ -27,31 +25,25 @@ intentMatcher.matchInputToIntent = function (input) {
     return result;
 };
 
-intentMatcher.getInputs = function () {
+intentMatcher.getInputs = function (matchers) {
     var result = [];
 
     var i;
     var phrases;
     var p;
-    for (i = 0; i < this.matchers.length; i++) {
-        phrases = this.matchers[i].getInputs();
+    for (i = 0; i < matchers.length; i++) {
+        phrases = matchers[i].getInputs();
 
         for (p = 0; p < phrases.length; p++) {
             result.push({
                 value: phrases[p],
-                trigger: this.matchers[i].intent,
-                context: this.matchers[i].context
+                trigger: matchers[i].intent,
+                context: matchers[i].context
             });
         }
     }
 
     return result;
-};
-
-intentMatcher.addIntent = function (matcher, intent, context) {
-    var m = new intentMatcher.Matcher(matcher, intent, context);
-    this.matchers.push(m);
-    return m;
 };
 
 intentMatcher.Matcher = function (input, intent, context) {

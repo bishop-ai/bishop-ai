@@ -6,7 +6,6 @@ var methodOverride = require('method-override');
 var socket = require('socket.io');
 var path = require('path');
 
-var Brain = require('./ai/brain');
 var classifier = require('./ai/classifier');
 var Core = require('./ai/core');
 var pluginLoader = require('./ai/pluginLoader');
@@ -27,8 +26,6 @@ var Server = function () {
 
     this.app.use(express.static(__dirname + '/public'));
     this.app.use('/lib', express.static(__dirname + '/node_modules'));
-    this.app.use('/cache', express.static(__dirname + '/cache'));
-    this.app.use('/cache', express.static(__dirname + '/cache'));
     this.app.use('/api', apiRoutes);
 
     this.server = http.createServer(this.app);
@@ -37,11 +34,9 @@ var Server = function () {
         console.log('Server started on %s:%d ...', self.ipaddress, self.port);
     });
 
-    pluginLoader.load();
-
-    Brain.initialize();
-
     classifier.load();
+
+    pluginLoader.load();
 
     // TODO: if in dev mode:
     // classifier.train();

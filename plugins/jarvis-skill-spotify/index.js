@@ -104,7 +104,6 @@ Spotify.commands = {
 
 module.exports = {
     namespace: 'spotify',
-    type: 'SKILL',
     register: function () {
         return new Spotify();
     }

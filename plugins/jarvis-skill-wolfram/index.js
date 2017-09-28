@@ -65,7 +65,6 @@ Wolfram.prototype.query = function (query, params, cb) {
 
 module.exports = {
     namespace: 'wolfram',
-    type: 'SKILL',
     register: function (config) {
         return new Wolfram(config);
     }

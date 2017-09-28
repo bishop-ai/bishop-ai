@@ -1,8 +1,11 @@
 var moment = require('moment');
 
-var PersonExtractor = function (commonExtractor, commonExpressions) {
-    this.extractor = commonExtractor;
-    this.expressions = commonExpressions;
+var entityExtractor = require("./../entityExtractor");
+var expressions = require("./../expressions");
+
+var PersonExtractor = function () {
+    this.extractor = entityExtractor;
+    this.expressions = expressions;
 
     this.timeLength = new RegExp("\\d+ " + this.expressions.timePeriods.source);
     this.age = new RegExp("(" + this.timeLength.source + " (old|young))");
@@ -139,10 +142,4 @@ PersonExtractor.prototype.extractName = function (string, tags) {
     return entities;
 };
 
-module.exports = {
-    namespace: 'person',
-    type: 'ENTITY_EXTRACTOR',
-    register: function (config) {
-        return new PersonExtractor(config.commonExtractor, config.commonExpressions);
-    }
-};
+module.exports = new PersonExtractor();

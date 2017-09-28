@@ -2,7 +2,7 @@ var moment = require('moment');
 var $q = require('q');
 var request = require('request');
 
-var cache = require('./../../utils/cache');
+var cache = require('./../../ai/cache');
 
 var Weather = function (config) {
 
@@ -421,7 +421,6 @@ Weather.failureMessages = [
 
 module.exports = {
     namespace: 'weather',
-    type: 'SKILL',
     register: function (config) {
         return new Weather(config);
     }

@@ -1,5 +1,6 @@
 var extend = require('extend');
-var cache = require('./../utils/cache');
+
+var cache = require('./cache');
 
 var memory = {
     file: 'memory.json',

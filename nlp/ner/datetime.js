@@ -1,8 +1,11 @@
 var moment = require('moment');
 
-var DateTimeExtractor = function (commonExtractor, commonExpressions) {
-    this.extractor = commonExtractor;
-    this.expressions = commonExpressions;
+var entityExtractor = require("./../entityExtractor");
+var expressions = require("./../expressions");
+
+var DateTimeExtractor = function () {
+    this.extractor = entityExtractor;
+    this.expressions = expressions;
 
     this.relativeTimeOfDay = new RegExp("(((in the )?" + this.expressions.timeOfDayInThe.source + ")|(((at|around) )?" + this.expressions.timeOfDayAt.source + ")|(the " + this.expressions.timeOfDayInThe.source + " of))", "i");
     this.relativeTime = new RegExp("((right now)|(" + this.relativeTimeOfDay.source + " )?(today|yesterday|tomorrow|tonight)( " + this.relativeTimeOfDay.source + ")?|" + this.expressions.daysOfWeek.source + "( " + this.relativeTimeOfDay.source + ")?|(this " + this.expressions.timeOfDayInThe.source + ")|((" + this.relativeTimeOfDay.source + " )?this " + this.expressions.daysOfWeek.source + "( " + this.relativeTimeOfDay.source + ")?)|((this|next|last) (" + this.expressions.daysOfWeek.source + "|" + this.expressions.timePeriods.source + "|" + this.expressions.monthOfYear.source + "))|(in the " + this.expressions.timeOfDayInThe.source + ")|((at|around) " + this.expressions.timeOfDayAt.source + "))", "i");
@@ -306,10 +309,4 @@ DateTimeExtractor.prototype.extractDuration = function (string) {
     return seconds;
 };
 
-module.exports = {
-    namespace: 'datetime',
-    type: 'ENTITY_EXTRACTOR',
-    register: function (config) {
-        return new DateTimeExtractor(config.commonExtractor, config.commonExpressions);
-    }
-};
+module.exports = new DateTimeExtractor();

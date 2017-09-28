@@ -1,14 +1,23 @@
 var natural = require('natural');
 var $q = require('q');
 
-var cache = require('./../utils/cache');
+var cache = require('./cache');
 var intentMatcher = require('./intentMatcher');
 var nlp = require('./../nlp');
+var pluginLoader = require('./pluginLoader');
 
 var classifier = {
     bayesFile: 'bayes-classifications.json',
     bayesClassifier: new natural.BayesClassifier()
 };
+
+pluginLoader.onPluginEnabled(function () {
+    classifier.train();
+});
+
+pluginLoader.onPluginDisabled(function () {
+    classifier.train();
+});
 
 classifier.classify = function (inputExpression) {
     var result = {
@@ -40,11 +49,18 @@ classifier.classify = function (inputExpression) {
 classifier.train = function () {
     var dfd = $q.defer();
 
-    console.log('Classifier: Starting training');
-
-    var intents = intentMatcher.getInputs();
+    console.log('Classifier: Starting training on enabled plugins');
 
     var i;
+    var matchers = [];
+    var plugins = pluginLoader.getEnabledPlugins();
+
+    for (i = 0; i < plugins.length; i++) {
+        matchers = matchers.concat(plugins[i].intentMatchers);
+    }
+
+    var intents = intentMatcher.getInputs(matchers);
+
     var value;
     var trigger;
     for (i = 0; i < intents.length; i++) {

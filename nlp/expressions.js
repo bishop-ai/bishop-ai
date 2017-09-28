@@ -1,5 +1,3 @@
-// TODO: This should be packaged as a nodejs module along with the entity extractor and common nlp tools that plugins would use.
-
 var expressions = {};
 
 expressions.timePeriods = /(millennium|millennia|centuries|century|decades|decade|years|year|months|month|weeks|week|days|day|hours|hour|minutes|minute|seconds|second)/;

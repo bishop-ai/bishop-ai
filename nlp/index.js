@@ -39,6 +39,10 @@ nlp.DiceCoefficient = function (s1, s2) {
     return natural.DiceCoefficient(s1, s2);
 };
 
+nlp.datetimeNer = require('./ner/datetime');
+nlp.personNer = require('./ner/person');
+nlp.urlNer = require('./ner/url');
+
 nlp._init = function () {
     var base_folder = path.join(path.dirname(require.resolve("natural")), "brill_pos_tagger");
     var rulesFilename = base_folder + "/data/English/tr_from_posjs.txt";

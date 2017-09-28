@@ -44,7 +44,6 @@ Ifttt.prototype.makeCall = function (event) {
 
 module.exports = {
     namespace: 'ifttt',
-    type: 'SKILL',
     register: function (config) {
         return new Ifttt(config);
     }

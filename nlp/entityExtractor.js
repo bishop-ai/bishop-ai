@@ -1,5 +1,3 @@
-// TODO: This should be packaged as a nodejs module along with common expressions and common nlp tools that plugins would use.
-
 var extractor = {};
 
 extractor.Entity = function (raw, type, value, source, confidence) {

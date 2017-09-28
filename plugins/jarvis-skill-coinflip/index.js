@@ -25,7 +25,6 @@ var CoinFlip = function () {
 
 module.exports = {
     namespace: 'coinflip',
-    type: 'SKILL',
     register: function () {
         return new CoinFlip();
     }

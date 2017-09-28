@@ -1,4 +1,4 @@
-var nlp = require('./../nlp/index');
+var nlp = require('./../nlp');
 
 var Expression = function (value, trigger, condition, context) {
     this.value = "";

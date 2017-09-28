@@ -1,16 +1,7 @@
 var assert = require("assert");
 var moment = require('moment');
 
-var DateTimeExtractor = require("../index");
-
-// TODO: This is a copy from the core module and should be removed once the core module utilities are packaged as a separate nodejs module
-var entityExtractor = require("./entityExtractor");
-var expressions = require("./expressions");
-
-var dateTimeExtractor = DateTimeExtractor.register({
-    commonExtractor: entityExtractor,
-    commonExpressions: expressions
-});
+var dateTimeExtractor = require("./../nlp/ner/datetime");
 
 var eql = function (string, moment) {
     assert.equal(dateTimeExtractor.extractDatetime(string), moment.format(), string);

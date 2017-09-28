@@ -26,7 +26,6 @@ angular.module('AI').controller('InterfaceCtrl', [
 
         $scope.message = "";
         $scope.transcript = [];
-        $scope.audioFile = null;
         $scope.recording = false;
 
         var messageSentTime;
@@ -61,7 +60,6 @@ angular.module('AI').controller('InterfaceCtrl', [
                 $scope.transcript.push(message);
 
                 var handleMessage = function () {
-                    $scope.audioFile = data.audio;
                     if (data.message) {
 
                         if (speechSynthesis && SpeechSynthesisUtterance) {
