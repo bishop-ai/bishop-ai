@@ -3,28 +3,23 @@ var ffi = require('ffi');
 var Spotify = function () {
 
     this.intent = [
-        {value: "Quieter", trigger: "spotify.volumeDown"},
-        {value: "The music is too loud", trigger: "spotify.volumeDown"},
-        {value: "Turn the music down", trigger: "spotify.volumeDown"},
-        {value: "Turn the volume down", trigger: "spotify.volumeDown"},
-        {value: "Mute", trigger: "spotify.mute"},
-        {value: "Unmute", trigger: "spotify.mute"},
-        {value: "Louder", trigger: "spotify.volumeUp"},
-        {value: "The music is too quiet", trigger: "spotify.volumeUp"},
-        {value: "Turn the music up", trigger: "spotify.volumeUp"},
-        {value: "Turn the volume up", trigger: "spotify.volumeUp"},
-        {value: "Stop playing music", trigger: "spotify.stop"},
-        {value: "Stop the music", trigger: "spotify.stop"},
-        {value: "Turn off the music", trigger: "spotify.stop"},
-        {value: "Play the last song", trigger: "spotify.previous"},
-        {value: "Play the last song again", trigger: "spotify.previous"},
-        {value: "Pause music", trigger: "spotify.pause"},
-        {value: "Play the next song", trigger: "spotify.next"},
-        {value: "Next song", trigger: "spotify.next"},
-        {value: "Play music please", trigger: "spotify.play"},
-        {value: "Play music", trigger: "spotify.play"},
-        {value: "Play my music", trigger: "spotify.play"},
-        {value: "Turn the music on", trigger: "spotify.play"}
+        {value: "quieter [please]", trigger: "spotify.volumeDown"},
+        {value: "(the|my) music is too loud", trigger: "spotify.volumeDown"},
+        {value: "turn [(the|my)] (music|volume) down [please]", trigger: "spotify.volumeDown"},
+        {value: "mute [(music|volume|sound)] [please]", trigger: "spotify.mute"},
+        {value: "unmute [(music|volume|sound)] [please]", trigger: "spotify.mute"},
+        {value: "louder [please]", trigger: "spotify.volumeUp"},
+        {value: "[(the|my)] music is too quiet", trigger: "spotify.volumeUp"},
+        {value: "turn [(the|my)] (music|volume) up [please]", trigger: "spotify.volumeUp"},
+        {value: "stop [playing] [(the|my)] music [please]", trigger: "spotify.stop"},
+        {value: "turn off [(the|my)] music [please]", trigger: "spotify.stop"},
+        {value: "turn [(the|my)] music off [please]", trigger: "spotify.stop"},
+        {value: "[play [the]] last song [again] [please]", trigger: "spotify.previous"},
+        {value: "pause [(the|my)] music [please]", trigger: "spotify.pause"},
+        {value: "[play [the]] next song [please]", trigger: "spotify.next"},
+        {value: "play [(the|my)] music [please]", trigger: "spotify.play"},
+        {value: "turn [(the|my)] music on [please]", trigger: "spotify.play"},
+        {value: "turn on [(the|my)] music [please]", trigger: "spotify.play"}
     ];
 
     this.triggers = {
