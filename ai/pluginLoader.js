@@ -1,6 +1,7 @@
-var fs = require("fs");
-var path = require("path");
+var pjson = require('./../package.json');
+
 var EventEmitter = require('events');
+var findPlugins = require('find-plugins');
 
 var configuration = require('./configuration');
 var intentMatcher = require('./intentMatcher');
@@ -13,17 +14,20 @@ var pluginLoader = {
     namespaces: []
 };
 
-var Plugin = function (module) {
+var Plugin = function (module, pkg) {
     this.registrationFunction = module.register;
+    this.name = pkg.name;
+    this.description = pkg.description || "";
+
     this.namespace = module.namespace;
-    this.description = module.description || "";
+    this.examples = module.examples || [];
 
     this.enabled = false;
 
     this.intentMatchers = [];
     this.triggers = {};
     this.contextTriggers = {};
-    this.examples = [];
+    this.options = null;
 };
 
 Plugin.prototype.register = function (config) {
@@ -32,7 +36,8 @@ Plugin.prototype.register = function (config) {
     this.intentMatchers = [];
     this.triggers = {};
     this.contextTriggers = {};
-    this.examples = [];
+
+    var i;
 
     if (service.hasOwnProperty("triggers")) {
         var trigger;
@@ -54,7 +59,6 @@ Plugin.prototype.register = function (config) {
         }
     }
     if (service.hasOwnProperty("intent")) {
-        var i;
         var intent;
         for (i = 0; i < service.intent.length; i++) {
             intent = service.intent[i];
@@ -63,8 +67,9 @@ Plugin.prototype.register = function (config) {
             }
         }
     }
-
-    this.examples = service.examples || [];
+    if (service.hasOwnProperty("options")) {
+        this.options = service.options;
+    }
 };
 
 pluginLoader.onPluginEnabled = function (listener) {
@@ -78,11 +83,14 @@ pluginLoader.onPluginDisabled = function (listener) {
 pluginLoader.load = function () {
     console.log('Plugin Loader: Initializing plugins');
 
-    var self = this;
-    var normalizedPath = path.join(__dirname, "../plugins");
+    var packages = findPlugins({
+        keyword: pjson.name + " plugin"
+    }) || [];
 
-    fs.readdirSync(normalizedPath).forEach(function (file) {
-        var module = require("./../plugins/" + file);
+    var self = this;
+    packages.forEach(function (result) {
+        var pkg = result.pkg;
+        var module = require(pkg.name);
 
         if (typeof module.register === 'function' && module.namespace) {
 
@@ -91,18 +99,18 @@ pluginLoader.load = function () {
                 return;
             }
 
-            self.loadModule(module);
+            self.loadModule(module, pkg);
 
         }  else {
-            console.log('Plugin Loader: Invalid plugin: "plugins/' + file + '"');
+            console.log('Plugin Loader: Invalid plugin: "' + pkg.name + '"');
         }
     });
 
     console.log('Plugin Loader: Done initializing plugins');
 };
 
-pluginLoader.loadModule = function (module) {
-    var plugin = new Plugin(module);
+pluginLoader.loadModule = function (module, pkg) {
+    var plugin = new Plugin(module, pkg);
 
     this.plugins.push(plugin);
     this.namespaces.push(module.namespace);
@@ -130,13 +138,13 @@ pluginLoader.getEnabledPlugins = function () {
     });
 };
 
-pluginLoader.getPlugin = function (namespace) {
+pluginLoader.getPlugin = function (name) {
     var plugin = null;
 
     var plugins = this.getPlugins();
     var i;
     for (i = 0; i < plugins.length; i++) {
-        if (plugins[i].namespace.toLowerCase() === namespace.toLowerCase()) {
+        if (plugins[i].name === name) {
             plugin = plugins[i];
             break;
         }
@@ -145,14 +153,23 @@ pluginLoader.getPlugin = function (namespace) {
     return plugin;
 };
 
-pluginLoader.updatePlugin = function (namespace, updateTemplate) {
-    var plugin = this.getPlugin(namespace);
+pluginLoader.updatePlugin = function (name, updateTemplate) {
+    var plugin = this.getPlugin(name);
 
     if (updateTemplate && plugin) {
         if (updateTemplate.enabled) {
             this.enablePlugin(plugin);
         } else {
             this.disablePlugin(plugin);
+        }
+
+        plugin.options = updateTemplate.options;
+
+        var option;
+        for (option in plugin.options) {
+            if (plugin.options.hasOwnProperty(option)) {
+                configuration.setPluginSetting(plugin.namespace, option, plugin.options[option].value);
+            }
         }
     }
 
@@ -166,6 +183,13 @@ pluginLoader.enablePlugin = function (plugin) {
     }
 
     plugin.register(config); // TODO: Just use long-term/session memory?
+
+    var option;
+    for (option in plugin.options) {
+        if (plugin.options.hasOwnProperty(option) && config[option]) {
+            plugin.options[option].value = config[option];
+        }
+    }
 
     plugin.enabled = true;
 

@@ -1,4 +1,9 @@
+var pjson = require('./../package.json');
+
 var router = require('express').Router();
+var npmKeyword = require('npm-keyword');
+var npmi = require('npmi');
+var path = require('path');
 
 var Brain = require('./brain');
 var classifier = require('./classifier');
@@ -18,10 +23,30 @@ var sanitizePlugins = function (input) {
         return plugins;
     }
 
+    var triggers = [];
+    var contextTriggers = [];
+
+    var trigger;
+    for (trigger in input.triggers) {
+        if (input.triggers.hasOwnProperty(trigger)) {
+            triggers.push(trigger);
+        }
+    }
+    for (trigger in input.contextTriggers) {
+        if (input.contextTriggers.hasOwnProperty(trigger)) {
+            contextTriggers.push(trigger);
+        }
+    }
+
     return {
-        namespace: input.namespace,
+        name: input.name,
         description: input.description,
-        enabled: input.enabled
+        namespace: input.namespace,
+        options: input.options,
+        enabled: input.enabled,
+        triggers: contextTriggers,
+        contextTriggers: contextTriggers,
+        examples: input.examples
     };
 };
 
@@ -42,12 +67,44 @@ router.post('/train', function (req, res) {
     });
 });
 
+router.get('/packages', function (req, res) {
+    npmKeyword(pjson.name + " plugin").then(function (packages) {
+        res.send(packages);
+    });
+});
+
+router.post('/packages', function (req, res) {
+    if (!req.body || !req.body.name) {
+        res.status(500).send("Invalid package");
+    }
+
+    // TODO: Install as bundle dependency
+    var options = {
+        name: req.body.name,
+        version: 'latest',
+        path: '.'
+    };
+    npmi(options, function (err) {
+        if (err) {
+            if (err.code === npmi.LOAD_ERR) {
+                res.status(500).send('NPM load error: ' + err.message);
+            } else {
+                res.status(500).send('NPM install error: ' + err.message);
+            }
+            return;
+        }
+
+        res.send(options.name + '@' + options.version + ' installed successfully in ' + path.resolve(options.path));
+        pluginLoader.load();
+    });
+});
+
 router.get('/plugins', function (req, res) {
     res.send(sanitizePlugins(pluginLoader.getPlugins()));
 });
 
-router.get('/plugins/:namespace', function (req, res) {
-    var plugin = pluginLoader.getPlugin(req.params.namespace);
+router.get('/plugins/:name', function (req, res) {
+    var plugin = pluginLoader.getPlugin(req.params.name);
 
     if (plugin) {
         res.send(sanitizePlugins(plugin));
@@ -56,8 +113,8 @@ router.get('/plugins/:namespace', function (req, res) {
     }
 });
 
-router.put('/plugins/:namespace', function (req, res) {
-    var plugin = pluginLoader.updatePlugin(req.params.namespace, req.body);
+router.put('/plugins/:name', function (req, res) {
+    var plugin = pluginLoader.updatePlugin(req.params.name, req.body);
 
     if (plugin) {
         res.send(sanitizePlugins(plugin));

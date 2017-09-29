@@ -51,6 +51,8 @@ classifier.train = function () {
 
     console.log('Classifier: Starting training on enabled plugins');
 
+    this.bayesClassifier = new natural.BayesClassifier();
+
     var i;
     var matchers = [];
     var plugins = pluginLoader.getEnabledPlugins();
@@ -77,13 +79,11 @@ classifier.train = function () {
     }
 
     var self = this;
-    this.bayesClassifier.events.once('doneTraining', function () {
+    this.bayesClassifier.trainParallel(function () {
         console.log('Classifier: Bayes Classifier training done');
         self.save();
         dfd.resolve();
     });
-
-    this.bayesClassifier.train();
 
     return dfd.promise;
 };

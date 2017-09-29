@@ -1,0 +1,62 @@
+<div class="masthead clearfix">
+    <div class="inner">
+        <h3 class="masthead-brand">Plugins</h3>
+        <nav data-fade-out="true">
+            <ul class="nav masthead-nav">
+                <li><a href="#/">Interface</a></li>
+                <li class="active"><a href="#/plugins">Plugins</a></li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<div class="site-wrapper">
+    <div class="site-wrapper-inner">
+        <div class="cover-container">
+
+            <div class="inner cover">
+
+
+                <h2>
+                    <span>{{plugin.name}}</span>
+                    <span class="pull-right">
+                        <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
+                        <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-default">Disable</button>
+                    </span>
+                </h2>
+
+                <p><em>{{plugin.description}}</em></p>
+
+                <div class="section" data-ng-show="plugin.examples.length > 0">
+                    <h3>Example Phrases</h3>
+                    <ul>
+                        <li data-ng-repeat="example in plugin.examples">{{example}}</li>
+                    </ul>
+                </div>
+
+                <div class="section" data-ng-show="plugin.enabled">
+                    <h3>Configuration</h3>
+
+                    <p data-ng-show="!plugin.options">There are no plugin options to configure.</p>
+
+                    <form class="form-horizontal" data-ng-show="plugin.options">
+                        <div class="form-group" data-ng-repeat="(key, option) in plugin.options">
+                            <label for="{{$index}}" class="col-sm-2 control-label">{{option.name || key}}</label>
+                            <div class="col-sm-10">
+                                <input data-ng-if="!option.protected" type="text" class="form-control" id="{{$index}}" data-ng-model="option.value">
+                                <input data-ng-if="option.protected" type="password" class="form-control" id="{{$index}}" data-ng-model="option.value">
+                                <div><small data-ng-show="option.description"><em>{{option.description}}</em></small></div>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary" data-ng-click="updatePluginOptions()">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

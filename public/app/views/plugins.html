@@ -22,49 +22,70 @@
 
                 <br />
 
-                <div class="tab-container" style="overflow: auto; height: 600px">
+                <div class="tab-container">
                     <div data-ng-show="tabs[0].active">
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th></th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr data-ng-repeat="plugin in plugins">
-                                <td>{{plugin.namespace}}</td>
-                                <td style="width: 100%">{{plugin.description}}</td>
-                                <td>
-                                    <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
-                                    <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-default">Disable</button>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+
+                        <div class="text-center" data-ng-show="plugins.length === 0">
+                            <p>No plugins are loaded. Click <a href data-ng-click="setActiveTab(1)">Find New Plugins</a> to search for plugins to install.</p>
+                        </div>
+
+                        <div data-ng-show="plugins.length > 0" class="table-container">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th style="width: 0"></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr data-ng-repeat="plugin in plugins">
+                                    <td><a data-ng-href="/#/plugins/{{plugin.name}}">{{plugin.name}}</a></td>
+                                    <td>{{plugin.description}}</td>
+                                    <td>
+                                        <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
+                                        <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-default">Disable</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div data-ng-show="tabs[1].active">
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th></th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr data-ng-repeat="plugin in availablePlugins">
-                                <td>{{plugin.namespace}}</td>
-                                <td style="width: 100%">{{plugin.description}}</td>
-                                <td>
-                                    <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
-                                    <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-danger">Disable</button>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+
+                        <div class="text-center" data-ng-show="loadingAvailable">
+                            <p>Searching<span class="ellipsis-anim"><span>.</span><span>.</span><span>.</span></span></p>
+                        </div>
+
+                        <div class="text-center" data-ng-show="availablePackages.length === 0">
+                            <p>No new plugins are available.</p>
+                        </div>
+
+                        <div data-ng-show="!loadingAvailable && availablePackages.length > 0">
+                            <input type="text" class="form-control" placeholder="Filter..." data-ng-model="filter">
+
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th style="width: 0"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr data-ng-repeat="package in availablePackages | filter:filter">
+                                        <td>{{package.name}}</td>
+                                        <td>{{package.description}}</td>
+                                        <td>
+                                            <button data-ng-disabled="saving" data-ng-click="installPackage(package)" class="btn btn-primary">Install</button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

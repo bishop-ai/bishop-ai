@@ -1,4 +1,4 @@
-angular.module('AI', ['ngRoute', 'ngSanitize']);
+angular.module('AI', ['ngAnimate', 'ngRoute', 'ngSanitize']);
 
 angular.module('AI').constant('version', "1.0.0");
 angular.module('AI').constant('debugMode', 0);
@@ -24,6 +24,17 @@ angular.module('AI').config([
                 resolve: {
                     plugins: ['$http', function ($http) {
                         return $http.get("/api/plugins").then(function (response) {
+                            return response.data;
+                        });
+                    }]
+                }
+            })
+            .when('/plugins/:name', {
+                templateUrl: 'app/views/plugin.html',
+                controller: 'PluginCtrl',
+                resolve: {
+                    plugin: ['$http', '$route', function ($http, $route) {
+                        return $http.get("/api/plugins/" + $route.current.params.name).then(function (response) {
                             return response.data;
                         });
                     }]

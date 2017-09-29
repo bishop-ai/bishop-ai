@@ -10,13 +10,32 @@ angular.module('AI').controller('PluginsCtrl', [
               plugins) {
 
         $scope.plugins = plugins;
-        $scope.availablePlugins = [];
+        $scope.availablePackages = [];
         $scope.saving = false;
+        $scope.loadingAvailable = false;
+        $scope.filter = "";
 
         $scope.tabs = [
-            {name: "Loaded", active: true},
+            {name: "Installed Plugins", active: true},
             {name: "Find New Plugins", active: false}
         ];
+
+        $scope.loadingAvailable = true;
+        $http.get("/api/packages").then(function (response) {
+            $scope.loadingAvailable = false;
+
+            var installedPkgNames = [];
+            var i;
+            for (i = 0; i < $scope.plugins.length; i++) {
+                installedPkgNames.push($scope.plugins[i].name);
+            }
+
+            $scope.availablePackages = response.data.filter(function (pkg) {
+                return installedPkgNames.indexOf(pkg.name) === -1;
+            });
+        }, function () {
+            $scope.loadingAvailable = false;
+        });
 
         $scope.setActiveTab = function (index) {
             var i;
@@ -28,7 +47,7 @@ angular.module('AI').controller('PluginsCtrl', [
 
         var updatePlugin = function (plugin) {
             $scope.saving = true;
-            return $http.put("/api/plugins/" + plugin.namespace, plugin).then(function (response) {
+            return $http.put("/api/plugins/" + plugin.name, plugin).then(function (response) {
                 $scope.saving = false;
                 return response;
             }, function (error) {
@@ -57,5 +76,13 @@ angular.module('AI').controller('PluginsCtrl', [
             });
         };
 
+        $scope.installPackage = function (pkg) {
+            $http.post("/api/packages/", pkg).then(function () {
+                $scope.setActiveTab(0);
+                $rootScope.$broadcast("fire");
+            }, function () {
+                alert("Error installing plugin");
+            });
+        };
     }
 ]);
