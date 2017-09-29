@@ -1,11 +1,13 @@
 angular.module('AI').controller('PluginsCtrl', [
     '$rootScope',
     '$scope',
+    '$location',
     '$http',
     'plugins',
 
     function ($rootScope,
               $scope,
+              $location,
               $http,
               plugins) {
 
@@ -78,7 +80,7 @@ angular.module('AI').controller('PluginsCtrl', [
 
         $scope.installPackage = function (pkg) {
             $http.post("/api/packages/", pkg).then(function () {
-                $scope.setActiveTab(0);
+                $location.path("/plugins/" + pkg.name);
                 $rootScope.$broadcast("fire");
             }, function () {
                 alert("Error installing plugin");
