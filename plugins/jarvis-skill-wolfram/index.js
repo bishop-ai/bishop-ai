@@ -68,7 +68,7 @@ Wolfram.prototype.query = function (query, params, cb) {
 
 module.exports = {
     namespace: 'wolfram',
-    exampled: [
+    examples: [
         "Ask Wolfram how big the earth is"
     ],
     register: function (config) {
