@@ -204,10 +204,6 @@ a:hover {
     padding-bottom: 20px;
     z-index: 2;
 }
-.masthead-brand {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
 
 .masthead-nav > li {
     display: inline-block;
@@ -238,9 +234,6 @@ a:hover {
 }
 
 @media (min-width: 768px) {
-    .masthead-brand {
-        float: left;
-    }
     .masthead-nav {
         float: right;
     }
