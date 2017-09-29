@@ -26,7 +26,7 @@ var Wolfram = function (config) {
     this.context = {};
 
     this.options = {
-        appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/"}
+        appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/", protected: true}
     };
 };
 

@@ -34,7 +34,7 @@ var Ifttt = function (config) {
     }
 
     this.options = {
-        key: {name: "Key", description: "Your IFTT key found at https://ifttt.com/services/maker_webhooks/settings"}
+        key: {name: "Key", description: "Your IFTT key found at https://ifttt.com/services/maker_webhooks/settings", protected: true}
     };
 };
 
