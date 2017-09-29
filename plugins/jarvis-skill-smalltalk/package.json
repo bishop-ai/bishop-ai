@@ -1,7 +1,10 @@
 {
     "name": "jarvis-skill-smalltalk",
     "version": "1.0.0",
-    "description": "Skill plugin for Jarvis that enables conversational triggers.",
+    "description": "Plugin for Jarvis that enables conversational triggers.",
+    "keywords": [
+        "J.A.R.V.I.S. plugin"
+    ],
     "author": {
         "name": "David Hamilton",
         "email": "nova706@gmail.com",

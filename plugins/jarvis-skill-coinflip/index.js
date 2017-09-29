@@ -1,9 +1,9 @@
 var CoinFlip = function () {
 
     this.intent = [
-        {value: "Heads or tails?", trigger: "coinflip.flip"},
-        {value: "Flip a coin", trigger: "coinflip.flip"},
-        {value: "Coin toss", trigger: "coinflip.flip"}
+        {value: "heads or tails", trigger: "coinflip.flip"},
+        {value: "flip a coin [please]", trigger: "coinflip.flip"},
+        {value: "coin toss [please]", trigger: "coinflip.flip"}
     ];
 
     this.triggers = {
@@ -16,15 +16,14 @@ var CoinFlip = function () {
     };
 
     this.context = {};
-
-    this.examples = [
-        "Heads or tails?",
-        "Flip a coin"
-    ];
 };
 
 module.exports = {
     namespace: 'coinflip',
+    examples: [
+        "Heads or tails?",
+        "Flip a coin"
+    ],
     register: function () {
         return new CoinFlip();
     }

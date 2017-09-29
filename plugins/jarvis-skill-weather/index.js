@@ -182,12 +182,11 @@ var Weather = function (config) {
 
     this.context = {};
 
-    this.examples = [
-        "What is the weather like",
-        "What's the temperature",
-        "How hot will it be tomorrow",
-        "Is it going to snow?"
-    ];
+    this.options = {
+        apiKey: {name: "API Key", description: "Your Dark Sky API key found at https://darksky.net/dev/account", protected: true},
+        latitude: {name: "Latitude", description: "Your latitude coordinate"},
+        longitude: {name: "Longitude", description: "Your longitude coordinate"}
+    };
 };
 
 Weather.extractCurrentTempRangeResponses = function (weather) {
@@ -398,7 +397,7 @@ Weather.getWeather = function (config, current) {
         dfd.resolve(weather);
     } else {
         console.log('Fetching weather');
-        var uri = 'https://api.forecast.io/forecast/' + config.apiKey + '/' + config.location;
+        var uri = 'https://api.darksky.net/forecast/' + config.apiKey + '/' + config.latitude + "," + config.longitude;
 
         request(uri, function (error, response, body) {
             if (error) {
@@ -421,6 +420,12 @@ Weather.failureMessages = [
 
 module.exports = {
     namespace: 'weather',
+    examples: [
+        "What's the weather like?",
+        "What's the temperature?",
+        "How hot will it be tomorrow?",
+        "Is it going to snow?"
+    ],
     register: function (config) {
         return new Weather(config);
     }

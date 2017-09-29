@@ -5,7 +5,6 @@ var Ifttt = function (config) {
 
     this.intent = [];
     this.triggers = {};
-    this.examples = [];
     this.context = {};
 
     // Bind to the intent containing event to be called
@@ -31,10 +30,12 @@ var Ifttt = function (config) {
                 trigger: "ifttt." + intent.event
             });
             this.triggers[intent.event] = triggerFunction.bind(intent);
-
-            this.examples.push(intent.value);
         }
     }
+
+    this.options = {
+        key: {name: "Key", description: "Your IFTT key found at https://ifttt.com/services/maker_webhooks/settings"}
+    };
 };
 
 Ifttt.prototype.makeCall = function (event) {

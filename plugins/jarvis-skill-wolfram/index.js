@@ -5,12 +5,15 @@ var Wolfram = function (config) {
     this.appKey = config.appId;
 
     this.intent = [
-        {value: "How big is the earth?", trigger: "wolfram.query"}
+        {value: "Ask Wolfram *", trigger: "wolfram.query"}
     ];
 
     this.triggers = {
         query: function (dfd, expression) {
-            this.query(expression.value, null, function (error, pods) {
+
+            var query = expression.normalized.substr("Ask Wolfram ".length);
+
+            this.query(query, null, function (error, pods) {
                 if (error) {
                     dfd.reject(error);
                 } else {
@@ -22,9 +25,9 @@ var Wolfram = function (config) {
 
     this.context = {};
 
-    this.examples = [
-        "How big is the earth?"
-    ];
+    this.options = {
+        appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/"}
+    };
 };
 
 Wolfram.prototype.query = function (query, params, cb) {
@@ -65,6 +68,9 @@ Wolfram.prototype.query = function (query, params, cb) {
 
 module.exports = {
     namespace: 'wolfram',
+    exampled: [
+        "Ask Wolfram how big the earth is"
+    ],
     register: function (config) {
         return new Wolfram(config);
     }

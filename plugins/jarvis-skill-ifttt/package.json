@@ -1,7 +1,10 @@
 {
     "name": "jarvis-skill-ifttt",
     "version": "1.0.0",
-    "description": "Skill plugin for Jarvis for webhooks in IFTTT.",
+    "description": "Plugin for Jarvis for webhooks in IFTTT.",
+    "keywords": [
+        "J.A.R.V.I.S. plugin"
+    ],
     "author": {
         "name": "David Hamilton",
         "email": "nova706@gmail.com",

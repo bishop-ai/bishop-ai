@@ -405,16 +405,15 @@ var SmallTalk = function (nlp) {
         "whatIsYourName": "smalltalk.setUserName",
         "whatIsMyName": "smalltalk.setAiName"
     };
-
-    this.examples = [
-        "What is your name?",
-        "What can you do?",
-        "How are you?"
-    ];
 };
 
 module.exports = {
     namespace: "smalltalk",
+    examples: [
+        "What is your name?",
+        "What can you do?",
+        "How are you?"
+    ],
     register: function (config, nlp) {
         return new SmallTalk(nlp);
     }

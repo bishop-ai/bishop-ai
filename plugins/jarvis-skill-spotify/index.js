@@ -58,12 +58,6 @@ var Spotify = function () {
     };
 
     this.context = {};
-
-    this.examples = [
-        "Play music",
-        "Next song",
-        "Turn the volume up"
-    ];
 };
 
 Spotify.sendCmd = function (commandCode) {
@@ -99,6 +93,11 @@ Spotify.commands = {
 
 module.exports = {
     namespace: 'spotify',
+    examples: [
+        "Play music",
+        "Next song",
+        "Turn the volume up"
+    ],
     register: function () {
         return new Spotify();
     }
