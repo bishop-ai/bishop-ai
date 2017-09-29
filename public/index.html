@@ -12,7 +12,9 @@
 
 <body>
 
-<div data-ng-cloak data-ng-view></div>
+<div id='particles-js' class="vz-wrapper" particles>
+    <div style="height: 100%; width: 100%; position:absolute;" data-ng-cloak data-ng-view></div>
+</div>
 
 <!-- Load Library Scripts -->
 <script type="text/javascript" src="lib/jquery/dist/jquery.min.js"></script>
@@ -25,11 +27,13 @@
 
 <!-- Load App Script -->
 <script type="text/javascript" src="app/app.js"></script>
+<script src="app/directives/autofocus.js"></script>
 <script src="app/directives/fadeOut.js"></script>
 <script src="app/directives/particles.js"></script>
 <script src="app/directives/scrollBottom.js"></script>
 <script src="app/services/socketFactory.js"></script>
 <script src="app/views/interface.js"></script>
+<script src="app/views/plugins.js"></script>
 
 </body>
 </html>

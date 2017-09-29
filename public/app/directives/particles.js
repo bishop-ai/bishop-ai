@@ -3,11 +3,8 @@ angular.module('AI').directive('particles', [
         return {
             restrict: 'A',
             scope: {
-                'config': '=particles',
-                'fire': '='
+                'config': '=particles'
             },
-            template: "<div id='particles-js'></div>",
-            replace: true,
             link: function (scope, elem) {
 
                 scope.$watch("config", function () {
@@ -120,31 +117,29 @@ angular.module('AI').directive('particles', [
                     particlesJS("particles-js", config);
                 });
 
-                scope.$watch("fire", function () {
-                    if (scope.fire === true || scope.fire === false) {
-                        var canvas = elem.find("canvas")[0];
-                        var bodyWidth = elem.width();
-                        var bodyHeight = elem.height();
-                        var randPosX = Math.floor((Math.random() * bodyWidth));
-                        var randPosY = Math.floor((Math.random() * bodyHeight));
+                scope.$on("fire", function () {
+                    var canvas = elem.find("canvas")[0];
+                    var bodyWidth = elem.width();
+                    var bodyHeight = elem.height();
+                    var randPosX = Math.floor((Math.random() * bodyWidth));
+                    var randPosY = Math.floor((Math.random() * bodyHeight));
 
-                        var particles = pJSDom[0].pJS;
-                        particles.interactivity.mouse.pos_x = bodyWidth / 2;
-                        particles.interactivity.mouse.pos_y = bodyHeight / 2;
+                    var particles = pJSDom[0].pJS;
+                    particles.interactivity.mouse.pos_x = bodyWidth / 2;
+                    particles.interactivity.mouse.pos_y = bodyHeight / 2;
 
-                        var evt = new MouseEvent("click", {
-                            view: window,
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        canvas.dispatchEvent(evt);
+                    var evt = new MouseEvent("click", {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    canvas.dispatchEvent(evt);
 
-                        particles.fn.modes.removeParticles(5);
+                    particles.fn.modes.removeParticles(5);
 
-                        particles.interactivity.mouse.pos_x = randPosX;
-                        particles.interactivity.mouse.pos_y = randPosY;
-                        particles.fn.modes.pushParticles(5, particles.interactivity.mouse);
-                    }
+                    particles.interactivity.mouse.pos_x = randPosX;
+                    particles.interactivity.mouse.pos_y = randPosY;
+                    particles.fn.modes.pushParticles(5, particles.interactivity.mouse);
                 });
             }
         };

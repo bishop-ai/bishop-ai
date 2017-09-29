@@ -5,7 +5,7 @@ angular.module('AI').directive('fadeOut', [
             scope: {
                 'when': '=fadeOut'
             },
-            link: function (scope, elem) {
+            link: function (scope, elem, attrs) {
 
                 var scrollParent = elem.parent().parent();
 
@@ -13,25 +13,31 @@ angular.module('AI').directive('fadeOut', [
                     return scrollParent[0].scrollHeight - scrollParent.parent().height() === scrollParent.scrollTop();
                 };
 
+                if (scope.when && (!attrs.withScroll || atBottom())) {
+                    elem.stop().fadeTo(3000, 0.1);
+                }
+
                 elem.hover(function () {
-                    if (scope.when && atBottom()) {
+                    if (scope.when && (!attrs.withScroll || atBottom())) {
                         elem.stop().fadeTo(1000, 1);
                     }
                 }, function () {
-                    if (scope.when && atBottom()) {
+                    if (scope.when && (!attrs.withScroll || atBottom())) {
                         elem.stop().fadeTo(3000, 0.1);
                     }
                 });
 
-                scrollParent.scroll(function () {
-                    if (scope.when) {
-                        if (atBottom()) {
-                            elem.stop().fadeTo(3000, 0.1);
-                        } else {
-                            elem.stop().fadeTo(1000, 1);
+                if (attrs.withScroll) {
+                    scrollParent.scroll(function () {
+                        if (scope.when) {
+                            if (atBottom()) {
+                                elem.stop().fadeTo(3000, 0.1);
+                            } else {
+                                elem.stop().fadeTo(1000, 1);
+                            }
                         }
-                    }
-                });
+                    });
+                }
 
             }
         };

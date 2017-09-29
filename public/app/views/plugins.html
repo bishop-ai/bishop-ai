@@ -1,0 +1,76 @@
+<div class="masthead clearfix">
+    <div class="inner">
+        <h3 class="masthead-brand">Plugins</h3>
+        <nav data-fade-out="true">
+            <ul class="nav masthead-nav">
+                <li><a href="#/">Interface</a></li>
+                <li class="active"><a href="#/plugins">Plugins</a></li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<div class="site-wrapper">
+    <div class="site-wrapper-inner">
+        <div class="cover-container">
+
+            <div class="inner cover">
+
+                <ul class="nav nav-tabs">
+                    <li data-ng-repeat="tab in tabs" role="presentation" data-ng-class="{active: tab.active}" data-ng-click="setActiveTab($index)"><a href>{{tab.name}}</a></li>
+                </ul>
+
+                <br />
+
+                <div class="tab-container" style="overflow: auto; height: 600px">
+                    <div data-ng-show="tabs[0].active">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr data-ng-repeat="plugin in plugins">
+                                <td>{{plugin.namespace}}</td>
+                                <td style="width: 100%">{{plugin.description}}</td>
+                                <td>
+                                    <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
+                                    <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-default">Disable</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div data-ng-show="tabs[1].active">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr data-ng-repeat="plugin in availablePlugins">
+                                <td>{{plugin.namespace}}</td>
+                                <td style="width: 100%">{{plugin.description}}</td>
+                                <td>
+                                    <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
+                                    <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-danger">Disable</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>

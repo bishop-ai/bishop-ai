@@ -17,6 +17,17 @@ angular.module('AI').config([
             .when('/', {
                 templateUrl: 'app/views/interface.html',
                 controller: 'InterfaceCtrl'
+            })
+            .when('/plugins', {
+                templateUrl: 'app/views/plugins.html',
+                controller: 'PluginsCtrl',
+                resolve: {
+                    plugins: ['$http', function ($http) {
+                        return $http.get("/api/plugins").then(function (response) {
+                            return response.data;
+                        });
+                    }]
+                }
             });
     }
 ]);

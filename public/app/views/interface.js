@@ -1,15 +1,15 @@
 angular.module('AI').controller('InterfaceCtrl', [
+    '$rootScope',
     '$scope',
     '$sanitize',
     '$timeout',
     'socket',
 
-    function ($scope,
+    function ($rootScope,
+              $scope,
               $sanitize,
               $timeout,
               socket) {
-
-        $scope.fire = false;
 
         //var hotWord = "wheatley"; // TODO: Get this from the server and allow the server to update it at any time
         //var useHotWord = true; // TODO: Allow this to be set by the user
@@ -70,7 +70,7 @@ angular.module('AI').controller('InterfaceCtrl', [
 
                         message.m = data.message;
                         message.html = $sanitize(data.html);
-                        $scope.fire = !$scope.fire;
+                        $rootScope.$emit("fire");
                     }
                 };
 
