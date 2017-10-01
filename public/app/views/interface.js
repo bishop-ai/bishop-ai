@@ -4,25 +4,17 @@ angular.module('AI').controller('InterfaceCtrl', [
     '$sanitize',
     '$timeout',
     'socket',
+    'speechService',
 
     function ($rootScope,
               $scope,
               $sanitize,
               $timeout,
-              socket) {
+              socket,
+              speechService) {
 
         //var hotWord = "wheatley"; // TODO: Get this from the server and allow the server to update it at any time
         //var useHotWord = true; // TODO: Allow this to be set by the user
-
-        var speechSynthesis = window.speechSynthesis;
-        var SpeechSynthesisUtterance = window.SpeechSynthesisUtterance;
-
-        var voice;
-        if (speechSynthesis && SpeechSynthesisUtterance) {
-            speechSynthesis.onvoiceschanged = function() {
-                voice = speechSynthesis.getVoices().filter(function(voice) { return voice.name === 'Google UK English Male'; })[0];
-            };
-        }
 
         $scope.message = "";
         $scope.transcript = [];
@@ -62,10 +54,10 @@ angular.module('AI').controller('InterfaceCtrl', [
                 var handleMessage = function () {
                     if (data.message) {
 
-                        if (speechSynthesis && SpeechSynthesisUtterance) {
-                            var msg = new SpeechSynthesisUtterance(data.message);
-                            msg.voice = voice;
-                            speechSynthesis.speak(msg);
+                        if (speechService.speechSynthesis && speechService.SpeechSynthesisUtterance) {
+                            var msg = new speechService.SpeechSynthesisUtterance(data.message);
+                            msg.voice = speechService.voice;
+                            speechService.speechSynthesis.speak(msg);
                         }
 
                         message.m = data.message;
@@ -98,14 +90,8 @@ angular.module('AI').controller('InterfaceCtrl', [
             }
         };
 
-        var SpeechRecognition = window.SpeechRecognition ||
-            window.webkitSpeechRecognition ||
-            window.mozSpeechRecognition ||
-            window.msSpeechRecognition ||
-            window.oSpeechRecognition;
-
-        if (SpeechRecognition) {
-            var recognition = new SpeechRecognition();
+        if (speechService.SpeechRecognition) {
+            var recognition = new speechService.SpeechRecognition();
             recognition.continuous = true;
             recognition.lang = 'en-US';
             recognition.interimResults = false;

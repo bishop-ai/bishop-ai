@@ -4,6 +4,7 @@
             <ul class="nav masthead-nav">
                 <li><a href="#/">Interface</a></li>
                 <li class="active"><a href="#/plugins">Plugins</a></li>
+                <li data-ng-show="authenticated"><a href data-ng-click="logout()">Logout</a></li>
             </ul>
         </nav>
     </div>
@@ -15,10 +16,9 @@
 
             <div class="inner cover">
 
-
                 <h2>
                     <span>{{plugin.name}}</span>
-                    <span class="pull-right">
+                    <span class="pull-right" data-ng-show="authenticated">
                         <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled" class="btn btn-primary">Enable</button>
                         <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled" class="btn btn-default">Disable</button>
                     </span>
@@ -33,7 +33,7 @@
                     </ul>
                 </div>
 
-                <div class="section" data-ng-show="plugin.enabled">
+                <div class="section" data-ng-show="plugin.enabled && authenticated">
                     <h3>Configuration</h3>
 
                     <p data-ng-show="!plugin.options">There are no plugin options to configure.</p>
@@ -55,6 +55,11 @@
                         </div>
                     </form>
                 </div>
+
+                <div class="section">
+                    <p><i data-ng-show="!authenticated">You must <a href="/#/login">login</a> to change plugin settings.</i></p>
+                </div>
+
             </div>
         </div>
     </div>

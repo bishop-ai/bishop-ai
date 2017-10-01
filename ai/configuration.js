@@ -1,10 +1,13 @@
 var extend = require('extend');
 
 var cache = require('./cache');
+var uuid = require('./uuid');
 
 var configuration = {
     file: 'configuration.json',
     settings: {
+        secret: "",
+        users: {},
         enabledPlugins: [],
         plugins: {}
     }
@@ -12,6 +15,11 @@ var configuration = {
 
 configuration.init = function () {
     extend(this.settings, cache.read(this.file));
+
+    if (!this.settings.secret) {
+        this.settings.secret = uuid.generate();
+        this._commit();
+    }
 };
 
 configuration.setPluginSetting = function (namespace, key, value) {

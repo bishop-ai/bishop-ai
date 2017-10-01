@@ -2,53 +2,30 @@ var pjson = require('./../package.json');
 
 var router = require('express').Router();
 var npmKeyword = require('npm-keyword');
-var npmi = require('npmi');
-var path = require('path');
 
+var auth = require('./auth');
 var Brain = require('./brain');
 var classifier = require('./classifier');
 var pluginLoader = require('./pluginLoader');
 
 var brain = new Brain();
 
-var sanitizePlugins = function (input) {
-    if (input instanceof Array) {
-        var plugins = [];
+router.get('/auth', auth.authorize, function (req, res) {
+    res.status(200).send();
+});
 
-        var i;
-        for (i = 0; i < input.length; i++) {
-            plugins.push(sanitizePlugins(input[i]));
-        }
+router.post('/auth', function (req, res) {
+    var token = auth.getToken(req.body.username, req.body.password);
 
-        return plugins;
+    if (token) {
+        res.status(200).send({
+            'token': token,
+            'username': req.body.username
+        });
+    } else {
+        res.status(401).send('Incorrect username or password.');
     }
-
-    var triggers = [];
-    var contextTriggers = [];
-
-    var trigger;
-    for (trigger in input.triggers) {
-        if (input.triggers.hasOwnProperty(trigger)) {
-            triggers.push(trigger);
-        }
-    }
-    for (trigger in input.contextTriggers) {
-        if (input.contextTriggers.hasOwnProperty(trigger)) {
-            contextTriggers.push(trigger);
-        }
-    }
-
-    return {
-        name: input.name,
-        description: input.description,
-        namespace: input.namespace,
-        options: input.options,
-        enabled: input.enabled,
-        triggers: contextTriggers,
-        contextTriggers: contextTriggers,
-        examples: input.examples
-    };
-};
+});
 
 router.get('/test/:message', function (req, res) {
     var message = decodeURIComponent(req.params.message);
@@ -59,7 +36,7 @@ router.get('/test/:message', function (req, res) {
     });
 });
 
-router.post('/train', function (req, res) {
+router.post('/train', auth.authorize, function (req, res) {
     classifier.train().then(function () {
         res.send();
     }, function (err) {
@@ -73,51 +50,46 @@ router.get('/packages', function (req, res) {
     });
 });
 
-router.post('/packages', function (req, res) {
+router.post('/packages', auth.authorize, function (req, res) {
     if (!req.body || !req.body.name) {
         res.status(500).send("Invalid package");
     }
 
-    // TODO: Install as bundle dependency
-    var options = {
-        name: req.body.name,
-        version: 'latest',
-        path: '.'
-    };
-    npmi(options, function (err) {
+    pluginLoader.installPluginPackage(req.body.name, function (err) {
         if (err) {
-            if (err.code === npmi.LOAD_ERR) {
-                res.status(500).send('NPM load error: ' + err.message);
-            } else {
-                res.status(500).send('NPM install error: ' + err.message);
-            }
+            res.status(500).send('NPM install error: ' + err.message);
             return;
         }
 
-        res.send(options.name + '@' + options.version + ' installed successfully in ' + path.resolve(options.path));
-        pluginLoader.load();
+        res.send(req.body.name + '@latest installed successfully');
     });
 });
 
 router.get('/plugins', function (req, res) {
-    res.send(sanitizePlugins(pluginLoader.getPlugins()));
+    auth.verifyToken(req, function (err) {
+        res.send(pluginLoader.sanitizePlugins(pluginLoader.getPlugins(), !err));
+    });
 });
 
 router.get('/plugins/:name', function (req, res) {
     var plugin = pluginLoader.getPlugin(req.params.name);
 
     if (plugin) {
-        res.send(sanitizePlugins(plugin));
+        auth.verifyToken(req, function (err) {
+            res.send(pluginLoader.sanitizePlugins(plugin, !err));
+        });
     } else {
         res.status(404).send();
     }
 });
 
-router.put('/plugins/:name', function (req, res) {
+router.put('/plugins/:name', auth.authorize, function (req, res) {
     var plugin = pluginLoader.updatePlugin(req.params.name, req.body);
 
     if (plugin) {
-        res.send(sanitizePlugins(plugin));
+        auth.verifyToken(req, function (err) {
+            res.send(pluginLoader.sanitizePlugins(plugin, !err));
+        });
     } else {
         res.status(404).send();
     }

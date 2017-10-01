@@ -2,6 +2,7 @@ var pjson = require('./../package.json');
 
 var EventEmitter = require('events');
 var findPlugins = require('find-plugins');
+var npmi = require('npmi');
 
 var configuration = require('./configuration');
 var intentMatcher = require('./intentMatcher');
@@ -78,6 +79,21 @@ pluginLoader.onPluginEnabled = function (listener) {
 
 pluginLoader.onPluginDisabled = function (listener) {
     emitter.on("pluginDisabled", listener);
+};
+
+pluginLoader.installPluginPackage = function (pkgName, cb) {
+    var options = {
+        name: pkgName,
+        version: 'latest',
+        path: '.'
+    };
+    npmi(options, function (err) {
+        if (!err) {
+            pluginLoader.load();
+        }
+
+        cb(err);
+    });
 };
 
 pluginLoader.load = function () {
@@ -163,12 +179,14 @@ pluginLoader.updatePlugin = function (name, updateTemplate) {
             this.disablePlugin(plugin);
         }
 
-        plugin.options = updateTemplate.options;
+        if (updateTemplate.hasOwnProperty('options')) {
+            plugin.options = updateTemplate.options;
 
-        var option;
-        for (option in plugin.options) {
-            if (plugin.options.hasOwnProperty(option)) {
-                configuration.setPluginSetting(plugin.namespace, option, plugin.options[option].value);
+            var option;
+            for (option in plugin.options) {
+                if (plugin.options.hasOwnProperty(option)) {
+                    configuration.setPluginSetting(plugin.namespace, option, plugin.options[option].value);
+                }
             }
         }
     }
@@ -204,6 +222,45 @@ pluginLoader.disablePlugin = function (plugin) {
     if (configuration.setPluginAsDisabled(plugin)) {
         emitter.emit('pluginDisabled', plugin);
     }
+};
+
+pluginLoader.sanitizePlugins = function (input, allowOptions) {
+    if (input instanceof Array) {
+        var plugins = [];
+
+        var i;
+        for (i = 0; i < input.length; i++) {
+            plugins.push(this.sanitizePlugins(input[i]));
+        }
+
+        return plugins;
+    }
+
+    var triggers = [];
+    var contextTriggers = [];
+
+    var trigger;
+    for (trigger in input.triggers) {
+        if (input.triggers.hasOwnProperty(trigger)) {
+            triggers.push(trigger);
+        }
+    }
+    for (trigger in input.contextTriggers) {
+        if (input.contextTriggers.hasOwnProperty(trigger)) {
+            contextTriggers.push(trigger);
+        }
+    }
+
+    return {
+        name: input.name,
+        description: input.description,
+        namespace: input.namespace,
+        options: allowOptions ? input.options : null,
+        enabled: input.enabled,
+        triggers: contextTriggers,
+        contextTriggers: contextTriggers,
+        examples: input.examples
+    };
 };
 
 module.exports = pluginLoader;
