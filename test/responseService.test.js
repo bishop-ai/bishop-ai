@@ -1,8 +1,8 @@
 var assert = require("assert");
 
-var responseBuilder = require("../ai/responseBuilder");
+var responseService = require("../ai/responseService");
 
-describe('Response Builder', function () {
+describe('Response Service', function () {
 
     describe('getResponses()', function () {
 
@@ -25,7 +25,7 @@ describe('Response Builder', function () {
             hi what can I do for you
              */
 
-            var inputs = responseBuilder.getResponses(template);
+            var inputs = responseService.getResponses(template);
 
             assert.equal(inputs.length, 12);
             assert.equal(inputs[0], "Hello.");
@@ -46,7 +46,7 @@ describe('Response Builder', function () {
 
             var simpleResponse = "Hey there!";
 
-            var inputs = responseBuilder.getResponses(simpleResponse);
+            var inputs = responseService.getResponses(simpleResponse);
 
             assert.equal(inputs.length, 1);
             assert.equal(inputs[0], "Hey there!");

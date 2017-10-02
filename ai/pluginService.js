@@ -5,12 +5,12 @@ var findPlugins = require('find-plugins');
 var npmi = require('npmi');
 
 var configuration = require('./configuration');
-var intentMatcher = require('./intentMatcher');
+var intentService = require('./intentService');
 var nlp = require('../nlp');
 
 var emitter = new EventEmitter();
 
-var pluginLoader = {
+var pluginService = {
     plugins: [],
     namespaces: []
 };
@@ -64,7 +64,7 @@ Plugin.prototype.register = function (config) {
         for (i = 0; i < service.intent.length; i++) {
             intent = service.intent[i];
             if (intent.value && intent.trigger && this.triggers.hasOwnProperty(intent.trigger) && (!intent.context || this.contextTriggers.hasOwnProperty(intent.context))) {
-                this.intentMatchers.push(new intentMatcher.Matcher(intent.value, intent.trigger, intent.context));
+                this.intentMatchers.push(new intentService.Matcher(intent.value, intent.trigger, intent.context));
             }
         }
     }
@@ -73,15 +73,15 @@ Plugin.prototype.register = function (config) {
     }
 };
 
-pluginLoader.onPluginEnabled = function (listener) {
+pluginService.onPluginEnabled = function (listener) {
     emitter.on("pluginEnabled", listener);
 };
 
-pluginLoader.onPluginDisabled = function (listener) {
+pluginService.onPluginDisabled = function (listener) {
     emitter.on("pluginDisabled", listener);
 };
 
-pluginLoader.installPluginPackage = function (pkgName, cb) {
+pluginService.installPluginPackage = function (pkgName, cb) {
     var options = {
         name: pkgName,
         version: 'latest',
@@ -89,14 +89,14 @@ pluginLoader.installPluginPackage = function (pkgName, cb) {
     };
     npmi(options, function (err) {
         if (!err) {
-            pluginLoader.load();
+            pluginService.load();
         }
 
         cb(err);
     });
 };
 
-pluginLoader.load = function () {
+pluginService.load = function () {
     console.log('Plugin Loader: Initializing plugins');
 
     var packages = findPlugins({
@@ -125,7 +125,7 @@ pluginLoader.load = function () {
     console.log('Plugin Loader: Done initializing plugins');
 };
 
-pluginLoader.loadModule = function (module, pkg) {
+pluginService.loadModule = function (module, pkg) {
     var plugin = new Plugin(module, pkg);
 
     this.plugins.push(plugin);
@@ -142,11 +142,11 @@ pluginLoader.loadModule = function (module, pkg) {
     return plugin;
 };
 
-pluginLoader.getPlugins = function () {
+pluginService.getPlugins = function () {
     return this.plugins || [];
 };
 
-pluginLoader.getEnabledPlugins = function () {
+pluginService.getEnabledPlugins = function () {
     var plugins = this.getPlugins();
 
     return plugins.filter(function (plugin) {
@@ -154,7 +154,7 @@ pluginLoader.getEnabledPlugins = function () {
     });
 };
 
-pluginLoader.getPlugin = function (name) {
+pluginService.getPlugin = function (name) {
     var plugin = null;
 
     var plugins = this.getPlugins();
@@ -169,7 +169,7 @@ pluginLoader.getPlugin = function (name) {
     return plugin;
 };
 
-pluginLoader.updatePlugin = function (name, updateTemplate) {
+pluginService.updatePlugin = function (name, updateTemplate) {
     var plugin = this.getPlugin(name);
 
     if (updateTemplate && plugin) {
@@ -194,7 +194,7 @@ pluginLoader.updatePlugin = function (name, updateTemplate) {
     return plugin;
 };
 
-pluginLoader.enablePlugin = function (plugin) {
+pluginService.enablePlugin = function (plugin) {
     var config = {};
     if (configuration.settings.plugins[plugin.namespace]) {
         config = configuration.settings.plugins[plugin.namespace];
@@ -216,7 +216,7 @@ pluginLoader.enablePlugin = function (plugin) {
     }
 };
 
-pluginLoader.disablePlugin = function (plugin) {
+pluginService.disablePlugin = function (plugin) {
     plugin.enabled = false;
 
     if (configuration.setPluginAsDisabled(plugin)) {
@@ -224,7 +224,7 @@ pluginLoader.disablePlugin = function (plugin) {
     }
 };
 
-pluginLoader.sanitizePlugins = function (input, allowOptions) {
+pluginService.sanitizePlugins = function (input, allowOptions) {
     if (input instanceof Array) {
         var plugins = [];
 
@@ -263,4 +263,4 @@ pluginLoader.sanitizePlugins = function (input, allowOptions) {
     };
 };
 
-module.exports = pluginLoader;
+module.exports = pluginService;

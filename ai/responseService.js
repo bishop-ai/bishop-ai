@@ -1,9 +1,11 @@
+var shuffle = require('knuth-shuffle').knuthShuffle;
+
 var nlp = require('../nlp');
 var Response = require('./response');
 
-var responseBuilder = {};
+var responseService = {};
 
-responseBuilder.getResponses = function (template) {
+responseService.getResponses = function (template) {
     var responses = [];
 
     if (template instanceof Array) {
@@ -12,23 +14,60 @@ responseBuilder.getResponses = function (template) {
             responses = responses.concat(this.getResponses(template[i]));
         }
     } else {
-        var builder = new responseBuilder.Builder(template);
+        var builder = new responseService.Builder(template);
         responses = builder.getResponses();
     }
 
     return responses;
 };
 
-responseBuilder.Builder = function (template) {
+responseService.getBestResponse = function (responses) {
+    console.log("Choosing 1 of " + responses.length + " responses.");
+
+    // First shuffle the array so that any items with the same weight will appear with the same frequency
+    responses = shuffle(responses.slice(0));
+
+    // Get the sum of the weights
+    var sumOfWeights = responses.reduce(function(memo, response) {
+        return memo + response.weight;
+    }, 0);
+
+    // Get a random weighted response
+    var getRandom = function (sumOfWeights) {
+        var random = Math.floor(Math.random() * (sumOfWeights + 1));
+
+        return function (response) {
+            random -= response.weight;
+            return random <= 0;
+        };
+    };
+
+    return responses.find(getRandom(sumOfWeights));
+};
+
+responseService.getUnknownResponse = function (inputExpression) {
+    var template = "[I'm sorry,] ((I'm not sure I|I don't) understand [what (you mean [by '" + inputExpression.value + "']|you're saying [when you say, '" + inputExpression.value + "'])]|I didn't quite get that).";
+    var responses = this.getResponses(template);
+
+    var res = [];
+    var i;
+    for (i = 0; i < responses.length; i++) {
+        res.push(new Response(responses[i]));
+    }
+
+    return this.getBestResponse(res);
+};
+
+responseService.Builder = function (template) {
     var string = (typeof template === "string") ? template : template.value || "";
     this.context = (typeof template === "string") ? "" : template.context || "";
     this.weight = (typeof template === "string") ? "" : template.weight || 0;
-    this.tokens = responseBuilder.Builder.lex(string);
-    this.tree = responseBuilder.Builder.buildParseTree(this.tokens);
-    this.getInputsFunction = responseBuilder.Builder.parseGetInputs(this.tree);
+    this.tokens = responseService.Builder.lex(string);
+    this.tree = responseService.Builder.buildParseTree(this.tokens);
+    this.getInputsFunction = responseService.Builder.parseGetInputs(this.tree);
 };
 
-responseBuilder.Builder.prototype.getResponses = function () {
+responseService.Builder.prototype.getResponses = function () {
     var responses = [];
     var inputs = [];
     this.getInputsFunction(inputs);
@@ -43,7 +82,7 @@ responseBuilder.Builder.prototype.getResponses = function () {
     return responses;
 };
 
-responseBuilder.Builder.parseGetInputs = function (tree) {
+responseService.Builder.parseGetInputs = function (tree) {
     var getInputsFunction;
     var getInputsFunctions;
 
@@ -52,7 +91,7 @@ responseBuilder.Builder.parseGetInputs = function (tree) {
     case "start":
         getInputsFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            getInputsFunctions.push(responseBuilder.Builder.parseGetInputs(tree.values[i]));
+            getInputsFunctions.push(responseService.Builder.parseGetInputs(tree.values[i]));
         }
 
         getInputsFunction = function (inputs) {
@@ -72,7 +111,7 @@ responseBuilder.Builder.parseGetInputs = function (tree) {
     case "[":
         getInputsFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            getInputsFunctions.push(responseBuilder.Builder.parseGetInputs(tree.values[i]));
+            getInputsFunctions.push(responseService.Builder.parseGetInputs(tree.values[i]));
         }
 
         getInputsFunction = function (inputs) {
@@ -81,7 +120,7 @@ responseBuilder.Builder.parseGetInputs = function (tree) {
 
             // Keep the original set of inputs without the optional tree values and create a duplicate set of inputs that does have the tree values.
             // Merge the two together.
-            var alternateInputs = responseBuilder.Builder.deepClone(inputs);
+            var alternateInputs = responseService.Builder.deepClone(inputs);
             for (i = 0; i < this.length; i++) {
                 this[i](alternateInputs);
             }
@@ -104,7 +143,7 @@ responseBuilder.Builder.parseGetInputs = function (tree) {
                     getInputsFunctionGroups.push(innerArray);
                 }
 
-                innerArray.push(responseBuilder.Builder.parseGetInputs(tree.values[i]));
+                innerArray.push(responseService.Builder.parseGetInputs(tree.values[i]));
             }
         }
 
@@ -117,7 +156,7 @@ responseBuilder.Builder.parseGetInputs = function (tree) {
 
             // For each alternate, create a duplicate set of inputs that contain the alternate tree
             for (g = 1; g < this.length; g++) {
-                alternateInputs = responseBuilder.Builder.deepClone(inputs);
+                alternateInputs = responseService.Builder.deepClone(inputs);
                 alternatesToAdd.push(alternateInputs);
 
                 for (i = 0; i < this[g].length; i++) {
@@ -158,7 +197,7 @@ responseBuilder.Builder.parseGetInputs = function (tree) {
     return getInputsFunction;
 };
 
-responseBuilder.Builder.lex = function (input) {
+responseService.Builder.lex = function (input) {
     var tokens = [];
 
     var i;
@@ -194,7 +233,7 @@ responseBuilder.Builder.lex = function (input) {
     return tokens;
 };
 
-responseBuilder.Builder.buildParseTree = function (tokens, op) {
+responseService.Builder.buildParseTree = function (tokens, op) {
     var tree = {
         op: op || "start",
         values: []
@@ -211,7 +250,7 @@ responseBuilder.Builder.buildParseTree = function (tokens, op) {
             switch (token.value) {
             case "[":
             case "(":
-                tree.values.push(responseBuilder.Builder.buildParseTree(tokens, token.value));
+                tree.values.push(responseService.Builder.buildParseTree(tokens, token.value));
                 break;
             case "|":
                 tree.values.push({op: "|", values: []});
@@ -242,8 +281,8 @@ responseBuilder.Builder.buildParseTree = function (tokens, op) {
     return tree;
 };
 
-responseBuilder.Builder.deepClone = function (array) {
+responseService.Builder.deepClone = function (array) {
     return JSON.parse(JSON.stringify(array));
 };
 
-module.exports = responseBuilder;
+module.exports = responseService;

@@ -2,20 +2,20 @@ var natural = require('natural');
 var $q = require('q');
 
 var cache = require('./cache');
-var intentMatcher = require('./intentMatcher');
+var intentService = require('./intentService');
 var nlp = require('./../nlp');
-var pluginLoader = require('./pluginLoader');
+var pluginService = require('./pluginService');
 
 var classifier = {
     bayesFile: 'bayes-classifications.json',
     bayesClassifier: new natural.BayesClassifier()
 };
 
-pluginLoader.onPluginEnabled(function () {
+pluginService.onPluginEnabled(function () {
     classifier.train();
 });
 
-pluginLoader.onPluginDisabled(function () {
+pluginService.onPluginDisabled(function () {
     classifier.train();
 });
 
@@ -55,13 +55,13 @@ classifier.train = function () {
 
     var i;
     var matchers = [];
-    var plugins = pluginLoader.getEnabledPlugins();
+    var plugins = pluginService.getEnabledPlugins();
 
     for (i = 0; i < plugins.length; i++) {
         matchers = matchers.concat(plugins[i].intentMatchers);
     }
 
-    var intents = intentMatcher.getInputs(matchers);
+    var intents = intentService.getInputs(matchers);
 
     var value;
     var trigger;

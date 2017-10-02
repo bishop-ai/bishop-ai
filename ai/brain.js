@@ -2,16 +2,14 @@ var extend = require('extend');
 var fs = require("fs");
 var path = require("path");
 var $q = require('q');
-var shuffle = require('knuth-shuffle').knuthShuffle;
 
 var classifier = require('./classifier');
 var configuration = require('./configuration');
 var Expression = require('./expression');
-var intentMatcher = require('./intentMatcher');
+var intentService = require('./intentService');
 var memory = require('./memory');
-var pluginLoader = require('./pluginLoader');
-var Response = require('./response');
-var responseBuilder = require('./responseBuilder');
+var pluginService = require('./pluginService');
+var responseService = require('./responseService');
 
 var Brain = function () {
 
@@ -71,7 +69,7 @@ Brain.prototype._processIntent = function (inputExpression, username) {
     var examples = [];
     var triggers = {};
     var contextTriggers = {};
-    var plugins = pluginLoader.getEnabledPlugins();
+    var plugins = pluginService.getEnabledPlugins();
 
     for (i = 0; i < plugins.length; i++) {
         matchers = matchers.concat(plugins[i].intentMatchers);
@@ -88,7 +86,7 @@ Brain.prototype._processIntent = function (inputExpression, username) {
             };
         }
     } else {
-        var matchedIntent = intentMatcher.matchInputToIntent(inputExpression.normalized, matchers);
+        var matchedIntent = intentService.matchInputToIntent(inputExpression.normalized, matchers);
         if (matchedIntent.confidence > 0.6) {
             matchedClassification = {
                 trigger: matchedIntent.intent,
@@ -113,7 +111,7 @@ Brain.prototype._processIntent = function (inputExpression, username) {
         }
 
         dfd.resolve({
-            response: this._getUnknownResponse(inputExpression),
+            response: responseService.getUnknownResponse(inputExpression),
             matchedClassification: matchedClassification
         });
     }
@@ -158,53 +156,15 @@ Brain.prototype._processTrigger = function (triggerKey, inputExpression, trigger
 
         trigger.method(dfd, inputExpression, getMemory, setMemory, setConfiguration, getExamples);
 
-        var self = this;
         return dfd.promise.then(function (triggerResponses) {
-            var responses = responseBuilder.getResponses(triggerResponses);
-            return self._getBestResponse(responses);
+            var responses = responseService.getResponses(triggerResponses);
+            return responseService.getBestResponse(responses);
         }, function () {
-            return self._getUnknownResponse(inputExpression);
+            return responseService.getUnknownResponse(inputExpression);
         });
     }
 
-    return $q.resolve(this._getUnknownResponse(inputExpression));
-};
-
-Brain.prototype._getUnknownResponse = function (inputExpression) {
-    var template = "[I'm sorry,] ((I'm not sure I|I don't) understand [what (you mean [by '" + inputExpression.value + "']|you're saying [when you say, '" + inputExpression.value + "'])]|I didn't quite get that).";
-    var responses = responseBuilder.getResponses(template);
-
-    var res = [];
-    var i;
-    for (i = 0; i < responses.length; i++) {
-        res.push(new Response(responses[i]));
-    }
-
-    return this._getBestResponse(res);
-};
-
-Brain.prototype._getBestResponse = function (responses) {
-    console.log("Choosing 1 of " + responses.length + " responses.");
-
-    // First shuffle the array so that any items with the same weight will appear with the same frequency
-    responses = shuffle(responses.slice(0));
-
-    // Get the sum of the weights
-    var sumOfWeights = responses.reduce(function(memo, response) {
-        return memo + response.weight;
-    }, 0);
-
-    // Get a random weighted response
-    var getRandom = function (sumOfWeights) {
-        var random = Math.floor(Math.random() * (sumOfWeights + 1));
-
-        return function (response) {
-            random -= response.weight;
-            return random <= 0;
-        };
-    };
-
-    return responses.find(getRandom(sumOfWeights));
+    return $q.resolve(responseService.getUnknownResponse(inputExpression));
 };
 
 module.exports = Brain;

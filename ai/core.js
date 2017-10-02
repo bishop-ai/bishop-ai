@@ -1,5 +1,5 @@
 var Brain = require('./brain');
-var auth = require('./auth');
+var authService = require('./authService');
 
 /**
  * The core is the main point of interaction. It handles input and output.
@@ -16,7 +16,7 @@ Core.prototype._handleConnection = function (client) {
 
     client.on('command', function (payload) {
         try {
-            auth.verifyToken(payload.token, function (err, decoded) {
+            authService.verifyToken(payload.token, function (err, decoded) {
                 self._brain.processExpression(payload.command, decoded ? decoded.user : "").then(function (result) {
                     if (result) {
                         client.emit('response', {

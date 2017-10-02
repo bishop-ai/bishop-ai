@@ -3,10 +3,10 @@ var jws = require('jws');
 
 var configuration = require('./configuration');
 
-var auth = {};
+var authService = {};
 
-auth.authorize = function (req, res, next) {
-    auth.verifyToken(req, function (err, decoded) {
+authService.authorize = function (req, res, next) {
+    authService.verifyToken(req, function (err, decoded) {
         if (err) {
             return res.status(401).send(err);
         } else {
@@ -16,7 +16,7 @@ auth.authorize = function (req, res, next) {
     });
 };
 
-auth.verifyToken = function (req, cb) {
+authService.verifyToken = function (req, cb) {
     var token = (typeof req === "string") ? req : req.body.token || req.headers['x-access-token'];
     if (token) {
         var decoded = jwt.decode(token);
@@ -40,7 +40,7 @@ auth.verifyToken = function (req, cb) {
     }
 };
 
-auth.refreshUserSecret = function (token) {
+authService.refreshUserSecret = function (token) {
     if (token) {
         var decoded = jwt.decode(token);
         var username = decoded.user;
@@ -48,7 +48,7 @@ auth.refreshUserSecret = function (token) {
     }
 };
 
-auth.getToken = function (username, password) {
+authService.getToken = function (username, password) {
     var token = null;
 
     if (username && password) {
@@ -73,4 +73,4 @@ auth.getToken = function (username, password) {
     return token;
 };
 
-module.exports = auth;
+module.exports = authService;

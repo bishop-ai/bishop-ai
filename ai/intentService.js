@@ -1,8 +1,8 @@
 var nlp = require('../nlp');
 
-var intentMatcher = {};
+var intentService = {};
 
-intentMatcher.matchInputToIntent = function (input, matchers) {
+intentService.matchInputToIntent = function (input, matchers) {
     var result = {
         intent: "",
         confidence: 0
@@ -25,7 +25,7 @@ intentMatcher.matchInputToIntent = function (input, matchers) {
     return result;
 };
 
-intentMatcher.getInputs = function (matchers) {
+intentService.getInputs = function (matchers) {
     var result = [];
 
     var i;
@@ -46,20 +46,20 @@ intentMatcher.getInputs = function (matchers) {
     return result;
 };
 
-intentMatcher.Matcher = function (input, intent, context) {
+intentService.Matcher = function (input, intent, context) {
     this.intent = intent;
     this.context = context || "";
-    this.tokens = intentMatcher.Matcher.lex(input);
-    this.tree = intentMatcher.Matcher.buildParseTree(this.tokens);
-    this.matchFunction = intentMatcher.Matcher.parseMatchesFunction(this.tree);
-    this.getInputsFunction = intentMatcher.Matcher.parseGetInputs(this.tree);
+    this.tokens = intentService.Matcher.lex(input);
+    this.tree = intentService.Matcher.buildParseTree(this.tokens);
+    this.matchFunction = intentService.Matcher.parseMatchesFunction(this.tree);
+    this.getInputsFunction = intentService.Matcher.parseGetInputs(this.tree);
 };
 
-intentMatcher.Matcher.prototype.matchesInput = function (inputTokens) {
+intentService.Matcher.prototype.matchesInput = function (inputTokens) {
     return this.matchFunction(inputTokens);
 };
 
-intentMatcher.Matcher.prototype.getInputs = function () {
+intentService.Matcher.prototype.getInputs = function () {
     var stringInputs = [];
     var inputs = [];
     this.getInputsFunction(inputs);
@@ -72,7 +72,7 @@ intentMatcher.Matcher.prototype.getInputs = function () {
     return stringInputs;
 };
 
-intentMatcher.Matcher.parseGetInputs = function (tree) {
+intentService.Matcher.parseGetInputs = function (tree) {
     var getInputsFunction;
     var getInputsFunctions;
 
@@ -81,7 +81,7 @@ intentMatcher.Matcher.parseGetInputs = function (tree) {
     case "start":
         getInputsFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            getInputsFunctions.push(intentMatcher.Matcher.parseGetInputs(tree.values[i]));
+            getInputsFunctions.push(intentService.Matcher.parseGetInputs(tree.values[i]));
         }
 
         getInputsFunction = function (inputs) {
@@ -101,7 +101,7 @@ intentMatcher.Matcher.parseGetInputs = function (tree) {
     case "[":
         getInputsFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            getInputsFunctions.push(intentMatcher.Matcher.parseGetInputs(tree.values[i]));
+            getInputsFunctions.push(intentService.Matcher.parseGetInputs(tree.values[i]));
         }
 
         getInputsFunction = function (inputs) {
@@ -110,7 +110,7 @@ intentMatcher.Matcher.parseGetInputs = function (tree) {
 
             // Keep the original set of inputs without the optional tree values and create a duplicate set of inputs that does have the tree values.
             // Merge the two together.
-            var alternateInputs = intentMatcher.Matcher.deepClone(inputs);
+            var alternateInputs = intentService.Matcher.deepClone(inputs);
             for (i = 0; i < this.length; i++) {
                 this[i](alternateInputs);
             }
@@ -133,7 +133,7 @@ intentMatcher.Matcher.parseGetInputs = function (tree) {
                     getInputsFunctionGroups.push(innerArray);
                 }
 
-                innerArray.push(intentMatcher.Matcher.parseGetInputs(tree.values[i]));
+                innerArray.push(intentService.Matcher.parseGetInputs(tree.values[i]));
             }
         }
 
@@ -146,7 +146,7 @@ intentMatcher.Matcher.parseGetInputs = function (tree) {
 
             // For each alternate, create a duplicate set of inputs that contain the alternate tree
             for (g = 1; g < this.length; g++) {
-                alternateInputs = intentMatcher.Matcher.deepClone(inputs);
+                alternateInputs = intentService.Matcher.deepClone(inputs);
                 alternatesToAdd.push(alternateInputs);
 
                 for (i = 0; i < this[g].length; i++) {
@@ -195,7 +195,7 @@ intentMatcher.Matcher.parseGetInputs = function (tree) {
     return getInputsFunction;
 };
 
-intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
+intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
     var matchesFunction;
 
     var i;
@@ -205,12 +205,12 @@ intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
     case "start":
         matchFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            matchFunctions.push(intentMatcher.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
+            matchFunctions.push(intentService.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
         }
 
         // Every tree value must return a good value
         matchesFunction = function (inputTokens) {
-            inputTokens = intentMatcher.Matcher.deepClone(inputTokens); // Clone
+            inputTokens = intentService.Matcher.deepClone(inputTokens); // Clone
 
             var i;
             var advance = 0;
@@ -242,12 +242,12 @@ intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
     case "[":
         matchFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            matchFunctions.push(intentMatcher.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
+            matchFunctions.push(intentService.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
         }
 
         // Tree values don't have to return a good value
         matchesFunction = function (inputTokens) {
-            inputTokens = intentMatcher.Matcher.deepClone(inputTokens); // Clone
+            inputTokens = intentService.Matcher.deepClone(inputTokens); // Clone
 
             var i;
             var advance = 0;
@@ -279,7 +279,7 @@ intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
                     matchFunctionGroups.push(innerArray);
                 }
 
-                innerArray.push(intentMatcher.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
+                innerArray.push(intentService.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
             }
         }
 
@@ -294,7 +294,7 @@ intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
             // Find the alternate the matches the most of the input.
             for (g = 0; g < this.length; g++) {
                 advance = 0;
-                tokensClone = intentMatcher.Matcher.deepClone(inputTokens);
+                tokensClone = intentService.Matcher.deepClone(inputTokens);
                 for (i = 0; i < this[g].length; i++) {
                     a = this[g][i](tokensClone);
 
@@ -321,11 +321,11 @@ intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
         matchesFunction = function (inputTokens) {
             var i;
 
-            var clone = intentMatcher.Matcher.deepClone(inputTokens);
+            var clone = intentService.Matcher.deepClone(inputTokens);
 
             var matcher = null;
             if (nextNode) {
-                matcher = intentMatcher.Matcher.parseMatchesFunction(nextNode);
+                matcher = intentService.Matcher.parseMatchesFunction(nextNode);
 
                 // Advance to the next token that matches
                 for (i = 0; i < clone.length; i++) {
@@ -371,7 +371,7 @@ intentMatcher.Matcher.parseMatchesFunction = function (tree, nextNode) {
     return matchesFunction;
 };
 
-intentMatcher.Matcher.lex = function (input) {
+intentService.Matcher.lex = function (input) {
     var tokens = [];
 
     var i;
@@ -408,7 +408,7 @@ intentMatcher.Matcher.lex = function (input) {
     return tokens;
 };
 
-intentMatcher.Matcher.buildParseTree = function (tokens, op) {
+intentService.Matcher.buildParseTree = function (tokens, op) {
     var tree = {
         op: op || "start",
         values: []
@@ -425,7 +425,7 @@ intentMatcher.Matcher.buildParseTree = function (tokens, op) {
             switch (token.value) {
             case "[":
             case "(":
-                tree.values.push(intentMatcher.Matcher.buildParseTree(tokens, token.value));
+                tree.values.push(intentService.Matcher.buildParseTree(tokens, token.value));
                 break;
             case "|":
                 tree.values.push({op: "|", values: []});
@@ -462,8 +462,8 @@ intentMatcher.Matcher.buildParseTree = function (tokens, op) {
     return tree;
 };
 
-intentMatcher.Matcher.deepClone = function (array) {
+intentService.Matcher.deepClone = function (array) {
     return JSON.parse(JSON.stringify(array));
 };
 
-module.exports = intentMatcher;
+module.exports = intentService;

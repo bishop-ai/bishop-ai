@@ -8,7 +8,7 @@ var path = require('path');
 
 var classifier = require('./ai/classifier');
 var Core = require('./ai/core');
-var pluginLoader = require('./ai/pluginLoader');
+var pluginService = require('./ai/pluginService');
 
 var Server = function () {
 
@@ -36,7 +36,7 @@ var Server = function () {
 
     classifier.load();
 
-    pluginLoader.load();
+    pluginService.load();
 
     // TODO: if in dev mode:
     // classifier.train();
