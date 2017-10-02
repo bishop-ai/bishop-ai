@@ -6,25 +6,25 @@ var configuration = require('./configuration');
 var auth = {};
 
 auth.authorize = function (req, res, next) {
-    auth.verifyToken(req, function (err) {
+    auth.verifyToken(req, function (err, decoded) {
         if (err) {
             return res.status(401).send(err);
         } else {
+            req.decoded = decoded;
             return next();
         }
     });
 };
 
 auth.verifyToken = function (req, cb) {
-    var token = req.body.token || req.headers['x-access-token'];
+    var token = (typeof req === "string") ? req : req.body.token || req.headers['x-access-token'];
     if (token) {
         jwt.verify(token, configuration.settings.secret, function (err, decoded) {
             if (err) {
-                console.error('JWT Verification Error', err);
+                console.log('JWT Verification Error', err);
                 return cb(err);
             } else {
-                req.decoded = decoded;
-                return cb();
+                return cb(null, decoded);
             }
         });
     } else {

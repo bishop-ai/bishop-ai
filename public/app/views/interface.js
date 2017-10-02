@@ -3,6 +3,7 @@ angular.module('AI').controller('InterfaceCtrl', [
     '$scope',
     '$sanitize',
     '$timeout',
+    'authenticationService',
     'socket',
     'speechService',
 
@@ -10,6 +11,7 @@ angular.module('AI').controller('InterfaceCtrl', [
               $scope,
               $sanitize,
               $timeout,
+              authenticationService,
               socket,
               speechService) {
 
@@ -82,7 +84,7 @@ angular.module('AI').controller('InterfaceCtrl', [
 
         $scope.handleKeyPress = function (event) {
             if (event.which === 13 && $scope.message) {
-                socket.emit('command', $scope.message);
+                socket.emit('command', {token : authenticationService.token, command: $scope.message});
                 $scope.transcript.push({m: $scope.message, ai: false});
                 $scope.message = "";
                 event.preventDefault();
@@ -127,7 +129,7 @@ angular.module('AI').controller('InterfaceCtrl', [
 
                 if (isMatch) {
                     console.log('Voice Match: ' + finalTranscript);
-                    socket.emit('command', finalTranscript);
+                    socket.emit('command', {token : authenticationService.token, command: finalTranscript});
                     $scope.transcript.push({html: null, m: finalTranscript, ai: false});
                     messageSentTime = (new Date()).getTime();
                 }

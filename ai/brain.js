@@ -23,14 +23,14 @@ var Brain = function () {
     this._context = "";
 };
 
-Brain.prototype.processExpression = function (input) {
+Brain.prototype.processExpression = function (input, username) {
     var dfd = $q.defer();
 
     var inputExpression = new Expression(input);
     inputExpression.process();
 
     var self = this;
-    this._processIntent(inputExpression).then(function (result) {
+    this._processIntent(inputExpression, username).then(function (result) {
         var response = result.response;
         var matchedClassification = result.matchedClassification;
 
@@ -61,7 +61,7 @@ Brain.prototype.processExpression = function (input) {
     return dfd.promise;
 };
 
-Brain.prototype._processIntent = function (inputExpression) {
+Brain.prototype._processIntent = function (inputExpression, username) {
     var dfd = $q.defer();
 
     var matchedClassification;
@@ -100,7 +100,7 @@ Brain.prototype._processIntent = function (inputExpression) {
     }
 
     if (matchedClassification && matchedClassification.confidence > 0.5) {
-        this._processTrigger(matchedClassification.trigger, inputExpression, triggers, examples).then(function (response) {
+        this._processTrigger(matchedClassification.trigger, inputExpression, triggers, examples, username).then(function (response) {
             dfd.resolve({
                 response: response,
                 matchedClassification: matchedClassification
@@ -129,20 +129,25 @@ Brain.prototype._processIntent = function (inputExpression) {
  * @param inputExpression
  * @param triggers
  * @param examples
+ * @param username
  * @returns {Promise.<Response>}
  * @private
  */
-Brain.prototype._processTrigger = function (triggerKey, inputExpression, triggers, examples) {
+Brain.prototype._processTrigger = function (triggerKey, inputExpression, triggers, examples, username) {
     if (triggerKey && triggers[triggerKey]) {
         var dfd = $q.defer();
 
         var trigger = triggers[triggerKey];
 
         var getMemory = function (name) {
-            return memory.get(trigger.namespace + '.' + name);
+            return memory.get(trigger.namespace + '.' + name, username);
         };
         var setMemory = function (name, value, shortTerm) {
-            memory.set(trigger.namespace + '.' + name, value, shortTerm);
+            if (shortTerm) {
+                memory.setSessionMemory(trigger.namespace + '.' + name, value, username);
+            } else {
+                memory.set(trigger.namespace + '.' + name, value);
+            }
         };
         var setConfiguration = function (key, value) {
             configuration.setPluginSetting(trigger.namespace, key, value);

@@ -29,10 +29,13 @@ router.post('/auth', function (req, res) {
 
 router.get('/test/:message', function (req, res) {
     var message = decodeURIComponent(req.params.message);
-    brain.processExpression(message).then(function (result) {
-        res.send(result);
-    }, function (err) {
-        res.status(500).send(err);
+
+    auth.verifyToken(req, function (err, decoded) {
+        brain.processExpression(message, decoded ? decoded.user : "").then(function (result) {
+            res.send(result);
+        }, function (err) {
+            res.status(500).send(err);
+        });
     });
 });
 

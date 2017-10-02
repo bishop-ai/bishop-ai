@@ -1,11 +1,10 @@
 var Brain = require('./brain');
-var memory = require('./memory');
+var auth = require('./auth');
 
 /**
  * The core is the main point of interaction. It handles input and output.
  */
 function Core(io) {
-    memory.init();
     this._brain = new Brain();
     this._io = io;
 
@@ -15,14 +14,16 @@ function Core(io) {
 Core.prototype._handleConnection = function (client) {
     var self = this;
 
-    client.on('command', function (command) {
+    client.on('command', function (payload) {
         try {
-            self._brain.processExpression(command).then(function (result) {
-                if (result) {
-                    client.emit('response', {
-                        message: result.response
-                    });
-                }
+            auth.verifyToken(payload.token, function (err, decoded) {
+                self._brain.processExpression(payload.command, decoded ? decoded.user : "").then(function (result) {
+                    if (result) {
+                        client.emit('response', {
+                            message: result.response
+                        });
+                    }
+                });
             });
         } catch (e) {
             console.log(e);
