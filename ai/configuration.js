@@ -22,6 +22,13 @@ configuration.init = function () {
     }
 };
 
+configuration.refreshUserSecret = function (username) {
+    if (this.settings.users[username]) {
+        this.settings.users[username].secret = uuid.generate();
+        this._commit();
+    }
+};
+
 configuration.setPluginSetting = function (namespace, key, value) {
     this.settings.plugins[namespace] = this.settings.plugins[namespace] || {};
     this.settings.plugins[namespace][key] = value;

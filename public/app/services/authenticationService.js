@@ -54,7 +54,7 @@ angular.module('AI').factory('authenticationService', [
         authenticationService.hasStateBeenAuthenticated = function () {
             var dfd = $q.defer();
 
-            if (this.authChecked) {
+            if (this.authChecked || !this.token) {
                 dfd.resolve();
             } else {
                 this.isAuthenticated(true).then(function () {
@@ -96,9 +96,14 @@ angular.module('AI').factory('authenticationService', [
         };
 
         authenticationService.logout = function () {
-            localStorage.remove(localStorage.keys.TOKEN);
-            $rootScope.authenticated = false;
-            authenticationService.token = "";
+            $http({
+                method: 'DELETE',
+                url: "/api/auth"
+            }).finally(function () {
+                localStorage.remove(localStorage.keys.TOKEN);
+                $rootScope.authenticated = false;
+                authenticationService.token = "";
+            });
         };
 
         /**

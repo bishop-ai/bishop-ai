@@ -11,7 +11,7 @@ var pluginLoader = require('./pluginLoader');
 var brain = new Brain();
 
 router.get('/auth', auth.authorize, function (req, res) {
-    res.status(200).send();
+    res.status(204).send();
 });
 
 router.post('/auth', function (req, res) {
@@ -24,6 +24,14 @@ router.post('/auth', function (req, res) {
         });
     } else {
         res.status(401).send('Incorrect username or password.');
+    }
+});
+
+router.delete('/auth', function (req, res) {
+    var token = (typeof req === "string") ? req : req.body.token || req.headers['x-access-token'];
+    if (token) {
+        auth.refreshUserSecret(token);
+        res.status(204).send();
     }
 });
 

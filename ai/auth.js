@@ -19,16 +19,32 @@ auth.authorize = function (req, res, next) {
 auth.verifyToken = function (req, cb) {
     var token = (typeof req === "string") ? req : req.body.token || req.headers['x-access-token'];
     if (token) {
-        jwt.verify(token, configuration.settings.secret, function (err, decoded) {
-            if (err) {
-                console.log('JWT Verification Error', err);
-                return cb(err);
-            } else {
-                return cb(null, decoded);
-            }
-        });
+        var decoded = jwt.decode(token);
+
+        if (decoded && decoded.user && configuration.settings.users[decoded.user]) {
+            var secret = configuration.settings.users[decoded.user].secret;
+
+            jwt.verify(token, secret, function (err, decoded) {
+                if (err) {
+                    console.log('JWT Verification Error: ' + err);
+                    return cb(err);
+                } else {
+                    return cb(null, decoded);
+                }
+            });
+        } else {
+            cb('Token invalid');
+        }
     } else {
         cb('Token not provided');
+    }
+};
+
+auth.refreshUserSecret = function (token) {
+    if (token) {
+        var decoded = jwt.decode(token);
+        var username = decoded.user;
+        configuration.refreshUserSecret(username);
     }
 };
 
@@ -44,8 +60,12 @@ auth.getToken = function (username, password) {
                 secret: configuration.settings.secret
             });
 
-            if (sig === configuration.settings.users[username]) {
-                token = jwt.sign({user: username}, configuration.settings.secret, {expiresIn: 24 * 60 * 60});
+            if (!configuration.settings.users[username].secret) {
+                this.refreshUserSecret(username);
+            }
+
+            if (sig === configuration.settings.users[username].password) {
+                token = jwt.sign({user: username}, configuration.settings.users[username].secret);
             }
         }
     }
