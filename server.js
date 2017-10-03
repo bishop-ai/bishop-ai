@@ -7,7 +7,7 @@ var socket = require('socket.io');
 var path = require('path');
 
 var classifier = require('./ai/classifier');
-var Core = require('./ai/core');
+var Client = require('./ai/client');
 var pluginService = require('./ai/pluginService');
 
 var Server = function () {
@@ -42,7 +42,9 @@ var Server = function () {
     // classifier.train();
 
     this.io = socket(this.server);
-    this.Core = new Core(this.io);
+    this.io.on('connection', function (ioClient) {
+        return new Client(ioClient);
+    });
 };
 
 var server = new Server();
