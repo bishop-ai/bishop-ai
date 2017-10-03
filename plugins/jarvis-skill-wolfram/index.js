@@ -1,19 +1,20 @@
 var xml = require('libxmljs');
 var request = require('request');
 
-var Wolfram = function (config) {
-    this.appKey = config.appId;
+var Wolfram = function () {
 
     this.intent = [
         {value: "Ask Wolfram *", trigger: "wolfram.query"}
     ];
 
     this.triggers = {
-        query: function (dfd, expression) {
+        query: function (dfd, expression, getMemory) {
+
+            var appId = getMemory('appId');
 
             var query = expression.normalized.substr("Ask Wolfram ".length);
 
-            this.query(query, null, function (error, pods) {
+            this.query(appId, query, null, function (error, pods) {
                 if (error) {
                     dfd.reject(error);
                 } else {
@@ -26,17 +27,17 @@ var Wolfram = function (config) {
     this.context = {};
 
     this.options = {
-        appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/", protected: true}
+        appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/"}
     };
 };
 
-Wolfram.prototype.query = function (query, params, cb) {
-    if (!this.appKey) {
+Wolfram.prototype.query = function (appId, query, params, cb) {
+    if (!appId) {
         return cb("Application key not set", null);
     }
 
     params = (params instanceof Array) ? params.join('&') : (params) ? ("&" + params) : "";
-    var uri = 'http://api.wolframalpha.com/v2/query?input=' + encodeURIComponent(query) + params + '&primary=true&appid=' + this.appKey;
+    var uri = 'http://api.wolframalpha.com/v2/query?input=' + encodeURIComponent(query) + params + '&primary=true&appid=' + appId;
 
     request(uri, function (error, response, body) {
         if (!error && response.statusCode === 200) {
@@ -71,7 +72,7 @@ module.exports = {
     examples: [
         "Ask Wolfram how big the earth is"
     ],
-    register: function (config) {
-        return new Wolfram(config);
+    register: function () {
+        return new Wolfram();
     }
 };

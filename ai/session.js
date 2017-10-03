@@ -4,14 +4,15 @@ var path = require("path");
 var $q = require('q');
 
 var classifier = require('./classifier');
-var configuration = require('./configuration');
 var Expression = require('./expression');
 var intentService = require('./intentService');
 var memory = require('./memory');
 var pluginService = require('./pluginService');
 var responseService = require('./responseService');
 
-var Brain = function () {
+var Session = function () {
+    this.username = null;
+    this.memory = {};
 
     // Keep track of the transcript. This should allow for repetition checking for both the user and the AI. This should
     // help prevent the AI from repeating a response to frequently. Also, when the user repeats the same thing multiple
@@ -21,14 +22,50 @@ var Brain = function () {
     this._context = "";
 };
 
-Brain.prototype.processExpression = function (input, username) {
+Session.prototype.getMemory = function (name) {
+    if (name && this.memory[name]) {
+        return this.memory[name];
+    }
+
+    console.log('Session Warning: No memory found by name: ' + name);
+    return null;
+};
+
+Session.prototype.setMemory = function (name, value) {
+    if (!name || value === null || value === undefined) {
+        console.log('Session Error: Cannot store session memory with name: ' + name);
+        return;
+    }
+
+    this.memory[name] = value;
+
+    // If the session is linked to an account, store the memory in long term
+    if (this.username) {
+        memory.set(this.username, this.memory);
+    }
+};
+
+Session.prototype.link = function (username) {
+    if (username && username !== this.username) {
+        this.username = username;
+        var loadedMemory = memory.get(username);
+        this.memory = extend(loadedMemory, this.memory);
+        memory.set(username, this.memory);
+    }
+};
+
+Session.prototype.unlink = function () {
+    this.username = null;
+};
+
+Session.prototype.processExpression = function (input, username) {
     var dfd = $q.defer();
 
     var inputExpression = new Expression(input);
     inputExpression.process();
 
     var self = this;
-    this._processIntent(inputExpression, username).then(function (result) {
+    this.processIntent(inputExpression, username).then(function (result) {
         var response = result.response;
         var matchedClassification = result.matchedClassification;
 
@@ -59,7 +96,7 @@ Brain.prototype.processExpression = function (input, username) {
     return dfd.promise;
 };
 
-Brain.prototype._processIntent = function (inputExpression, username) {
+Session.prototype.processIntent = function (inputExpression, username) {
     var dfd = $q.defer();
 
     var matchedClassification;
@@ -70,12 +107,31 @@ Brain.prototype._processIntent = function (inputExpression, username) {
     var triggers = {};
     var contextTriggers = {};
     var plugins = pluginService.getEnabledPlugins();
+    var option;
+    var customPluginIntent = [];
+
+    var memories = memory.get(username);
 
     for (i = 0; i < plugins.length; i++) {
         matchers = matchers.concat(plugins[i].intentMatchers);
         examples = examples.concat(plugins[i].examples);
         extend(triggers, plugins[i].triggers);
         extend(contextTriggers, plugins[i].contextTriggers);
+
+        if (plugins[i].options) {
+            for (option in plugins[i].options) {
+                if (plugins[i].options.hasOwnProperty(option) && plugins[i].options[option].intentArray) {
+                    var name = plugins[i].namespace + "." + option;
+                    if (memories[name] instanceof Array) {
+                        customPluginIntent = customPluginIntent.concat(memories[name]);
+                    }
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < customPluginIntent.length; i++) {
+        matchers.push(new intentService.Matcher(customPluginIntent[i].value, customPluginIntent[i].trigger, customPluginIntent[i].context));
     }
 
     if (this._context) {
@@ -98,7 +154,7 @@ Brain.prototype._processIntent = function (inputExpression, username) {
     }
 
     if (matchedClassification && matchedClassification.confidence > 0.5) {
-        this._processTrigger(matchedClassification.trigger, inputExpression, triggers, examples, username).then(function (response) {
+        this.processTrigger(matchedClassification.trigger, inputExpression, triggers, examples, username).then(function (response) {
             dfd.resolve({
                 response: response,
                 matchedClassification: matchedClassification
@@ -107,7 +163,7 @@ Brain.prototype._processIntent = function (inputExpression, username) {
     } else {
 
         if (matchedClassification) {
-            console.log("Brain: Classification found but low confidence: " + matchedClassification.trigger + " = " + matchedClassification.confidence);
+            console.log("Session: Classification found but low confidence: " + matchedClassification.trigger + " = " + matchedClassification.confidence);
         }
 
         dfd.resolve({
@@ -131,30 +187,40 @@ Brain.prototype._processIntent = function (inputExpression, username) {
  * @returns {Promise.<Response>}
  * @private
  */
-Brain.prototype._processTrigger = function (triggerKey, inputExpression, triggers, examples, username) {
+Session.prototype.processTrigger = function (triggerKey, inputExpression, triggers, examples, username) {
+    if (!triggerKey) {
+        return $q.resolve(responseService.getUnknownResponse(inputExpression));
+    }
+
+    var triggerData = [];
+    if (triggerKey.indexOf('(') >= 0 && triggerKey.indexOf(')') === triggerKey.length - 1) {
+        var dataString = triggerKey.substring(triggerKey.indexOf('(') + 1, triggerKey.length - 1);
+        triggerKey = triggerKey.substring(0, triggerKey.indexOf('('));
+        triggerData = dataString.split(",");
+    }
+
+    var i;
+    for (i = 0; i < triggerData.length; i++) {
+        triggerData[i] = triggerData[i].trim();
+    }
+
     if (triggerKey && triggers[triggerKey]) {
         var dfd = $q.defer();
 
         var trigger = triggers[triggerKey];
+        var self = this;
 
         var getMemory = function (name) {
-            return memory.get(trigger.namespace + '.' + name, username);
+            return self.getMemory(trigger.namespace + '.' + name, username);
         };
-        var setMemory = function (name, value, shortTerm) {
-            if (shortTerm) {
-                memory.setSessionMemory(trigger.namespace + '.' + name, value, username);
-            } else {
-                memory.set(trigger.namespace + '.' + name, value);
-            }
-        };
-        var setConfiguration = function (key, value) {
-            configuration.setPluginSetting(trigger.namespace, key, value);
+        var setMemory = function (name, value) {
+            self.setMemory(trigger.namespace + '.' + name, value);
         };
         var getExamples = function () {
             return examples;
         };
 
-        trigger.method(dfd, inputExpression, getMemory, setMemory, setConfiguration, getExamples);
+        trigger.method(dfd, inputExpression, getMemory, setMemory, getExamples, triggerData);
 
         return dfd.promise.then(function (triggerResponses) {
             var responses = responseService.getResponses(triggerResponses);
@@ -167,4 +233,4 @@ Brain.prototype._processTrigger = function (triggerKey, inputExpression, trigger
     return $q.resolve(responseService.getUnknownResponse(inputExpression));
 };
 
-module.exports = Brain;
+module.exports = Session;

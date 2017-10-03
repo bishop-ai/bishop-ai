@@ -8,8 +8,7 @@ var configuration = {
     settings: {
         secret: "",
         users: {},
-        enabledPlugins: [],
-        plugins: {}
+        enabledPlugins: []
     }
 };
 
@@ -27,12 +26,6 @@ configuration.refreshUserSecret = function (username) {
         this.settings.users[username].secret = uuid.generate();
         this._commit();
     }
-};
-
-configuration.setPluginSetting = function (namespace, key, value) {
-    this.settings.plugins[namespace] = this.settings.plugins[namespace] || {};
-    this.settings.plugins[namespace][key] = value;
-    this._commit();
 };
 
 configuration.setPluginAsEnabled = function (plugin) {

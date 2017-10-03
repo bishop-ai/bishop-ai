@@ -62,8 +62,8 @@ router.post('/packages', authService.authorize, function (req, res) {
 });
 
 router.get('/plugins', function (req, res) {
-    authService.verifyToken(req, function (err) {
-        res.send(pluginService.sanitizePlugins(pluginService.getPlugins(), !err));
+    authService.verifyToken(req, function (err, decoded) {
+        res.send(pluginService.sanitizePlugins(pluginService.getPlugins(), decoded ? decoded.user : null));
     });
 });
 
@@ -71,8 +71,8 @@ router.get('/plugins/:name', function (req, res) {
     var plugin = pluginService.getPlugin(req.params.name);
 
     if (plugin) {
-        authService.verifyToken(req, function (err) {
-            res.send(pluginService.sanitizePlugins(plugin, !err));
+        authService.verifyToken(req, function (err, decoded) {
+            res.send(pluginService.sanitizePlugins(plugin, decoded ? decoded.user : null));
         });
     } else {
         res.status(404).send();
@@ -80,12 +80,11 @@ router.get('/plugins/:name', function (req, res) {
 });
 
 router.put('/plugins/:name', authService.authorize, function (req, res) {
-    var plugin = pluginService.updatePlugin(req.params.name, req.body);
+    var plugin = pluginService.getPlugin(req.params.name);
 
     if (plugin) {
-        authService.verifyToken(req, function (err) {
-            res.send(pluginService.sanitizePlugins(plugin, !err));
-        });
+        plugin = pluginService.updatePlugin(req.params.name, req.body, req.decoded.user);
+        res.send(pluginService.sanitizePlugins(plugin, req.decoded.user));
     } else {
         res.status(404).send();
     }

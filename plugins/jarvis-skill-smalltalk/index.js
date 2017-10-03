@@ -121,7 +121,7 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        getAiInfo: function (dfd, expression, getMemory, setMemory, setConfig, getExamples) {
+        getAiInfo: function (dfd, expression, getMemory, setMemory, getExamples) {
             var responses = [];
 
             var name = getMemory('aiName');
@@ -287,7 +287,7 @@ var SmallTalk = function (nlp) {
             }
 
             if (birthday) {
-                setMemory('userBirthday', birthday, true);
+                setMemory('userBirthday', birthday);
                 dfd.resolve();
             } else {
                 dfd.reject();
@@ -337,7 +337,7 @@ var SmallTalk = function (nlp) {
             }
 
             if (name) {
-                setMemory('userName', name, true);
+                setMemory('userName', name);
                 var responses = [
                     "It's (nice|great|a pleasure) to (meet you|make your acquaintance), " + name + "."
                 ];
@@ -414,7 +414,7 @@ module.exports = {
         "What can you do?",
         "How are you?"
     ],
-    register: function (config, nlp) {
+    register: function (nlp) {
         return new SmallTalk(nlp);
     }
 };

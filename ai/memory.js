@@ -4,49 +4,20 @@ var cache = require('./cache');
 
 var memory = {
     file: 'memory.json',
-    storage: {
-        longTerm: {},
-        session: {}
-    }
+    storage: {}
 };
 
 memory.init = function () {
     extend(this.storage, cache.read(this.file));
 };
 
-memory.get = function (name, username) {
-    if (name && username && this.storage.session[username] && this.storage.session[username][name]) {
-        return this.storage.session[username][name];
-    }
-
-    if (name && this.storage.longTerm[name]) {
-        return this.storage.longTerm[name];
-    }
-
-    console.log('Memory Warning: No memory found by name: ' + name);
-    return null;
+memory.get = function (username) {
+    this.storage[username] = this.storage[username] || {};
+    return this.storage[username];
 };
 
-memory.set = function (name, value) {
-    if (!name || value === null || value === undefined) {
-        console.log('Memory Error: Cannot store memory with name: ' + name);
-        return;
-    }
-
-    this.storage.longTerm[name] = value;
-
-    this._commit();
-};
-
-memory.setSessionMemory = function (name, value, username) {
-    if (!name || value === null || value === undefined || !username) {
-        console.log('Memory Error: Cannot store session memory with name: ' + name);
-        return;
-    }
-
-    this.storage.session[username] = this.storage.session[username] || {};
-    this.storage.session[username][name] = value;
-
+memory.set = function (username, memories) {
+    this.storage[username] = memories;
     this._commit();
 };
 

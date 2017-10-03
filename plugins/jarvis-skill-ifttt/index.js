@@ -1,51 +1,44 @@
 var request = require('request');
 
-var Ifttt = function (config) {
-    this.key = config.key;
-
+var Ifttt = function () {
     this.intent = [];
-    this.triggers = {};
     this.context = {};
 
-    // Bind to the intent containing event to be called
-    var triggerFunction = function (dfd) {
-        self.makeCall(this.event);
+    var self = this;
+    this.triggers = {
+        maker: function (dfd, expression, getMemory, setMemory, getExamples, data) {
+            var key = getMemory("key");
 
-        if (this.response) {
-            dfd.resolve(this.response);
-        } else {
-            dfd.resolve();
+            if (!data[0]) {
+                dfd.resolve("I'm sorry, something went wrong. Please make sure your If This Then That plugin is correctly configured.");
+                return;
+            }
+
+            self.makeCall(data[0], key);
+
+            if (data[1]) {
+                dfd.resolve(data[1]);
+            } else {
+                dfd.resolve();
+            }
         }
     };
 
-    var self = this;
-    if (config.eventIntents) {
-        var i;
-        var intent;
-        for (i = 0; i < config.eventIntents.length; i++) {
-            intent = config.eventIntents[i];
-
-            this.intent.push({
-                value: intent.value,
-                trigger: "ifttt." + intent.event
-            });
-            this.triggers[intent.event] = triggerFunction.bind(intent);
-        }
-    }
-
     this.options = {
-        key: {name: "Key", description: "Your IFTT key found at https://ifttt.com/services/maker_webhooks/settings", protected: true}
+        key: {name: "Key", description: "Your IFTTT key found at https://ifttt.com/services/maker_webhooks/settings"},
+        eventIntents: {name: "Custom Intents", description: "Custom phrases that trigger IFTTT maker events. For the trigger enter 'ifttt.maker(eventName)' where eventName is the name of the IFTTT maker event to trigger.", intentArray: true}
     };
 };
 
-Ifttt.prototype.makeCall = function (event) {
-    var uri = 'https://maker.ifttt.com/trigger/' + event + '/with/key/' + this.key;
+Ifttt.prototype.makeCall = function (event, key) {
+    var uri = 'https://maker.ifttt.com/trigger/' + event + '/with/key/' + key;
+    console.log("IFTTT call: " + uri);
     request(uri);
 };
 
 module.exports = {
     namespace: 'ifttt',
-    register: function (config) {
-        return new Ifttt(config);
+    register: function () {
+        return new Ifttt();
     }
 };

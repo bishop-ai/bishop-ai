@@ -2,9 +2,7 @@ var moment = require('moment');
 var $q = require('q');
 var request = require('request');
 
-var cache = require('./../../ai/cache');
-
-var Weather = function (config) {
+var Weather = function () {
 
     this.intent = [
         {value: "what is the weather like [today]", trigger: "weather.getCurrent"},
@@ -27,8 +25,13 @@ var Weather = function (config) {
     ];
 
     this.triggers = {
-        getCurrent: function (dfd) {
-            Weather.getWeather(config, true).then(function (weather) {
+        getCurrent: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -47,8 +50,13 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrow: function (dfd) {
-            Weather.getWeather(config).then(function (weather) {
+        getTomorrow: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -67,8 +75,13 @@ var Weather = function (config) {
             });
         },
 
-        getCurrentTemp: function (dfd) {
-            Weather.getWeather(config, true).then(function (weather) {
+        getCurrentTemp: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -81,8 +94,13 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrowTemp: function (dfd) {
-            Weather.getWeather(config).then(function (weather) {
+        getTomorrowTemp: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -95,8 +113,13 @@ var Weather = function (config) {
             });
         },
 
-        getCurrentConditionSnow: function (dfd) {
-            Weather.getWeather(config, true).then(function (weather) {
+        getCurrentConditionSnow: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -109,8 +132,13 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrowConditionSnow: function (dfd) {
-            Weather.getWeather(config).then(function (weather) {
+        getTomorrowConditionSnow: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -123,8 +151,13 @@ var Weather = function (config) {
             });
         },
 
-        getFutureConditionSnow: function (dfd) {
-            Weather.getWeather(config).then(function (weather) {
+        getFutureConditionSnow: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -137,8 +170,13 @@ var Weather = function (config) {
             });
         },
 
-        getCurrentConditionRain: function (dfd) {
-            Weather.getWeather(config, true).then(function (weather) {
+        getCurrentConditionRain: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude, true).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -151,8 +189,13 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrowConditionRain: function (dfd) {
-            Weather.getWeather(config).then(function (weather) {
+        getTomorrowConditionRain: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -165,8 +208,13 @@ var Weather = function (config) {
             });
         },
 
-        getFutureConditionRain: function (dfd) {
-            Weather.getWeather(config).then(function (weather) {
+        getFutureConditionRain: function (dfd, expression, getMemory) {
+
+            var key = getMemory('apiKey');
+            var latitude = getMemory('latitude');
+            var longitude = getMemory('longitude');
+
+            Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
 
                 responses.push([
@@ -183,7 +231,7 @@ var Weather = function (config) {
     this.context = {};
 
     this.options = {
-        apiKey: {name: "API Key", description: "Your Dark Sky API key found at https://darksky.net/dev/account", protected: true},
+        apiKey: {name: "API Key", description: "Your Dark Sky API key found at https://darksky.net/dev/account"},
         latitude: {name: "Latitude", description: "Your latitude coordinate"},
         longitude: {name: "Longitude", description: "Your longitude coordinate"}
     };
@@ -387,29 +435,20 @@ Weather.returnRandom = function (responses) {
     return responses[Math.floor(Math.random() * responses.length)];
 };
 
-Weather.getWeather = function (config, current) {
+Weather.getWeather = function (key, latitude, longitude) {
     var dfd = $q.defer();
-    var weather = cache.read('weather.json');
 
-    var startOfDay = moment().startOf('day');
-    var lastHour = moment().subtract(1, 'hour');
-    if (weather && weather.currently && moment.unix(weather.currently.time).isAfter(startOfDay) && (current !== true || moment.unix(weather.currently.time).isAfter(lastHour))) {
-        dfd.resolve(weather);
-    } else {
-        console.log('Fetching weather');
-        var uri = 'https://api.darksky.net/forecast/' + config.apiKey + '/' + config.latitude + "," + config.longitude;
+    var uri = 'https://api.darksky.net/forecast/' + key + '/' + latitude + "," + longitude;
 
-        request(uri, function (error, response, body) {
-            if (error) {
-                console.log(error);
-                dfd.reject(error);
-            } else {
-                var obj = JSON.parse(body);
-                cache.write('weather.json', obj);
-                dfd.resolve(obj);
-            }
-        });
-    }
+    request(uri, function (error, response, body) {
+        if (error) {
+            console.log(error);
+            dfd.reject(error);
+        } else {
+            var obj = JSON.parse(body);
+            dfd.resolve(obj);
+        }
+    });
 
     return dfd.promise;
 };
@@ -426,7 +465,7 @@ module.exports = {
         "How hot will it be tomorrow?",
         "Is it going to snow?"
     ],
-    register: function (config) {
-        return new Weather(config);
+    register: function () {
+        return new Weather();
     }
 };

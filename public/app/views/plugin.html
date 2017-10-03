@@ -41,10 +41,29 @@
                     <form class="form-horizontal" data-ng-show="plugin.options">
                         <div class="form-group" data-ng-repeat="(key, option) in plugin.options">
                             <label for="{{$index}}" class="col-sm-2 control-label">{{option.name || key}}</label>
-                            <div class="col-sm-10">
-                                <input data-ng-if="!option.protected" type="text" class="form-control" id="{{$index}}" data-ng-model="option.value">
-                                <input data-ng-if="option.protected" type="password" class="form-control" id="{{$index}}" data-ng-model="option.value">
+                            <div class="col-sm-10" data-ng-if="!option.intentArray">
+                                <input type="text" class="form-control" id="{{$index}}" data-ng-model="option.value">
                                 <div><small data-ng-show="option.description"><em>{{option.description}}</em></small></div>
+                            </div>
+                            <div class="col-sm-10" data-ng-if="option.intentArray">
+                                <div><small data-ng-show="option.description"><em>{{option.description}}</em></small></div>
+                                <table class="table table-condensed">
+                                    <thead>
+                                    <tr>
+                                        <th>Value</th>
+                                        <th>Trigger</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr data-ng-repeat="intent in option.value">
+                                        <td><input class="form-control" type="text" data-ng-model="intent.value"></td>
+                                        <td><input class="form-control" type="text" data-ng-model="intent.trigger"></td>
+                                        <td><button type="button" class="btn btn-default btn-sm" data-ng-click="option.value.splice($index, 1)"><span class="glyphicon glyphicon-remove"></span></button></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                                <a href class="btn btn-default" data-ng-click="option.value.push({})">Add Intent</a>
                             </div>
                         </div>
                         <br />

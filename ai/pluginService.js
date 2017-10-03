@@ -1,11 +1,13 @@
 var pjson = require('./../package.json');
 
+var extend = require('extend');
 var EventEmitter = require('events');
 var findPlugins = require('find-plugins');
 var npmi = require('npmi');
 
 var configuration = require('./configuration');
 var intentService = require('./intentService');
+var memory = require('./memory');
 var nlp = require('../nlp');
 
 var emitter = new EventEmitter();
@@ -31,8 +33,8 @@ var Plugin = function (module, pkg) {
     this.options = null;
 };
 
-Plugin.prototype.register = function (config) {
-    var service = this.registrationFunction(config, nlp);
+Plugin.prototype.register = function () {
+    var service = this.registrationFunction(nlp);
 
     this.intentMatchers = [];
     this.triggers = {};
@@ -169,8 +171,8 @@ pluginService.getPlugin = function (name) {
     return plugin;
 };
 
-pluginService.updatePlugin = function (name, updateTemplate) {
-    var plugin = this.getPlugin(name);
+pluginService.updatePlugin = function (pluginName, updateTemplate, username) {
+    var plugin = this.getPlugin(pluginName);
 
     if (updateTemplate && plugin) {
         if (updateTemplate.enabled) {
@@ -180,14 +182,21 @@ pluginService.updatePlugin = function (name, updateTemplate) {
         }
 
         if (updateTemplate.hasOwnProperty('options')) {
-            plugin.options = updateTemplate.options;
+            var memories = memory.get(username);
 
+            var options = {};
             var option;
-            for (option in plugin.options) {
-                if (plugin.options.hasOwnProperty(option)) {
-                    configuration.setPluginSetting(plugin.namespace, option, plugin.options[option].value);
+            var name;
+            for (option in updateTemplate.options) {
+                if (updateTemplate.options.hasOwnProperty(option)) {
+                    name = option.substring((plugin.namespace + ".").length);
+                    options[name] = updateTemplate.options[option];
+                    memories[option] = updateTemplate.options[option].value;
                 }
             }
+
+            plugin.options = options;
+            memory.set(username, memories);
         }
     }
 
@@ -195,20 +204,7 @@ pluginService.updatePlugin = function (name, updateTemplate) {
 };
 
 pluginService.enablePlugin = function (plugin) {
-    var config = {};
-    if (configuration.settings.plugins[plugin.namespace]) {
-        config = configuration.settings.plugins[plugin.namespace];
-    }
-
-    plugin.register(config); // TODO: Just use long-term/session memory?
-
-    var option;
-    for (option in plugin.options) {
-        if (plugin.options.hasOwnProperty(option) && config[option]) {
-            plugin.options[option].value = config[option];
-        }
-    }
-
+    plugin.register();
     plugin.enabled = true;
 
     if (configuration.setPluginAsEnabled(plugin)) {
@@ -224,7 +220,7 @@ pluginService.disablePlugin = function (plugin) {
     }
 };
 
-pluginService.sanitizePlugins = function (input, allowOptions) {
+pluginService.sanitizePlugins = function (input, username) {
     if (input instanceof Array) {
         var plugins = [];
 
@@ -236,30 +232,51 @@ pluginService.sanitizePlugins = function (input, allowOptions) {
         return plugins;
     }
 
+    var plugin = input;
+
     var triggers = [];
     var contextTriggers = [];
 
     var trigger;
-    for (trigger in input.triggers) {
-        if (input.triggers.hasOwnProperty(trigger)) {
+    for (trigger in plugin.triggers) {
+        if (plugin.triggers.hasOwnProperty(trigger)) {
             triggers.push(trigger);
         }
     }
-    for (trigger in input.contextTriggers) {
-        if (input.contextTriggers.hasOwnProperty(trigger)) {
+    for (trigger in plugin.contextTriggers) {
+        if (plugin.contextTriggers.hasOwnProperty(trigger)) {
             contextTriggers.push(trigger);
         }
     }
 
+    var options = null;
+
+    if (username) {
+        var memories = memory.get(username);
+        var option;
+        var name;
+        for (option in plugin.options) {
+            if (plugin.options.hasOwnProperty(option)) {
+                name = plugin.namespace + "." + option;
+
+                if (memories[name]) {
+                    options = options || {};
+                    options[name] = extend({}, plugin.options[option]);
+                    options[name].value = memories[name];
+                }
+            }
+        }
+    }
+
     return {
-        name: input.name,
-        description: input.description,
-        namespace: input.namespace,
-        options: allowOptions ? input.options : null,
-        enabled: input.enabled,
+        name: plugin.name,
+        description: plugin.description,
+        namespace: plugin.namespace,
+        options: options,
+        enabled: plugin.enabled,
         triggers: contextTriggers,
         contextTriggers: contextTriggers,
-        examples: input.examples
+        examples: plugin.examples
     };
 };
 
