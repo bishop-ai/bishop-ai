@@ -38,9 +38,6 @@ var Server = function () {
 
     pluginService.load();
 
-    // TODO: if in dev mode:
-    // classifier.train();
-
     this.io = socket(this.server);
     this.io.on('connection', function (ioClient) {
         return new Client(ioClient);

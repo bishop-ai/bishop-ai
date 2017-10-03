@@ -274,7 +274,7 @@ pluginService.sanitizePlugins = function (input, username) {
         namespace: plugin.namespace,
         options: options,
         enabled: plugin.enabled,
-        triggers: contextTriggers,
+        triggers: triggers,
         contextTriggers: contextTriggers,
         examples: plugin.examples
     };
