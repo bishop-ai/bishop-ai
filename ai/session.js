@@ -32,12 +32,16 @@ Session.prototype.getMemory = function (name) {
 };
 
 Session.prototype.setMemory = function (name, value) {
-    if (!name || value === null || value === undefined) {
+    if (!name) {
         console.log('Session Error: Cannot store session memory with name: ' + name);
         return;
     }
 
-    this.memory[name] = value;
+    if (value === null || value === undefined) {
+        delete this.memory[name];
+    } else {
+        this.memory[name] = value;
+    }
 
     // If the session is linked to an account, store the memory in long term
     if (this.username) {
@@ -146,7 +150,8 @@ Session.prototype.processIntent = function (inputExpression, username) {
         if (matchedIntent.confidence > 0.6) {
             matchedClassification = {
                 trigger: matchedIntent.intent,
-                confidence: matchedIntent.confidence
+                confidence: matchedIntent.confidence,
+                namedWildcards: matchedIntent.namedWildcards
             };
         } else {
             matchedClassification = classifier.classify(inputExpression);
@@ -154,7 +159,10 @@ Session.prototype.processIntent = function (inputExpression, username) {
     }
 
     if (matchedClassification && matchedClassification.confidence > 0.5) {
-        this.processTrigger(matchedClassification.trigger, inputExpression, triggers, examples, username).then(function (response) {
+
+        var namedValues = matchedClassification.namedWildcards || {};
+
+        this.processTrigger(matchedClassification.trigger, inputExpression, triggers, namedValues, examples, username).then(function (response) {
             dfd.resolve({
                 response: response,
                 matchedClassification: matchedClassification
@@ -182,27 +190,33 @@ Session.prototype.processIntent = function (inputExpression, username) {
  * @param triggerKey
  * @param inputExpression
  * @param triggers
+ * @param namedValues
  * @param examples
  * @param username
  * @returns {Promise.<Response>}
  * @private
  */
-Session.prototype.processTrigger = function (triggerKey, inputExpression, triggers, examples, username) {
+Session.prototype.processTrigger = function (triggerKey, inputExpression, triggers, namedValues, examples, username) {
     if (!triggerKey) {
         return $q.resolve(responseService.getUnknownResponse(inputExpression));
     }
 
-    var triggerData = [];
+    var triggerParams = [];
     if (triggerKey.indexOf('(') >= 0 && triggerKey.indexOf(')') === triggerKey.length - 1) {
         var dataString = triggerKey.substring(triggerKey.indexOf('(') + 1, triggerKey.length - 1);
         triggerKey = triggerKey.substring(0, triggerKey.indexOf('('));
-        triggerData = dataString.split(",");
+        triggerParams = dataString.split(",");
     }
 
     var i;
-    for (i = 0; i < triggerData.length; i++) {
-        triggerData[i] = triggerData[i].trim();
+    for (i = 0; i < triggerParams.length; i++) {
+        triggerParams[i] = triggerParams[i].trim();
     }
+
+    var intentData = {
+        triggerParams: triggerParams,
+        namedValues: namedValues || {}
+    };
 
     if (triggerKey && triggers[triggerKey]) {
         var dfd = $q.defer();
@@ -220,7 +234,7 @@ Session.prototype.processTrigger = function (triggerKey, inputExpression, trigge
             return examples;
         };
 
-        trigger.method(dfd, inputExpression, getMemory, setMemory, getExamples, triggerData);
+        trigger.method(dfd, inputExpression, getMemory, setMemory, getExamples, intentData);
 
         return dfd.promise.then(function (triggerResponses) {
             var responses = responseService.getResponses(triggerResponses);

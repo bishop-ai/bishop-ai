@@ -42,8 +42,9 @@
                         <div class="form-group" data-ng-repeat="(key, option) in plugin.options">
                             <label for="{{$index}}" class="col-sm-2 control-label">{{option.name || key}}</label>
                             <div class="col-sm-10" data-ng-if="!option.intentArray">
-                                <input type="text" class="form-control" id="{{$index}}" data-ng-model="option.value">
+                                <input type="text" class="form-control" id="{{$index}}" data-ng-model="option.value" data-ng-disabled="option.oauth">
                                 <div><small data-ng-show="option.description"><em>{{option.description}}</em></small></div>
+                                <div data-ng-show="option.oauth"><button type="button" class="btn btn-default" data-ng-click="startOauth(option)">Authenticate</button></div>
                             </div>
                             <div class="col-sm-10" data-ng-if="option.intentArray">
                                 <div><small data-ng-show="option.description"><em>{{option.description}}</em></small></div>

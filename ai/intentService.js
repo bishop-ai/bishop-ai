@@ -11,13 +11,14 @@ intentService.matchInputToIntent = function (input, matchers) {
     var tokens = nlp.tokenize(input);
 
     var i;
-    var matchAmount;
+    var matchResult;
     for (i = 0; i < matchers.length; i++) {
-        matchAmount = matchers[i].matchesInput(tokens);
+        matchResult = matchers[i].matchesInput(tokens);
 
-        if (matchAmount >= 0) {
+        if (matchResult.amountMatched >= 0) {
             result.intent = matchers[i].intent;
-            result.confidence = matchAmount / tokens.length;
+            result.confidence = matchResult.amountMatched / tokens.length;
+            result.namedWildcards = matchResult.namedWildcards || {};
             break;
         }
     }
@@ -56,7 +57,12 @@ intentService.Matcher = function (input, intent, context) {
 };
 
 intentService.Matcher.prototype.matchesInput = function (inputTokens) {
-    return this.matchFunction(inputTokens);
+    var namedWildcards = {};
+    var result = this.matchFunction(inputTokens, namedWildcards);
+    return {
+        amountMatched: result,
+        namedWildcards: namedWildcards
+    };
 };
 
 intentService.Matcher.prototype.getInputs = function () {
@@ -168,7 +174,7 @@ intentService.Matcher.parseGetInputs = function (tree) {
 
         }.bind(getInputsFunctionGroups);
         break;
-    case "*":
+    case "wildcard":
         getInputsFunction = function (inputs) {
             var i;
             for (i = 0; i < inputs.length; i++) {
@@ -195,21 +201,25 @@ intentService.Matcher.parseGetInputs = function (tree) {
     return getInputsFunction;
 };
 
-intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
+intentService.Matcher.parseMatchesFunction = function (tree) {
     var matchesFunction;
 
     var i;
     var matchFunctions;
 
+    if (!tree) {
+        return function () {return -1;};
+    }
+
     switch (tree.op) {
     case "start":
         matchFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            matchFunctions.push(intentService.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
+            matchFunctions.push(intentService.Matcher.parseMatchesFunction(tree.values[i]));
         }
 
         // Every tree value must return a good value
-        matchesFunction = function (inputTokens) {
+        matchesFunction = function (inputTokens, namedWildcards) {
             inputTokens = intentService.Matcher.deepClone(inputTokens); // Clone
 
             var i;
@@ -219,13 +229,13 @@ intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
 
                 // If there are more tree values but there are no more input tokens, return -1 indicating the match failed.
                 if (inputTokens.length === 0) {
-                    if (tree.values[i].op === "*" || tree.values[i].op === "[") {
+                    if (tree.values[i].op === "wildcard" || tree.values[i].op === "[") {
                         continue;
                     }
                     return -1;
                 }
 
-                a = this[i](inputTokens);
+                a = this[i](inputTokens, namedWildcards);
 
                 // If the input did not match, return -1 indicating the required match failed.
                 if (a === -1) {
@@ -242,18 +252,18 @@ intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
     case "[":
         matchFunctions = [];
         for (i = 0; i < tree.values.length; i++) {
-            matchFunctions.push(intentService.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
+            matchFunctions.push(intentService.Matcher.parseMatchesFunction(tree.values[i]));
         }
 
         // Tree values don't have to return a good value
-        matchesFunction = function (inputTokens) {
+        matchesFunction = function (inputTokens, namedWildcards) {
             inputTokens = intentService.Matcher.deepClone(inputTokens); // Clone
 
             var i;
             var advance = 0;
             var a;
             for (i = 0; i < this.length; i++) {
-                a = this[i](inputTokens);
+                a = this[i](inputTokens, namedWildcards);
 
                 // If the input did not match, return 0 indicating the optional match was not found.
                 if (a === -1) {
@@ -279,11 +289,11 @@ intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
                     matchFunctionGroups.push(innerArray);
                 }
 
-                innerArray.push(intentService.Matcher.parseMatchesFunction(tree.values[i], tree.values[i + 1]));
+                innerArray.push(intentService.Matcher.parseMatchesFunction(tree.values[i]));
             }
         }
 
-        matchesFunction = function (inputTokens) {
+        matchesFunction = function (inputTokens, namedWildcards) {
             var i;
             var g;
             var a;
@@ -296,7 +306,7 @@ intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
                 advance = 0;
                 tokensClone = intentService.Matcher.deepClone(inputTokens);
                 for (i = 0; i < this[g].length; i++) {
-                    a = this[g][i](tokensClone);
+                    a = this[g][i](tokensClone, namedWildcards);
 
                     if (a === -1) {
                         advance = a;
@@ -317,19 +327,59 @@ intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
             return maxAdvance;
         }.bind(matchFunctionGroups);
         break;
-    case "*":
-        matchesFunction = function (inputTokens) {
+    case "wildcard":
+
+        var binder = {
+            wildcardName: tree.values[0]
+        };
+
+        // Need to reconstruct the entire tree with the parts that have been matched already removed from the tree
+        // This allows using lookahead to find the least amount of text to match the wildcard
+        var constructRemainingTree = function (parent, index) {
+
+            // Reconstruct the parent tree
+            var newParent = {
+                op: parent.op,
+                values: [],
+                index: 0,
+                getParent: null
+            };
+
+            var getParent = function () { return this; };
+
+            // Add the remaining values in the parent tree
+            if (parent.values.length > index + 1) {
+                newParent.values = parent.values.slice(index + 1);
+
+                var i;
+                for (i = 0; i < newParent.values.length; i++) {
+                    newParent.values[i].index = i;
+                    newParent.values[i].getParent = getParent.bind(newParent);
+                }
+            }
+
+            if (parent.getParent) {
+                return constructRemainingTree(parent.getParent(), parent.index);
+            } else {
+                return newParent;
+            }
+        };
+
+        if (tree.getParent) {
+            var remainingTree = constructRemainingTree(tree.getParent(), tree.index);
+            binder.matcher = intentService.Matcher.parseMatchesFunction(remainingTree);
+        }
+
+        matchesFunction = function (inputTokens, namedWildcards) {
             var i;
 
             var clone = intentService.Matcher.deepClone(inputTokens);
 
-            var matcher = null;
-            if (nextNode) {
-                matcher = intentService.Matcher.parseMatchesFunction(nextNode);
+            if (this.matcher) {
 
                 // Advance to the next token that matches
                 for (i = 0; i < clone.length; i++) {
-                    if (matcher && matcher(clone.slice(i)) > 0) {
+                    if (this.matcher && this.matcher(clone.slice(i), []) > 0) {
                         break;
                     }
                 }
@@ -337,10 +387,14 @@ intentService.Matcher.parseMatchesFunction = function (tree, nextNode) {
                 i = clone.length;
             }
 
+            if (this.wildcardName && this.wildcardName !== "*" && i > 0) {
+                namedWildcards[this.wildcardName] = inputTokens.slice(0, i).join(" ");
+            }
+
             inputTokens.slice(i);
 
             return i;
-        };
+        }.bind(binder);
         break;
     case "text":
         matchesFunction = function (inputTokens) {
@@ -376,6 +430,22 @@ intentService.Matcher.lex = function (input) {
 
     var i;
     var text = "";
+    var namedWildcard = false;
+
+    var checkAndAddTextToken = function () {
+        if (text.length > 0) {
+            if (text.trim().length > 0) {
+                if (namedWildcard) {
+                    tokens[tokens.length - 1].value = text.trim();
+                    namedWildcard = false;
+                } else {
+                    tokens.push({type: "text", value: text.trim()});
+                }
+            }
+            text = "";
+        }
+    };
+
     for (i = 0; i < input.length; i++) {
 
         switch (input[i]) {
@@ -384,26 +454,28 @@ intentService.Matcher.lex = function (input) {
         case "(":
         case ")":
         case "|":
-        case "*":
-            if (text.length > 0) {
-                if (text.trim().length > 0) {
-                    tokens.push({type: "text", value: text.trim()});
-                }
-                text = "";
-            }
+            checkAndAddTextToken();
             tokens.push({ type: "op", value: input[i] });
             break;
+        case "*":
+            checkAndAddTextToken();
+            tokens.push({ type: "wildcard", value: input[i] });
+            break;
         default:
+            if (namedWildcard === true) {
+                if (input[i] === " ") {
+                    checkAndAddTextToken();
+                }
+            } else if (tokens.length > 0 && tokens[tokens.length - 1].type === "wildcard" && tokens[tokens.length - 1].value === "*" && input[i] !== " " && text.length === 0) {
+                namedWildcard = true;
+            }
+
             text += input[i];
+            break;
         }
     }
 
-    if (text.length > 0) {
-        if (text.trim().length > 0) {
-            tokens.push({type: "text", value: text.trim()});
-        }
-        text = "";
-    }
+    checkAndAddTextToken();
 
     return tokens;
 };
@@ -411,11 +483,19 @@ intentService.Matcher.lex = function (input) {
 intentService.Matcher.buildParseTree = function (tokens, op) {
     var tree = {
         op: op || "start",
-        values: []
+        values: [],
+        index: 0,
+        getParent: null
     };
 
     var token;
     var stopLoop = false;
+
+    var getParent = function () {
+        return this;
+    };
+
+    var index = 0;
 
     while (tokens.length > 0) {
         token = tokens.shift();
@@ -425,16 +505,13 @@ intentService.Matcher.buildParseTree = function (tokens, op) {
             switch (token.value) {
             case "[":
             case "(":
-                tree.values.push(intentService.Matcher.buildParseTree(tokens, token.value));
+                var subTree = intentService.Matcher.buildParseTree(tokens, token.value);
+                subTree.getParent = getParent.bind(tree);
+                subTree.index = index++;
+                tree.values.push(subTree);
                 break;
             case "|":
-                tree.values.push({op: "|", values: []});
-                break;
-            case "*":
-                tree.values.push({
-                    op: token.value,
-                    values: []
-                });
+                tree.values.push({op: "|", values: [], getParent: getParent.bind(tree), index: index++});
                 break;
             case "]":
             case ")":
@@ -443,14 +520,25 @@ intentService.Matcher.buildParseTree = function (tokens, op) {
             default:
                 tree.values.push({
                     op: "text",
-                    values: token.value.split(" ")
+                    values: token.value.split(" "),
+                    getParent: getParent.bind(tree),
+                    index: index++
                 });
             }
 
+        } else if (token.type === "wildcard") {
+            tree.values.push({
+                op: token.type,
+                values: [token.value],
+                getParent: getParent.bind(tree),
+                index: index++
+            });
         } else {
             tree.values.push({
                 op: "text",
-                values: token.value.split(" ")
+                values: token.value.split(" "),
+                getParent: getParent.bind(tree),
+                index: index++
             });
         }
 

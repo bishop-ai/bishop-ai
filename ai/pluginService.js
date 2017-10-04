@@ -258,10 +258,9 @@ pluginService.sanitizePlugins = function (input, username) {
         for (option in plugin.options) {
             if (plugin.options.hasOwnProperty(option)) {
                 name = plugin.namespace + "." + option;
-
+                options = options || {};
+                options[name] = extend({}, plugin.options[option]);
                 if (memories[name]) {
-                    options = options || {};
-                    options[name] = extend({}, plugin.options[option]);
                     options[name].value = memories[name];
                 }
             }

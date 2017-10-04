@@ -9,15 +9,15 @@ var Ifttt = function () {
         maker: function (dfd, expression, getMemory, setMemory, getExamples, data) {
             var key = getMemory("key");
 
-            if (!data[0]) {
+            if (!data.triggerParams[0]) {
                 dfd.resolve("I'm sorry, something went wrong. Please make sure your If This Then That plugin is correctly configured.");
                 return;
             }
 
-            self.makeCall(data[0], key);
+            self.makeCall(data.triggerParams[0], key);
 
-            if (data[1]) {
-                dfd.resolve(data[1]);
+            if (data.triggerParams[1]) {
+                dfd.resolve(data.triggerParams[1]);
             } else {
                 dfd.resolve();
             }

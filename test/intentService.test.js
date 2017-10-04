@@ -11,35 +11,47 @@ describe('Intent Service', function () {
     describe('matchInputToIntent()', function () {
 
         it("Should correctly match input", function () {
-            intentService.addIntent("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on");
-            intentService.addIntent("what is the weather [going to be] like tomorrow", "get_weather");
+            var intent = [];
+            intent.push(new intentService.Matcher("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on"));
+            intent.push(new intentService.Matcher("what is the weather [going to be] like tomorrow", "get_weather"));
 
-            var result = intentService.matchInputToIntent("switch on my lights please");
+            var result = intentService.matchInputToIntent("switch on my lights please", intent);
 
             assert.equal(result.intent, "turn_light_on");
             assert(result.confidence > 0.5, "The confidence was expected to be greater than 0.5 but was " + result.confidence);
 
-            result = intentService.matchInputToIntent("what is the weather like tomorrow?");
+            result = intentService.matchInputToIntent("what is the weather like tomorrow?", intent);
 
             assert.equal(result.intent, "get_weather");
             assert(result.confidence > 0.5, "The confidence was expected to be greater than 0.5 but was " + result.confidence);
         });
 
         it("Should find when there is no match", function () {
-            intentService.addIntent("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on");
+            var intent = new intentService.Matcher("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on");
 
-            var result = intentService.matchInputToIntent("Switch on my");
+            var result = intentService.matchInputToIntent("Switch on my", [intent]);
 
             assert.equal(result.intent, "");
             assert(result.confidence < 0.5, "The confidence was expected to be less than 0.5 but was " + result.confidence);
         });
 
-        it("Should correctly wildcards input", function () {
-            intentService.addIntent("ask Google [(to|for|what)] * please", "ask_google");
+        it("Should correctly handle wildcards in input", function () {
+            var intent = new intentService.Matcher("ask Google [(to|for|what)] * please", "ask_google");
 
-            var result = intentService.matchInputToIntent("ask Google what the circumference of the earth is please");
+            var result = intentService.matchInputToIntent("ask Google what the circumference of the earth is please", [intent]);
 
             assert.equal(result.intent, "ask_google");
+            assert(result.confidence > 0.5, "The confidence was expected to be greater than 0.5 but was " + result.confidence);
+        });
+
+        it("Should correctly handle named wildcards in input", function () {
+            var intent = new intentService.Matcher("play [the song] *song [by [the artist] *artist] [from [the album] *album] [on spotify]", "play_song");
+
+            var result = intentService.matchInputToIntent("Play the song Stairway to Heaven by Led Zeppelin on spotify", [intent]);
+
+            assert.equal(result.intent, "play_song");
+            assert.equal(result.namedWildcards.song, "Stairway to Heaven");
+            assert.equal(result.namedWildcards.artist, "Led Zeppelin");
             assert(result.confidence > 0.5, "The confidence was expected to be greater than 0.5 but was " + result.confidence);
         });
 
@@ -47,10 +59,10 @@ describe('Intent Service', function () {
 
     describe('getInputs()', function () {
 
-        it ("Should return all possible input phrase for an intent matcher", function () {
-            var matcher = intentService.addIntent("ask Google [(to|for|what)] * please", "ask_google");
+        it("Should return all possible input phrase for an intent matcher", function () {
+            var intent = new intentService.Matcher("ask Google [(to|for|what)] * please", "ask_google");
 
-            var inputs = matcher.getInputs();
+            var inputs = intent.getInputs();
 
             assert.equal(inputs.length, 4);
             assert.equal(inputs[0], "ask Google * please");

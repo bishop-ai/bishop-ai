@@ -2,11 +2,13 @@ angular.module('AI').controller('PluginCtrl', [
     '$rootScope',
     '$scope',
     '$http',
+    '$interpolate',
     'plugin',
 
     function ($rootScope,
               $scope,
               $http,
+              $interpolate,
               plugin) {
 
         $scope.plugin = plugin;
@@ -49,6 +51,29 @@ angular.module('AI').controller('PluginCtrl', [
             }, function () {
                 alert("Error disabling plugin");
             });
+        };
+
+        $scope.startOauth = function (option) {
+            var url = $interpolate(option.oauth.url)($scope);
+
+            var width = 450,
+                height = 730,
+                left = (screen.width / 2) - (width / 2),
+                top = (screen.height / 2) - (height / 2);
+
+            window.addEventListener("message", function (event) {
+                $scope.$apply(function () {
+                    var params = JSON.parse(event.data);
+                    if (params[option.oauth.urlParam]) {
+                        option.value = params[option.oauth.urlParam];
+                    }
+                });
+            }, false);
+
+            window.open(url,
+                'OAuth Authentication',
+                'menubar=no,location=no,resizable=no,scrollbars=no,status=no, width=' + width + ', height=' + height + ', top=' + top + ', left=' + left
+            );
         };
     }
 ]);

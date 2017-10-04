@@ -11,6 +11,6 @@
         "url": "http://www.davidpaulhamilton.net/"
     },
     "dependencies": {
-        "ffi": "^2.2.0"
+        "axios": "~0.16.2"
     }
 }
