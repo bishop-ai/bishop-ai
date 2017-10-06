@@ -12,7 +12,7 @@ describe('Intent Service', function () {
 
         it("Should correctly match input", function () {
             var intent = [];
-            intent.push(new intentService.Matcher("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on"));
+            intent.push(new intentService.Matcher("(activate|enable|switch on|turn on) [(the|my)] (lights|lighting)", "turn_light_on"));
             intent.push(new intentService.Matcher("what is the weather [going to be] like tomorrow", "get_weather"));
 
             var result = intentService.matchInputToIntent("switch on my lights please", intent);
@@ -27,7 +27,7 @@ describe('Intent Service', function () {
         });
 
         it("Should find when there is no match", function () {
-            var intent = new intentService.Matcher("[please] (activate|enable|switch on|turn on) [(the|my)] (lights|lighting) [please]", "turn_light_on");
+            var intent = new intentService.Matcher("(activate|enable|switch on|turn on) [(the|my)] (lights|lighting)", "turn_light_on");
 
             var result = intentService.matchInputToIntent("Switch on my", [intent]);
 

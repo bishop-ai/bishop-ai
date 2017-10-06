@@ -146,7 +146,9 @@ Session.prototype.processIntent = function (inputExpression, username) {
             };
         }
     } else {
-        var matchedIntent = intentService.matchInputToIntent(inputExpression.normalized, matchers);
+        var input = inputExpression.normalized.replace(/^please\s/i, "");
+        input = input.replace(/\splease$/i, "");
+        var matchedIntent = intentService.matchInputToIntent(input, matchers);
         if (matchedIntent.confidence > 0.6) {
             matchedClassification = {
                 trigger: matchedIntent.intent,

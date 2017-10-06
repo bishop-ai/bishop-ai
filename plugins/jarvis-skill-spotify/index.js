@@ -9,17 +9,16 @@ var redirect = "http://localhost:3000/oauth.html";
 var Spotify = function () {
 
     this.intent = [
-        // TODO: Find and remove please before and after input before passing it to the trigger matcher.
-        {value: "[please] play [(the|my)] music [please]", trigger: "spotify.play"},
-        {value: "[please] turn [(the|my)] music on [please]", trigger: "spotify.play"},
-        {value: "[please] turn on [(the|my)] music [please]", trigger: "spotify.play"},
-        {value: "[please] play [the] ((artist|band) *artist|(album|cd|disk|record|single) *album [(from|by) [[the] (artist|band)] *artist]) [on spotify] [please]", trigger: "spotify.play"},
-        {value: "[please] play [[the] (song|track)] *song [by [the (artist|band)] *artist] [(from|on) the (album|cd|disk|record|single) *album] [on spotify] [please]", trigger: "spotify.play"},
-        {value: "[please] (turn off|stop [playing]) [(the|my)] music [please]", trigger: "spotify.pause"},
-        {value: "[please] turn [(the|my)] music off [please]", trigger: "spotify.pause"},
-        {value: "[please] pause [(the|my)] music [please]", trigger: "spotify.pause"},
-        {value: "[please] [play [the]] last song [again] [please]", trigger: "spotify.previous"},
-        {value: "[please] [play [the]] next song [please]", trigger: "spotify.next"}
+        {value: "play [(the|my)] music", trigger: "spotify.play"},
+        {value: "turn [(the|my)] music on", trigger: "spotify.play"},
+        {value: "turn on [(the|my)] music", trigger: "spotify.play"},
+        {value: "play [the] ((artist|band) *artist|(album|cd|disk|record|single) *album [(from|by) [[the] (artist|band)] *artist]) [on spotify]", trigger: "spotify.play"},
+        {value: "play [[the] (song|track)] *song [by [the (artist|band)] *artist] [(from|on) the (album|cd|disk|record|single) *album] [on spotify]", trigger: "spotify.play"},
+        {value: "(turn off|stop [playing]) [(the|my)] music", trigger: "spotify.pause"},
+        {value: "turn [(the|my)] music off", trigger: "spotify.pause"},
+        {value: "pause [(the|my)] music", trigger: "spotify.pause"},
+        {value: "[play [the]] last song [again]", trigger: "spotify.previous"},
+        {value: "[play [the]] next song", trigger: "spotify.next"}
     ];
 
     // TODO: "Save this song", "Set Volume", "Play playlist", "Add this song to playlist", "Play songs like this"
