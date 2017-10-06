@@ -55,7 +55,6 @@ var Spotify = function () {
     var redirectUrl = encodeURIComponent(redirect);
 
     // TODO: Add back in config so that if a plugin option is set in the config file, it is not shown to the user as an option that can be configured.
-    // TODO: Add callbacks for when plugin options are set. In this case, when the user authenticates with Spotify, we need to log in and get the refresh token before the auth token expires.
     this.options = {
         clientId: {name: "Client ID", description: "Your Spotify application Client ID found at https://developer.spotify.com/my-applications/#!/applications"},
         clientSecret: {name: "Client Secret", description: "Your Spotify application Client Secret found at https://developer.spotify.com/my-applications/#!/applications"},
@@ -63,8 +62,26 @@ var Spotify = function () {
             name: "Auth Code",
             description: "",
             oauth: {
-                url: "https://accounts.spotify.com/authorize?client_id={{plugin.options['spotify.clientId'].value}}&response_type=code&redirect_uri=" + redirectUrl + "&scope=playlist-read-private%20playlist-read-collaborative%20user-read-playback-state%20user-modify-playback-state%20user-read-private",
+                url: "https://accounts.spotify.com/authorize?client_id={{plugin.options['clientId'].value}}&response_type=code&redirect_uri=" + redirectUrl + "&scope=playlist-read-private%20playlist-read-collaborative%20user-read-playback-state%20user-modify-playback-state%20user-read-private",
                 urlParam: "code"
+            },
+            onChange: function (getMemory, setMemory) {
+
+                var clientId = getMemory("clientId");
+                var clientSecret = getMemory("clientSecret");
+                var authCode = getMemory("authCode");
+
+                if (clientId && clientSecret && authCode) {
+                    Spotify.getTokenFromAuth(clientId, clientSecret, authCode).then(function (response) {
+                        if (response.refreshToken) {
+                            setMemory("refreshToken", response.refreshToken);
+                            setMemory("authCode", null);
+                        }
+                    }, function (err) {
+                        console.log(err.message);
+                        console.log(JSON.stringify(err.response.data));
+                    });
+                }
             }
         }
     };

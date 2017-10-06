@@ -184,18 +184,14 @@ pluginService.updatePlugin = function (pluginName, updateTemplate, username) {
         if (updateTemplate.hasOwnProperty('options')) {
             var memories = memory.get(username);
 
-            var options = {};
             var option;
-            var name;
             for (option in updateTemplate.options) {
-                if (updateTemplate.options.hasOwnProperty(option)) {
-                    name = option.substring((plugin.namespace + ".").length);
-                    options[name] = updateTemplate.options[option];
-                    memories[option] = updateTemplate.options[option].value;
+                if (updateTemplate.options.hasOwnProperty(option) && plugin.options.hasOwnProperty(option)) {
+                    plugin.options[option].value = updateTemplate.options[option].value;
+                    memory.setShortTerm(memories, plugin.namespace + "." + option, plugin.options[option].value);
                 }
             }
 
-            plugin.options = options;
             memory.set(username, memories);
         }
     }
@@ -259,9 +255,9 @@ pluginService.sanitizePlugins = function (input, username) {
             if (plugin.options.hasOwnProperty(option)) {
                 name = plugin.namespace + "." + option;
                 options = options || {};
-                options[name] = extend({}, plugin.options[option]);
+                options[option] = extend({}, plugin.options[option]);
                 if (memories[name]) {
-                    options[name].value = memories[name];
+                    options[option].value = memories[name];
                 }
             }
         }

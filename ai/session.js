@@ -23,25 +23,11 @@ var Session = function () {
 };
 
 Session.prototype.getMemory = function (name) {
-    if (name && this.memory[name]) {
-        return this.memory[name];
-    }
-
-    console.log('Session Warning: No memory found by name: ' + name);
-    return null;
+    return memory.getShortTerm(this.memory, name);
 };
 
 Session.prototype.setMemory = function (name, value) {
-    if (!name) {
-        console.log('Session Error: Cannot store session memory with name: ' + name);
-        return;
-    }
-
-    if (value === null || value === undefined) {
-        delete this.memory[name];
-    } else {
-        this.memory[name] = value;
-    }
+    memory.setShortTerm(this.memory, name, value);
 
     // If the session is linked to an account, store the memory in long term
     if (this.username) {
