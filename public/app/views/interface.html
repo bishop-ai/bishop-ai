@@ -13,7 +13,9 @@
 <div class="input">
     <div class="recording-indicator" data-ng-click="toggleRecording()" data-ng-class="{active: recording}"></div>
     <span>&gt;</span>
-    <input id="input" autofocus="autofocus" autocomplete="off" type="text" data-ng-model="message" placeholder="Type message..." data-ng-keypress="handleKeyPress($event)"/>
+    <div class="wrapper">
+        <input id="input" autofocus="autofocus" autocomplete="off" type="text" data-ng-model="message" placeholder="Type message..." data-ng-keypress="handleKeyPress($event)"/>
+    </div>
 </div>
 
 <div class="transcript-container">

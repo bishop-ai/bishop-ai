@@ -120,21 +120,6 @@ Session.prototype.processIntent = function (inputExpression, username) {
         }
     }
 
-    for (i = 0; i < customPluginIntent.length; i++) {
-        matchers.push(new intentService.Matcher(customPluginIntent[i].value, customPluginIntent[i].trigger, customPluginIntent[i].context));
-    }
-
-    // Reverse sort by specificity so the most specific matcher is at the top
-    matchers.sort(function (a, b) {
-        if (a.specificity > b.specificity) {
-            return -1;
-        }
-        if (b.specificity > a.specificity) {
-            return 1;
-        }
-        return 0;
-    });
-
     if (this._context) {
         if (contextTriggers[this._context]) {
             matchedClassification = {
@@ -143,6 +128,21 @@ Session.prototype.processIntent = function (inputExpression, username) {
             };
         }
     } else {
+        for (i = 0; i < customPluginIntent.length; i++) {
+            matchers.push(new intentService.Matcher(customPluginIntent[i].value, customPluginIntent[i].trigger, customPluginIntent[i].context));
+        }
+
+        // Reverse sort by specificity so the most specific matcher is at the top
+        matchers.sort(function (a, b) {
+            if (a.specificity > b.specificity) {
+                return -1;
+            }
+            if (b.specificity > a.specificity) {
+                return 1;
+            }
+            return 0;
+        });
+
         var input = inputExpression.normalized.replace(/^please\s/i, "");
         input = input.replace(/\splease$/i, "");
         var matchedIntent = intentService.matchInputToIntent(input, matchers);

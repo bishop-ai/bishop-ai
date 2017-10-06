@@ -48,7 +48,7 @@ memory.setShortTerm = function (memoryBank, name, value) {
     for (i = 0; i < plugins.length; i++) {
         if (name.indexOf((plugins[i].namespace + ".")) === 0) {
             optionName = name.substring((plugins[i].namespace + ".").length);
-            if (plugins[i].hasOwnProperty("options") && plugins[i].options.hasOwnProperty(optionName) && typeof plugins[i].options[optionName].onChange === 'function') {
+            if (plugins[i].options && plugins[i].options.hasOwnProperty(optionName) && typeof plugins[i].options[optionName].onChange === 'function') {
                 plugins[i].options[optionName].onChange(getMemory.bind(plugins[i]), setMemory.bind(plugins[i]));
             }
 

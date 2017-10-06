@@ -22,6 +22,14 @@ a:hover {
     color: #aed0d0;
 }
 
+input[type="number"],
+input[type="password"],
+input[type="text"],
+select:focus,
+textarea {
+    font-size: 16px;
+}
+
 .recording-indicator {
     z-index: 1;
     right: 5px;
@@ -41,50 +49,56 @@ a:hover {
 
 .input {
     position: absolute;
-    width: 500px;
-    left: 50%;
-    bottom: 100px;
+    width: 96%;
+    left: 2%;
+    margin-right: -2%;
+    bottom: 5px;
     margin-top: 20px;
-    margin-left: -250px;
     z-index: 1;
     color: rgb(202,253,255);
     text-shadow: 0 0 5px rgba(202,253,255,0.5);
     background-color: rgba(109, 171, 170,0.8);
-    padding: 20px;
+    padding: 10px;
     border-radius: 10px;
 }
 
-.input input,
-.input input:focus {
+.input .wrapper {
     position: absolute;
     top: 0;
-    padding: 20px 0;
-    margin-left: 20px;
-    width: 400px;
+    bottom: 0;
+    right: 10px;
+    left: 60px;
+}
+
+.input .wrapper input,
+.input .wrapper input:focus {
+    width: 100%;
+    height: 100%;
+    padding: 10px 0;
     background: transparent;
     outline: none;
     border: none;
     text-shadow: 0 0 5px rgba(202,253,255,0.5);
 }
-.input input:placeholder-shown {
+.input .wrapper input:placeholder-shown {
     text-shadow: none;
 }
-.input input::placeholder {
+.input .wrapper input::placeholder {
     color: #ADD;
 }
 
 .transcript-container {
     position: absolute;
-    bottom: 200px;
-    left: 50%;
-    width: 600px;
-    top: 0;
-    margin-left: -300px;
+    bottom: 50px;
+    width: 96%;
+    left: 2%;
+    margin-right: -2%;
+    top: 60px;
     z-index: 1;
     text-align: center;
     color: black;
     text-shadow: 0 0 5px rgba(0,0,0,0.2);
-    -webkit-mask-image: -webkit-gradient(linear, left 20%, left 70%, from(rgba(0,0,0,0)), to(rgba(0,0,0,1)))
+    -webkit-mask-image: -webkit-gradient(linear, left top, left 80%, from(rgba(0,0,0,0)), to(rgba(0,0,0,1)))
 }
 .transcript-container .transcript {
     overflow: auto;
@@ -93,7 +107,7 @@ a:hover {
     max-height: 100%;
     width: 100%;
     padding-top: 100%;
-    padding-bottom: 40px;
+    padding-bottom: 20px;
     -webkit-mask-image: -webkit-gradient(linear, left 95%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)))
 }
 .transcript-container .transcript::-webkit-scrollbar {
@@ -101,12 +115,12 @@ a:hover {
 }
 .transcript-container .transcript .message {
     text-align: right;
-    margin: 20px 0 20px 100px;
+    margin: 10px 0 10px 80px;
 }
 .transcript-container .transcript .message.ai {
     font-weight: bold;
     text-align: left;
-    margin-right: 100px;
+    margin-right: 80px;
     margin-left: 0;
 }
 .transcript-container .transcript .message .contents {
@@ -114,13 +128,49 @@ a:hover {
     color: rgb(202,253,255);
     text-shadow: 0 0 5px rgba(202,253,255,0.5);
     background-color: rgba(57, 99, 98, 0.8);
-    padding: 15px 20px;
+    padding: 8px 10px;
     border-radius: 10px;
     opacity: .8;
 }
 .transcript-container .transcript .message.ai .contents {
     opacity: 1;
     min-width: 70px;
+}
+
+@media (min-width: 768px) {
+    .input {
+        width: 500px;
+        left: 50%;
+        bottom: 100px;
+        margin-left: -250px;
+        padding: 20px;
+    }
+
+    .input .wrapper input,
+    .input .wrapper input:focus {
+        padding: 20px 0;
+    }
+
+    .transcript-container {
+        top: 0;
+        bottom: 200px;
+        left: 50%;
+        width: 600px;
+        margin-left: -300px;
+        -webkit-mask-image: -webkit-gradient(linear, left 20%, left 70%, from(rgba(0,0,0,0)), to(rgba(0,0,0,1)))
+    }
+    .transcript-container .transcript {
+        padding-bottom: 40px;
+    }
+    .transcript-container .transcript .message {
+        margin: 20px 0 20px 100px;
+    }
+    .transcript-container .transcript .message.ai {
+        margin-right: 100px;
+    }
+    .transcript-container .transcript .message .contents {
+        padding: 15px 20px;
+    }
 }
 
 .vz-wrapper {
@@ -132,6 +182,43 @@ a:hover {
     background: -moz-radial-gradient(circle, #396362, #000000);
     background: -ms-radial-gradient(circle, #396362, #000000);
     overflow: hidden;
+}
+
+.vz-wrapper .particles-js-canvas-el {
+    opacity: 0.2;
+}
+
+@media (min-width: 768px) {
+    .vz-wrapper .particles-js-canvas-el {
+        opacity: 1;
+    }
+}
+
+.content-wrapper {
+    position: absolute;
+    width: 100%;
+    top: 80px;
+    bottom: 0;
+    overflow: auto;
+    padding: 8px;
+}
+
+@media (min-width: 768px) {
+    .content-wrapper {
+        width: 600px;
+        left: 50%;
+        margin-left: -300px;
+        padding: 20px;
+    }
+}
+
+@media (min-width: 992px) {
+    .content-wrapper {
+        width: 800px;
+        left: 50%;
+        margin-left: -400px;
+        padding: 80px 20px 20px;
+    }
 }
 
 .ellipsis-anim span {
@@ -165,16 +252,6 @@ a:hover {
     100% { opacity: 0; }
 }
 
-.tab-container .table-container {
-    overflow: auto;
-    max-height: 600px;
-    margin-top: 20px;
-}
-
-.tab-container .table-container .btn {
-    width: 90px
-}
-
 .site-wrapper {
     position: absolute;
     color: #ddd;
@@ -192,11 +269,6 @@ a:hover {
     margin-left: auto;
 }
 
-/* Padding for spacing */
-.inner {
-    padding: 30px;
-}
-
 /*
  * Header
  */
@@ -204,7 +276,9 @@ a:hover {
     padding-bottom: 20px;
     z-index: 2;
 }
-
+.masthead .inner {
+    padding: 8px;
+}
 .masthead-nav > li {
     display: inline-block;
 }
@@ -234,6 +308,9 @@ a:hover {
 }
 
 @media (min-width: 768px) {
+    .masthead .inner {
+        padding: 30px;
+    }
     .masthead-nav {
         float: right;
     }
@@ -244,7 +321,7 @@ a:hover {
  */
 
 .cover {
-    padding: 100px 20px;
+    padding: 8px;
 }
 .cover .section {
     margin-top: 60px;
@@ -274,6 +351,10 @@ a:hover {
     .cover-container {
         width: 100%; /* Must be percentage or pixels for horizontal alignment */
     }
+
+    .cover {
+        padding: 100px 20px;
+    }
 }
 
 @media (min-width: 992px) {
@@ -288,6 +369,7 @@ a:hover {
     width: 100%;
     position:absolute;
     opacity: 1;
+    z-index: 1;
 }
 .fade.ng-enter,
 .fade.ng-leave {
