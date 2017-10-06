@@ -8,7 +8,8 @@ var configuration = {
     settings: {
         secret: "",
         users: {},
-        enabledPlugins: []
+        enabledPlugins: [],
+        pluginSettings: {}
     }
 };
 

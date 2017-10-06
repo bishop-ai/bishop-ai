@@ -414,7 +414,7 @@ module.exports = {
         "What can you do?",
         "How are you?"
     ],
-    register: function (nlp) {
+    register: function (config, nlp) {
         return new SmallTalk(nlp);
     }
 };

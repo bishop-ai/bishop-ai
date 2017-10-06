@@ -1,7 +1,7 @@
 var xml = require('libxmljs');
 var request = require('request');
 
-var Wolfram = function () {
+var Wolfram = function (config) {
 
     this.intent = [
         {value: "Ask Wolfram *", trigger: "wolfram.query"}
@@ -10,7 +10,7 @@ var Wolfram = function () {
     this.triggers = {
         query: function (dfd, expression, getMemory) {
 
-            var appId = getMemory('appId');
+            var appId = config.appId || getMemory('appId');
 
             var query = expression.normalized.substr("Ask Wolfram ".length);
 
@@ -26,9 +26,11 @@ var Wolfram = function () {
 
     this.context = {};
 
-    this.options = {
-        appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/"}
-    };
+    if (!config || !config.appId) {
+        this.options = {
+            appId: {name: "AppID", description: "Your WolframAlpha AppID found at https://developer.wolframalpha.com/portal/myapps/"}
+        };
+    }
 };
 
 Wolfram.prototype.query = function (appId, query, params, cb) {
@@ -72,7 +74,7 @@ module.exports = {
     examples: [
         "Ask Wolfram how big the earth is"
     ],
-    register: function () {
-        return new Wolfram();
+    register: function (config) {
+        return new Wolfram(config);
     }
 };

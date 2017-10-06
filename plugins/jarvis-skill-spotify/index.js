@@ -6,7 +6,7 @@ axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 var redirect = "http://localhost:3000/oauth.html";
 
-var Spotify = function () {
+var Spotify = function (config) {
 
     this.intent = [
         {value: "play [(the|my)] music", trigger: "spotify.play"},
@@ -29,22 +29,22 @@ var Spotify = function () {
             var artist = data.namedValues.artist;
             var album = data.namedValues.album;
 
-            Spotify.play(song, album, artist, getMemory, setMemory, function (response) {
+            Spotify.play(song, album, artist, getMemory, setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         },
         pause: function (dfd, expression, getMemory, setMemory) {
-            Spotify.sendCmd(Spotify.commands.PAUSE, null, getMemory, setMemory, function (response) {
+            Spotify.sendCmd(Spotify.commands.PAUSE, null, getMemory, setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         },
         next: function (dfd, expression, getMemory, setMemory) {
-            Spotify.sendCmd(Spotify.commands.NEXT, null, getMemory, setMemory, function (response) {
+            Spotify.sendCmd(Spotify.commands.NEXT, null, getMemory, setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         },
         previous: function (dfd, expression, getMemory, setMemory) {
-            Spotify.sendCmd(Spotify.commands.PREV, null, getMemory, setMemory, function (response) {
+            Spotify.sendCmd(Spotify.commands.PREV, null, getMemory, setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         }
@@ -54,41 +54,51 @@ var Spotify = function () {
 
     var redirectUrl = encodeURIComponent(redirect);
 
-    // TODO: Add back in config so that if a plugin option is set in the config file, it is not shown to the user as an option that can be configured.
-    this.options = {
-        clientId: {name: "Client ID", description: "Your Spotify application Client ID found at https://developer.spotify.com/my-applications/#!/applications"},
-        clientSecret: {name: "Client Secret", description: "Your Spotify application Client Secret found at https://developer.spotify.com/my-applications/#!/applications"},
-        authCode: {
-            name: "Auth Code",
-            description: "",
-            oauth: {
-                url: "https://accounts.spotify.com/authorize?client_id={{plugin.options['clientId'].value}}&response_type=code&redirect_uri=" + redirectUrl + "&scope=playlist-read-private%20playlist-read-collaborative%20user-read-playback-state%20user-modify-playback-state%20user-read-private",
-                urlParam: "code"
-            },
-            onChange: function (getMemory, setMemory) {
+    this.options = {};
 
-                var clientId = getMemory("clientId");
-                var clientSecret = getMemory("clientSecret");
-                var authCode = getMemory("authCode");
+    var clientIdString = "{{plugin.options['clientId'].value}}";
+    if (config) {
+        if (config.clientId) {
+            clientIdString = config.clientId;
+        } else {
+            this.options.clientId = {name: "Client ID", description: "Your Spotify application Client ID found at https://developer.spotify.com/my-applications/#!/applications"};
+        }
 
-                if (clientId && clientSecret && authCode) {
-                    Spotify.getTokenFromAuth(clientId, clientSecret, authCode).then(function (response) {
-                        if (response.refreshToken) {
-                            setMemory("refreshToken", response.refreshToken);
-                            setMemory("authCode", null);
-                        }
-                    }, function (err) {
-                        console.log(err.message);
-                        console.log(JSON.stringify(err.response.data));
-                    });
-                }
+        if (!config.clientSecret) {
+            this.options.clientSecret = {name: "Client Secret", description: "Your Spotify application Client Secret found at https://developer.spotify.com/my-applications/#!/applications"};
+        }
+    }
+
+    this.options.authCode = {
+        name: "Auth Code",
+        description: "",
+        oauth: {
+            url: "https://accounts.spotify.com/authorize?client_id=" + clientIdString + "&response_type=code&redirect_uri=" + redirectUrl + "&scope=playlist-read-private%20playlist-read-collaborative%20user-read-playback-state%20user-modify-playback-state%20user-read-private",
+            urlParam: "code"
+        },
+        onChange: function (getMemory, setMemory) {
+
+            var clientId = config.clientId || getMemory("clientId");
+            var clientSecret = config.clientSecret || getMemory("clientSecret");
+            var authCode = getMemory("authCode");
+
+            if (clientId && clientSecret && authCode) {
+                Spotify.getTokenFromAuth(clientId, clientSecret, authCode).then(function (response) {
+                    if (response.refreshToken) {
+                        setMemory("refreshToken", response.refreshToken);
+                        setMemory("authCode", null);
+                    }
+                }, function (err) {
+                    console.log(err.message);
+                    console.log(JSON.stringify(err.response.data));
+                });
             }
         }
     };
 };
 
-Spotify.play = function (song, album, artist, getMemory, setMemory, callback) {
-    Spotify.getToken(getMemory, setMemory, function (err, token) {
+Spotify.play = function (song, album, artist, getMemory, setMemory, config, callback) {
+    Spotify.getToken(getMemory, setMemory, config, function (err, token) {
         if (err) {
             console.log(JSON.stringify(err.response.data));
             callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
@@ -195,8 +205,8 @@ Spotify.play = function (song, album, artist, getMemory, setMemory, callback) {
     });
 };
 
-Spotify.sendCmd = function (commandCode, data, getMemory, setMemory, callback) {
-    Spotify.getToken(getMemory, setMemory, function (err, token) {
+Spotify.sendCmd = function (commandCode, data, getMemory, setMemory, config, callback) {
+    Spotify.getToken(getMemory, setMemory, config, function (err, token) {
 
         if (err) {
             console.log(err.message);
@@ -278,9 +288,9 @@ Spotify.getTokenFromRefresh = function (clientId, clientSecret, refreshToken) {
     });
 };
 
-Spotify.getToken = function (getMemory, setMemory, callback) {
-    var clientId = getMemory("clientId");
-    var clientSecret = getMemory("clientSecret");
+Spotify.getToken = function (getMemory, setMemory, config, callback) {
+    var clientId = config.clientId || getMemory("clientId");
+    var clientSecret = config.clientSecret || getMemory("clientSecret");
     var authCode = getMemory("authCode");
     var refreshToken = getMemory("refreshToken");
 
@@ -323,7 +333,7 @@ module.exports = {
         "Play the artist Oh Wonder",
         "Play the album The Wall by Pink Floyd on Spotify"
     ],
-    register: function () {
-        return new Spotify();
+    register: function (config) {
+        return new Spotify(config);
     }
 };

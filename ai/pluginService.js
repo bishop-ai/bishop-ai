@@ -34,7 +34,12 @@ var Plugin = function (module, pkg) {
 };
 
 Plugin.prototype.register = function () {
-    var service = this.registrationFunction(nlp);
+    var config = {};
+    if (configuration.settings.pluginSettings[this.namespace]) {
+        config = extend(config, configuration.settings.pluginSettings[this.namespace]);
+    }
+
+    var service = this.registrationFunction(config, nlp);
 
     this.intentMatchers = [];
     this.triggers = {};

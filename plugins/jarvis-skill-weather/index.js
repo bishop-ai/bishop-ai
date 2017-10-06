@@ -2,7 +2,7 @@ var moment = require('moment');
 var $q = require('q');
 var request = require('request');
 
-var Weather = function () {
+var Weather = function (config) {
 
     this.intent = [
         {value: "what is the weather like [today]", trigger: "weather.getCurrent"},
@@ -27,7 +27,7 @@ var Weather = function () {
     this.triggers = {
         getCurrent: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -52,7 +52,7 @@ var Weather = function () {
 
         getTomorrow: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -77,7 +77,7 @@ var Weather = function () {
 
         getCurrentTemp: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -96,7 +96,7 @@ var Weather = function () {
 
         getTomorrowTemp: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -115,7 +115,7 @@ var Weather = function () {
 
         getCurrentConditionSnow: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -134,7 +134,7 @@ var Weather = function () {
 
         getTomorrowConditionSnow: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -153,7 +153,7 @@ var Weather = function () {
 
         getFutureConditionSnow: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -172,7 +172,7 @@ var Weather = function () {
 
         getCurrentConditionRain: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -191,7 +191,7 @@ var Weather = function () {
 
         getTomorrowConditionRain: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -210,7 +210,7 @@ var Weather = function () {
 
         getFutureConditionRain: function (dfd, expression, getMemory) {
 
-            var key = getMemory('apiKey');
+            var key = config.apiKey || getMemory('apiKey');
             var latitude = getMemory('latitude');
             var longitude = getMemory('longitude');
 
@@ -230,11 +230,13 @@ var Weather = function () {
 
     this.context = {};
 
-    this.options = {
-        apiKey: {name: "API Key", description: "Your Dark Sky API key found at https://darksky.net/dev/account"},
-        latitude: {name: "Latitude", description: "Your latitude coordinate"},
-        longitude: {name: "Longitude", description: "Your longitude coordinate"}
-    };
+    this.options = {};
+    if (!config || !config.apiKey) {
+        this.options.apiKey = {name: "API Key", description: "Your Dark Sky API key found at https://darksky.net/dev/account"};
+    }
+
+    this.options.latitude = {name: "Latitude", description: "Your latitude coordinate"};
+    this.options.longitude = {name: "Longitude", description: "Your longitude coordinate"};
 };
 
 Weather.extractCurrentTempRangeResponses = function (weather) {
@@ -465,7 +467,7 @@ module.exports = {
         "How hot will it be tomorrow?",
         "Is it going to snow?"
     ],
-    register: function () {
-        return new Weather();
+    register: function (config) {
+        return new Weather(config);
     }
 };
