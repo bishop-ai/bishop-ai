@@ -51,7 +51,8 @@ intentService.Matcher = function (input, intent, context) {
     this.intent = intent;
     this.context = context || "";
     this.tokens = intentService.Matcher.lex(input);
-    this.tree = intentService.Matcher.buildParseTree(this.tokens);
+    this.tree = intentService.Matcher.buildParseTree(this.tokens.slice(0));
+    this.specificity = intentService.Matcher.getSpecificity(this.tree);
     this.matchFunction = intentService.Matcher.parseMatchesFunction(this.tree);
     this.getInputsFunction = intentService.Matcher.parseGetInputs(this.tree);
 };
@@ -423,6 +424,72 @@ intentService.Matcher.parseMatchesFunction = function (tree) {
     }
 
     return matchesFunction;
+};
+
+intentService.Matcher.getSpecificity = function (tree) {
+    var specificity = 0;
+
+    var i;
+
+    if (!tree) {
+        return function () {return specificity;};
+    }
+
+    switch (tree.op) {
+    case "start":
+
+        // Add the point values of each tree value.
+        for (i = 0; i < tree.values.length; i++) {
+            specificity += intentService.Matcher.getSpecificity(tree.values[i]);
+        }
+
+        break;
+    case "wildcard":
+    case "[":
+
+        // There are no points for optional matches or wildcards and no need to recurse into the structure
+        break;
+    case "(":
+
+        // Find the lowest alternative points and add them to the total.
+        var minSpec = null;
+        var spec = 0;
+
+        // Add each value together, once at a '|' or at the end get the minimum value between the sum and minSpec
+        for (i = 0; i < tree.values.length; i++) {
+            if (tree.values[i].op === "|") {
+                if (minSpec === null) {
+                    minSpec = spec;
+                } else {
+                    minSpec = Math.min(minSpec, spec);
+                }
+                spec = 0;
+            } else {
+                spec += intentService.Matcher.getSpecificity(tree.values[i]);
+            }
+
+            if (i === tree.values.length - 1) {
+                if (minSpec === null) {
+                    minSpec = spec;
+                } else {
+                    minSpec = Math.min(minSpec, spec);
+                }
+            }
+        }
+
+        if (minSpec !== null) {
+            specificity += minSpec;
+        }
+
+        break;
+    case "text":
+
+        // Each word matched adds one point
+        specificity += tree.values.length;
+        break;
+    }
+
+    return specificity;
 };
 
 intentService.Matcher.lex = function (input) {

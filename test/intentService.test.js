@@ -73,4 +73,20 @@ describe('Intent Service', function () {
 
     });
 
+    describe('getSpecificity()', function () {
+
+        it("Should should add up the number of required tokens to match for the intent", function () {
+            var intent1 = new intentService.Matcher("ask Google [(to|for|what)] * please", "ask_google");
+            var intent2 = new intentService.Matcher("play [the song] *song [by [the artist] *artist] [from [the album] *album] [on spotify]", "play_song");
+            var intent3 = new intentService.Matcher("(activate|enable|switch on|turn on) [(the|my)] (lights|lighting)", "turn_light_on");
+            var intent4 = new intentService.Matcher("(switch on [my really cool]|turn on my [awesome]) (lights|lighting) *", "turn_light_on");
+
+            assert.equal(intent1.specificity, 3);
+            assert.equal(intent2.specificity, 1);
+            assert.equal(intent3.specificity, 2);
+            assert.equal(intent4.specificity, 3);
+        });
+
+    });
+
 });

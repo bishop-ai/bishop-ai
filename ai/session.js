@@ -124,6 +124,17 @@ Session.prototype.processIntent = function (inputExpression, username) {
         matchers.push(new intentService.Matcher(customPluginIntent[i].value, customPluginIntent[i].trigger, customPluginIntent[i].context));
     }
 
+    // Reverse sort by specificity so the most specific matcher is at the top
+    matchers.sort(function (a, b) {
+        if (a.specificity > b.specificity) {
+            return -1;
+        }
+        if (b.specificity > a.specificity) {
+            return 1;
+        }
+        return 0;
+    });
+
     if (this._context) {
         if (contextTriggers[this._context]) {
             matchedClassification = {
