@@ -1,0 +1,21 @@
+{
+    "name": "bishop-ai-darksky",
+    "version": "0.1.0",
+    "description": "Get weather forcasts from Dark Sky in Bishop-Ai",
+    "keywords": [
+        "bishop-ai plugin",
+        "Dark Sky",
+        "weather",
+        "forecast"
+    ],
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {
+        "moment": "~2.11.2",
+        "q": "1.2.0",
+        "request": "~2.1"
+    }
+}

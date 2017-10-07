@@ -1,9 +1,11 @@
 {
-    "name": "jarvis-skill-ifttt",
-    "version": "1.0.0",
-    "description": "Plugin for Jarvis for webhooks in IFTTT.",
+    "name": "bishop-ai-spotify",
+    "version": "0.1.0",
+    "description": "Control Spotify from Bishop-AI",
     "keywords": [
-        "J.A.R.V.I.S. plugin"
+        "bishop-ai plugin",
+        "Spotify",
+        "web api"
     ],
     "author": {
         "name": "David Hamilton",
@@ -11,6 +13,6 @@
         "url": "http://www.davidpaulhamilton.net/"
     },
     "dependencies": {
-        "request": "~2.1"
+        "axios": "~0.16.2"
     }
 }

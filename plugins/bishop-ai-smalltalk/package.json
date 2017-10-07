@@ -1,7 +1,7 @@
 {
-    "name": "jarvis-skill-spotify",
-    "version": "1.0.0",
-    "description": "Plugin for Jarvis that enables controls for Spotify.",
+    "name": "bishop-ai-smalltalk",
+    "version": "0.1.0",
+    "description": "Conversational interface for Bishop-AI",
     "keywords": [
         "J.A.R.V.I.S. plugin"
     ],
@@ -11,6 +11,8 @@
         "url": "http://www.davidpaulhamilton.net/"
     },
     "dependencies": {
-        "axios": "~0.16.2"
+        "knuth-shuffle": "^1.0.1",
+        "moment": "~2.11.2",
+        "speakeasy-nlp": "^0.2.12"
     }
 }
