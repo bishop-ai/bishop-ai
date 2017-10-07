@@ -24,27 +24,27 @@ var Spotify = function (config) {
     // TODO: "Save this song", "Set Volume", "Play playlist", "Add this song to playlist", "Play songs like this"
 
     this.triggers = {
-        play: function (dfd, expression, getMemory, setMemory, getExamples, data) {
+        play: function (dfd, expression, utils, data) {
             var song = data.namedValues.song;
             var artist = data.namedValues.artist;
             var album = data.namedValues.album;
 
-            Spotify.play(song, album, artist, getMemory, setMemory, config, function (response) {
+            Spotify.play(song, album, artist, utils.getMemory, utils.setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         },
-        pause: function (dfd, expression, getMemory, setMemory) {
-            Spotify.sendCmd(Spotify.commands.PAUSE, null, getMemory, setMemory, config, function (response) {
+        pause: function (dfd, expression, utils) {
+            Spotify.sendCmd(Spotify.commands.PAUSE, null, utils.getMemory, utils.setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         },
-        next: function (dfd, expression, getMemory, setMemory) {
-            Spotify.sendCmd(Spotify.commands.NEXT, null, getMemory, setMemory, config, function (response) {
+        next: function (dfd, expression, utils) {
+            Spotify.sendCmd(Spotify.commands.NEXT, null, utils.getMemory, utils.setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         },
-        previous: function (dfd, expression, getMemory, setMemory) {
-            Spotify.sendCmd(Spotify.commands.PREV, null, getMemory, setMemory, config, function (response) {
+        previous: function (dfd, expression, utils) {
+            Spotify.sendCmd(Spotify.commands.PREV, null, utils.getMemory, utils.setMemory, config, function (response) {
                 dfd.resolve(response);
             });
         }

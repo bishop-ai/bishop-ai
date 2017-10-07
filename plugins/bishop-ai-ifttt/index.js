@@ -6,8 +6,8 @@ var Ifttt = function () {
 
     var self = this;
     this.triggers = {
-        maker: function (dfd, expression, getMemory, setMemory, getExamples, data) {
-            var key = getMemory("key");
+        maker: function (dfd, expression, utils, data) {
+            var key = utils.getMemory("key");
 
             if (!data.triggerParams[0]) {
                 dfd.resolve("I'm sorry, something went wrong. Please make sure your If This Then That plugin is correctly configured.");

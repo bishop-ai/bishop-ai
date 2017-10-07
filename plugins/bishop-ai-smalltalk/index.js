@@ -25,8 +25,8 @@ var SmallTalk = function (nlp) {
 
     this.triggers = {
 
-        greeting: function (dfd, expression, getMemory) {
-            var name = getMemory('userName');
+        greeting: function (dfd, expression, utils) {
+            var name = utils.getMemory('userName');
 
             var responses = [
                 "(Hello|Hi). [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]",
@@ -66,10 +66,10 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        compliment: function (dfd, expression, getMemory) {
+        compliment: function (dfd, expression, utils) {
             var responses = [];
 
-            var name = getMemory('userName');
+            var name = utils.getMemory('userName');
 
             var sentiment = speak.sentiment.analyze(expression.normalized).score;
 
@@ -104,8 +104,8 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        gratitude: function (dfd, expression, getMemory) {
-            var name = getMemory('userName');
+        gratitude: function (dfd, expression, utils) {
+            var name = utils.getMemory('userName');
 
             var responses = [
                 "(You're [very] welcome|No problem).",
@@ -121,10 +121,10 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        getAiInfo: function (dfd, expression, getMemory, setMemory, getExamples) {
+        getAiInfo: function (dfd, expression, utils) {
             var responses = [];
 
-            var name = getMemory('aiName');
+            var name = utils.getMemory('aiName');
 
             if (expression.contains('who')) {
                 responses = responses.concat([
@@ -144,7 +144,7 @@ var SmallTalk = function (nlp) {
                     {value: "I'm doing (well|fine|great), [(thanks|thank you) and] ((how|what) about you|how are you [doing]|and yourself)?", context: "smalltalk.howAreYou"}
                 ];
             } else if (expression.contains("what") && expression.contains("skills", "you do", "ask", "questions", "answer")) {
-                var examples = shuffle(getExamples().slice(0));
+                var examples = shuffle(utils.getExamples().slice(0));
                 var max = Math.min(examples.length, 5);
 
                 var response = "Here are [(some|a (few|couple))] [examples of] things you can say or ask: ";
@@ -201,7 +201,7 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        setAiBirthday: function (dfd, expression, getMemory, setMemory) {
+        setAiBirthday: function (dfd, expression, utils) {
             var i;
             var birthday;
 
@@ -214,14 +214,14 @@ var SmallTalk = function (nlp) {
             }
 
             if (birthday) {
-                setMemory('aIBirthday', birthday);
+                utils.setMemory('aIBirthday', birthday);
                 dfd.resolve();
             } else {
                 dfd.reject();
             }
         },
 
-        getAiAge: function (dfd, expression, getMemory) {
+        getAiAge: function (dfd, expression, utils) {
             var responses = [];
             var i;
             var timeFromNow;
@@ -234,7 +234,7 @@ var SmallTalk = function (nlp) {
                 }
             }
 
-            var birthday = getMemory('aIBirthday');
+            var birthday = utils.getMemory('aIBirthday');
             if (birthday) {
                 var timeFrom;
                 if (timeFromNow) {
@@ -251,7 +251,7 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        setAiName: function (dfd, expression, getMemory, setMemory) {
+        setAiName: function (dfd, expression, utils) {
             var i;
             var name;
 
@@ -264,7 +264,7 @@ var SmallTalk = function (nlp) {
             }
 
             if (name) {
-                setMemory('aiName', name);
+                utils.setMemory('aiName', name);
                 dfd.resolve([
                     "[That's a (great|good) name.] You (can|may) now call me " + name + ".",
                     "From hence forth, I shall be " + name + ", the (mighty|magnificent|omnipotent|all knowing|all powerful)!"
@@ -274,7 +274,7 @@ var SmallTalk = function (nlp) {
             }
         },
 
-        setUserBirthday: function (dfd, expression, getMemory, setMemory) {
+        setUserBirthday: function (dfd, expression, utils) {
             var i;
             var birthday;
 
@@ -287,14 +287,14 @@ var SmallTalk = function (nlp) {
             }
 
             if (birthday) {
-                setMemory('userBirthday', birthday);
+                utils.setMemory('userBirthday', birthday);
                 dfd.resolve();
             } else {
                 dfd.reject();
             }
         },
 
-        getUserAge: function (dfd, expression, getMemory) {
+        getUserAge: function (dfd, expression, utils) {
             var responses = [];
             var i;
             var timeFromNow;
@@ -307,7 +307,7 @@ var SmallTalk = function (nlp) {
                 }
             }
 
-            var birthday = getMemory('userBirthday');
+            var birthday = utils.getMemory('userBirthday');
             if (birthday) {
                 var timeFrom;
                 if (timeFromNow) {
@@ -324,7 +324,7 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
-        setUserName: function (dfd, expression, getMemory, setMemory) {
+        setUserName: function (dfd, expression, utils) {
             var i;
             var name;
 
@@ -337,7 +337,7 @@ var SmallTalk = function (nlp) {
             }
 
             if (name) {
-                setMemory('userName', name);
+                utils.setMemory('userName', name);
                 var responses = [
                     "It's (nice|great|a pleasure) to (meet you|make your acquaintance), " + name + "."
                 ];
@@ -347,10 +347,10 @@ var SmallTalk = function (nlp) {
             }
         },
 
-        getUserName: function (dfd, expression, getMemory) {
+        getUserName: function (dfd, expression, utils) {
             var responses = [];
 
-            var name = getMemory('userName');
+            var name = utils.getMemory('userName');
 
             if (name) {
                 responses.push("Your name is " + name + ".");

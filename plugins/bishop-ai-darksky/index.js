@@ -25,11 +25,11 @@ var Weather = function (config) {
     ];
 
     this.triggers = {
-        getCurrent: function (dfd, expression, getMemory) {
+        getCurrent: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -50,11 +50,11 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrow: function (dfd, expression, getMemory) {
+        getTomorrow: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -75,11 +75,11 @@ var Weather = function (config) {
             });
         },
 
-        getCurrentTemp: function (dfd, expression, getMemory) {
+        getCurrentTemp: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -94,11 +94,11 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrowTemp: function (dfd, expression, getMemory) {
+        getTomorrowTemp: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -113,11 +113,11 @@ var Weather = function (config) {
             });
         },
 
-        getCurrentConditionSnow: function (dfd, expression, getMemory) {
+        getCurrentConditionSnow: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -132,11 +132,11 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrowConditionSnow: function (dfd, expression, getMemory) {
+        getTomorrowConditionSnow: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -151,11 +151,11 @@ var Weather = function (config) {
             });
         },
 
-        getFutureConditionSnow: function (dfd, expression, getMemory) {
+        getFutureConditionSnow: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -170,11 +170,11 @@ var Weather = function (config) {
             });
         },
 
-        getCurrentConditionRain: function (dfd, expression, getMemory) {
+        getCurrentConditionRain: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude, true).then(function (weather) {
                 var responses = [];
@@ -189,11 +189,11 @@ var Weather = function (config) {
             });
         },
 
-        getTomorrowConditionRain: function (dfd, expression, getMemory) {
+        getTomorrowConditionRain: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];
@@ -208,11 +208,11 @@ var Weather = function (config) {
             });
         },
 
-        getFutureConditionRain: function (dfd, expression, getMemory) {
+        getFutureConditionRain: function (dfd, expression, utils) {
 
-            var key = config.apiKey || getMemory('apiKey');
-            var latitude = getMemory('latitude');
-            var longitude = getMemory('longitude');
+            var key = config.apiKey || utils.getMemory('apiKey');
+            var latitude = utils.getMemory('latitude');
+            var longitude = utils.getMemory('longitude');
 
             Weather.getWeather(key, latitude, longitude).then(function (weather) {
                 var responses = [];

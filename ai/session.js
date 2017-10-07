@@ -223,17 +223,19 @@ Session.prototype.processTrigger = function (triggerKey, inputExpression, trigge
         var trigger = triggers[triggerKey];
         var self = this;
 
-        var getMemory = function (name) {
-            return self.getMemory(trigger.namespace + '.' + name, username);
-        };
-        var setMemory = function (name, value) {
-            self.setMemory(trigger.namespace + '.' + name, value);
-        };
-        var getExamples = function () {
-            return examples;
+        var utils = {
+            getMemory: function (name) {
+                return self.getMemory(trigger.namespace + '.' + name, username);
+            },
+            setMemory: function (name, value) {
+                self.setMemory(trigger.namespace + '.' + name, value);
+            },
+            getExamples: function () {
+                return examples;
+            }
         };
 
-        trigger.method(dfd, inputExpression, getMemory, setMemory, getExamples, intentData);
+        trigger.method(dfd, inputExpression, utils, intentData);
 
         return dfd.promise.then(function (triggerResponses) {
             var responses = responseService.getResponses(triggerResponses);

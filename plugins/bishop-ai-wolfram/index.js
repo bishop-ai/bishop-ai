@@ -4,15 +4,15 @@ var request = require('request');
 var Wolfram = function (config) {
 
     this.intent = [
-        {value: "Ask Wolfram *", trigger: "wolfram.query"}
+        {value: "Ask Wolfram *query", trigger: "wolfram.query"}
     ];
 
     this.triggers = {
-        query: function (dfd, expression, getMemory) {
+        query: function (dfd, expression, utils, data) {
 
-            var appId = config.appId || getMemory('appId');
+            var appId = config.appId || utils.getMemory('appId');
 
-            var query = expression.normalized.substr("Ask Wolfram ".length);
+            var query = data.namedValues.query || "";
 
             this.query(appId, query, null, function (error, pods) {
                 if (error) {
