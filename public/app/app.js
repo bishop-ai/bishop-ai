@@ -2,7 +2,7 @@ angular.module('AI', ['ngAnimate', 'ngRoute', 'ngSanitize']);
 
 angular.module('AI').constant('version', "1.0.0");
 angular.module('AI').constant('debugMode', 0);
-angular.module('AI').constant('appName', 'J.A.R.V.I.S.');
+angular.module('AI').constant('appName', 'Bishop AI');
 
 angular.module('AI').factory('socket', ['socketFactory', function (socketFactory) {
     return socketFactory();

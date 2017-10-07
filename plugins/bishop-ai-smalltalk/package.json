@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "Conversational interface for Bishop-AI",
     "keywords": [
-        "J.A.R.V.I.S. plugin"
+        "bishop-ai plugin"
     ],
     "author": {
         "name": "David Hamilton",
