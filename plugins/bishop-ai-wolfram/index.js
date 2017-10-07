@@ -15,9 +15,12 @@ var Wolfram = function (config) {
 
             Wolfram.query(appId, query, function (error, result) {
                 if (error) {
-                    dfd.reject(error);
-                } else {
+                    console.log("Wolfram: error while querying: " + error);
+                    dfd.resolve("Sorry, something went wrong. Please make sure your Wolfram Alpha plugin is set up correctly.");
+                } else if (result) {
                     dfd.resolve(result);
+                } else {
+                    dfd.resolve("I (was unable to|could not|couldn't) find (the|an) answer. [Try (asking|saying) your question (another|a different) way.]");
                 }
             });
         }
