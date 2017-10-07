@@ -456,7 +456,7 @@ Weather.getWeather = function (key, latitude, longitude) {
 };
 
 Weather.failureMessages = [
-    "I could not check the weather right now."
+    "Sorry, I (could not|couldn't|was unable to) check the weather [forecast] right now. Please make sure your Dark Sky plugin is configured correctly."
 ];
 
 module.exports = {
