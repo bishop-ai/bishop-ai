@@ -12,7 +12,6 @@
         "url": "http://www.davidpaulhamilton.net/"
     },
     "dependencies": {
-        "request": "~2.1",
-        "libxmljs": "^0.18.7"
+        "request": "~2.1"
     }
 }
