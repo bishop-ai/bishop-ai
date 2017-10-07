@@ -11,7 +11,7 @@
 </div>
 
 <div class="input">
-    <div class="recording-indicator" data-ng-click="toggleRecording()" data-ng-class="{active: recording}"></div>
+    <div class="recording-indicator" data-ng-if="supportsSpeechRecognition" data-ng-click="toggleRecording()" data-ng-class="{active: recording}"></div>
     <span>&gt;</span>
     <div class="wrapper">
         <input id="input" autofocus="autofocus" autocomplete="off" type="text" data-ng-model="message" placeholder="Type message..." data-ng-keypress="handleKeyPress($event)"/>

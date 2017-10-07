@@ -25,6 +25,8 @@ angular.module('AI').controller('InterfaceCtrl', [
         var messageSentTime;
         var messageReceivedTime;
 
+        $scope.supportsSpeechRecognition = !!speechService.SpeechRecognition;
+
         $scope.shouldFade = function ($index) {
             var isLastMessage = $index === $scope.transcript.length - 1;
             var isSecondToLast = $index === $scope.transcript.length - 2;
