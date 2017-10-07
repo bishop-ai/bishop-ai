@@ -1,26 +1,27 @@
 {
-    "name": "J.A.R.V.I.S.",
-    "version": "1.0.0",
-    "description": "Voice or Text personal assistant",
+    "name": "bishop-ai",
+    "version": "0.1.0",
+    "description": "Voice and text virtual assistant",
     "keywords": [
-        "JARVIS",
-        "Assistant",
-        "IFTTT",
+        "ai",
+        "chat bot",
+        "virtual assistant",
         "Siri",
         "Cartona",
         "Echo",
+        "Alexa",
         "OK Google",
-        "API"
+        "natural language",
+        "nlp"
     ],
     "author": {
         "name": "David Hamilton",
         "email": "nova706@gmail.com",
         "url": "http://www.davidpaulhamilton.net/"
     },
-    "engines": {
-        "node": ">= 0.6.0",
-        "npm": ">= 1.0.0"
-    },
+    "homepage": "https://bitbucket.org/nova706/jarvis-node",
+    "bugs": "https://bitbucket.org/nova706/jarvis-node/issues",
+    "repository": "bitbucket:nova706/jarvis-node",
     "dependencies": {
         "angular": "~1.5.0",
         "angular-animate": "~1.5.0",
