@@ -9,6 +9,7 @@ var intentService = require('./intentService');
 var memory = require('./memory');
 var pluginService = require('./pluginService');
 var responseService = require('./responseService');
+var Timer = require('./timer');
 
 var Session = function () {
     this.username = null;
@@ -20,6 +21,17 @@ var Session = function () {
     this._transcript = [];
 
     this._context = "";
+
+    this.timers = [];
+};
+
+Session.prototype.addTimer = function (seconds, onFinish) {
+    var self = this;
+    var timer = new Timer(seconds, onFinish, function () {
+        delete self.timers[timer.id];
+    });
+    this.timers[timer.id] = timer;
+    return timer;
 };
 
 Session.prototype.getMemory = function (name) {
@@ -54,6 +66,8 @@ Session.prototype.processExpression = function (input, username) {
     var inputExpression = new Expression(input);
     inputExpression.process();
 
+    var pushedInputToTranscript = false;
+
     var self = this;
     this.processIntent(inputExpression, username).then(function (result) {
         var response = result.response;
@@ -70,17 +84,47 @@ Session.prototype.processExpression = function (input, username) {
 
         console.log(JSON.stringify({
             input: data.input.value,
-            entities: data.entities,
             trigger: data.classification ? data.classification.trigger : "",
             confidence: data.classification ? data.classification.confidence : 0,
             response: data.response,
             context: data.context
         }, null, "  "));
 
-        self._transcript.push(inputExpression.value);
+        if (!pushedInputToTranscript) {
+            self._transcript.push(inputExpression.value);
+        }
         self._transcript.push(response.value);
 
         dfd.resolve(data);
+    }, function (e) {
+        console.log("Session: unexpected error: " + e);
+    }, function (intermediateResponse) {
+        var response = intermediateResponse.response;
+        var matchedClassification = intermediateResponse.matchedClassification;
+
+        self._context = response.context || "";
+
+        var data = {
+            input: inputExpression,
+            classification: matchedClassification,
+            response: response.value,
+            context: self._context
+        };
+
+        console.log(JSON.stringify({
+            input: data.input.value,
+            trigger: data.classification ? data.classification.trigger : "",
+            confidence: data.classification ? data.classification.confidence : 0,
+            response: data.response,
+            context: data.context
+        }, null, "  "));
+
+        if (!pushedInputToTranscript) {
+            self._transcript.push(inputExpression.value);
+        }
+        self._transcript.push(response.value);
+
+        dfd.notify(data);
     });
 
     return dfd.promise;
@@ -161,12 +205,23 @@ Session.prototype.processIntent = function (inputExpression, username) {
 
         var namedValues = matchedClassification.namedWildcards || {};
 
-        this.processTrigger(matchedClassification.trigger, inputExpression, triggers, namedValues, examples, username).then(function (response) {
-            dfd.resolve({
-                response: response,
-                matchedClassification: matchedClassification
+        this.processTrigger(matchedClassification.trigger, inputExpression, triggers, namedValues, examples, username).then(
+            function (response) {
+                dfd.resolve({
+                    response: response,
+                    matchedClassification: matchedClassification
+                });
+            }, function () {
+                dfd.resolve({
+                    response: responseService.getUnknownResponse(inputExpression),
+                    matchedClassification: matchedClassification
+                });
+            }, function (response) {
+                dfd.notify({
+                    response: response,
+                    matchedClassification: matchedClassification
+                });
             });
-        });
     } else {
 
         if (matchedClassification) {
@@ -196,6 +251,8 @@ Session.prototype.processIntent = function (inputExpression, username) {
  * @private
  */
 Session.prototype.processTrigger = function (triggerKey, inputExpression, triggers, namedValues, examples, username) {
+    var dfd = $q.defer();
+
     if (!triggerKey) {
         return $q.resolve(responseService.getUnknownResponse(inputExpression));
     }
@@ -218,7 +275,7 @@ Session.prototype.processTrigger = function (triggerKey, inputExpression, trigge
     };
 
     if (triggerKey && triggers[triggerKey]) {
-        var dfd = $q.defer();
+        var triggerDfd = $q.defer();
 
         var trigger = triggers[triggerKey];
         var self = this;
@@ -232,17 +289,28 @@ Session.prototype.processTrigger = function (triggerKey, inputExpression, trigge
             },
             getExamples: function () {
                 return examples;
+            },
+            addTimer: function (seconds, onFinish) {
+                return self.addTimer(seconds, onFinish);
+            },
+            getTimer: function (id) {
+                return self.timers[id] || null;
             }
         };
 
-        trigger.method(dfd, inputExpression, utils, intentData);
-
-        return dfd.promise.then(function (triggerResponses) {
+        triggerDfd.promise.then(function (triggerResponses) {
             var responses = responseService.getResponses(triggerResponses);
-            return responseService.getBestResponse(responses);
+            dfd.resolve(responseService.getBestResponse(responses));
         }, function () {
-            return responseService.getUnknownResponse(inputExpression);
+            dfd.resolve(responseService.getUnknownResponse(inputExpression));
+        }, function (triggerResponses) {
+            var responses = responseService.getResponses(triggerResponses);
+            dfd.notify(responseService.getBestResponse(responses));
         });
+
+        trigger.method(triggerDfd, inputExpression, utils, intentData);
+
+        return dfd.promise;
     }
 
     return $q.resolve(responseService.getUnknownResponse(inputExpression));

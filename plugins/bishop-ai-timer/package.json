@@ -1,0 +1,16 @@
+{
+    "name": "bishop-ai-timer",
+    "version": "0.1.0",
+    "description": "Set timers from Bishop-AI",
+    "keywords": [
+        "bishop-ai plugin",
+        "timer",
+        "scheduler"
+    ],
+    "author": {
+        "name": "David Hamilton",
+        "email": "nova706@gmail.com",
+        "url": "http://www.davidpaulhamilton.net/"
+    },
+    "dependencies": {}
+}

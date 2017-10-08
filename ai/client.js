@@ -26,6 +26,14 @@ Client.prototype.handleCommand = function (payload) {
                     message: result.response
                 });
             }
+        }, function (e) {
+            console.log("Client: unexpected error: " + e);
+        }, function (intermediateResponse) {
+            if (intermediateResponse) {
+                self.emitEvent('response', {
+                    message: intermediateResponse.response
+                });
+            }
         });
     });
 };

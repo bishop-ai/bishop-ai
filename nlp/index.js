@@ -1,3 +1,4 @@
+var humanizeDuration = require('humanize-duration');
 var natural = require('natural');
 var path = require('path');
 var RuleClassify = require("qtypes");
@@ -37,6 +38,10 @@ nlp.LevenshteinDistance = function (s1, s2) {
 
 nlp.DiceCoefficient = function (s1, s2) {
     return natural.DiceCoefficient(s1, s2);
+};
+
+nlp.humanizeDuration = function (seconds) {
+    return humanizeDuration(seconds * 1000, { largest: 2, round: true, conjunction: ' and ', serialComma: false });
 };
 
 nlp.datetimeNer = require('./ner/datetime');
