@@ -12,7 +12,7 @@ router.get('/auth', authService.authorize, function (req, res) {
 });
 
 router.post('/auth', function (req, res) {
-    var token = authService.getToken(req.body.username, req.body.password);
+    var token = authService.login(req.body.username, req.body.password);
 
     if (token) {
         res.status(200).send({
@@ -25,11 +25,8 @@ router.post('/auth', function (req, res) {
 });
 
 router.delete('/auth', function (req, res) {
-    var token = (typeof req === "string") ? req : req.body.token || req.headers['x-access-token'];
-    if (token) {
-        authService.refreshUserSecret(token);
-        res.status(204).send();
-    }
+    authService.logout(req);
+    res.status(204).send();
 });
 
 router.post('/train', authService.authorizeAsAdmin, function (req, res) {

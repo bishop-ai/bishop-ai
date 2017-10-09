@@ -22,9 +22,9 @@ configuration.init = function () {
     }
 };
 
-configuration.refreshUserSecret = function (username) {
-    if (this.settings.users[username]) {
-        this.settings.users[username].secret = uuid.generate();
+configuration.storeUser = function (user) {
+    if (user.username) {
+        this.settings.users[user.username] = user;
         this._commit();
     }
 };

@@ -1,7 +1,7 @@
 var jwt = require('jsonwebtoken');
-var jws = require('jws');
 
 var configuration = require('./configuration');
+var userService = require('./userService');
 
 var authService = {};
 
@@ -31,14 +31,15 @@ authService.verifyToken = function (req, cb) {
     if (token) {
         var decoded = jwt.decode(token);
 
-        if (decoded && decoded.user && configuration.settings.users[decoded.user]) {
-            var user = configuration.settings.users[decoded.user];
+        var user;
+        if (decoded && decoded.user) {
+            user = userService.getUser(decoded.user);
+        }
+
+        if (user) {
 
             // Remove the user secret from the user entity.
-            var sanitizedUser = {
-                username: decoded.user,
-                admin: !!user.admin
-            };
+            var sanitizedUser = userService.sanitizeUser(user);
 
             jwt.verify(token, user.secret, function (err, decoded) {
                 if (err) {
@@ -56,33 +57,25 @@ authService.verifyToken = function (req, cb) {
     }
 };
 
-authService.refreshUserSecret = function (token) {
-    if (token) {
-        var decoded = jwt.decode(token);
-        var username = decoded.user;
-        configuration.refreshUserSecret(username);
-    }
+authService.logout = function (req) {
+
+    // If the token is valid, log the user out that the token is for
+    this.verifyToken(req, function (err, decoded, user) {
+        if (user) {
+            // This will invalidate all tokens signed with the old secret
+            userService.refreshUserSecret(user.username);
+        }
+    });
 };
 
-authService.getToken = function (username, password) {
+authService.login = function (username, password) {
     var token = null;
 
     if (username && password) {
+        var user = userService.getUser(username);
 
-        if (configuration.settings.users[username]) {
-            var sig = jws.sign({
-                header: { alg: 'HS256' },
-                payload: password,
-                secret: configuration.settings.secret
-            });
-
-            if (!configuration.settings.users[username].secret) {
-                this.refreshUserSecret(username);
-            }
-
-            if (sig === configuration.settings.users[username].password) {
-                token = jwt.sign({user: username}, configuration.settings.users[username].secret);
-            }
+        if (user && userService.validatePassword(user, password)) {
+            token = jwt.sign({user: username}, user.secret);
         }
     }
 
