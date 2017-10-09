@@ -6,13 +6,23 @@ var configuration = require('./configuration');
 var authService = {};
 
 authService.authorize = function (req, res, next) {
-    authService.verifyToken(req, function (err, decoded) {
+    authService.verifyToken(req, function (err, decoded, user) {
         if (err) {
             return res.status(401).send(err);
         } else {
             req.decoded = decoded;
+            req.user = user;
             return next();
         }
+    });
+};
+
+authService.authorizeAsAdmin = function (req, res, next) {
+    authService.authorize(req, res, function () {
+        if (!req.user.admin) {
+            return res.status(401).send("Admin permission required.");
+        }
+        return next();
     });
 };
 
@@ -22,14 +32,20 @@ authService.verifyToken = function (req, cb) {
         var decoded = jwt.decode(token);
 
         if (decoded && decoded.user && configuration.settings.users[decoded.user]) {
-            var secret = configuration.settings.users[decoded.user].secret;
+            var user = configuration.settings.users[decoded.user];
 
-            jwt.verify(token, secret, function (err, decoded) {
+            // Remove the user secret from the user entity.
+            var sanitizedUser = {
+                username: decoded.user,
+                admin: !!user.admin
+            };
+
+            jwt.verify(token, user.secret, function (err, decoded) {
                 if (err) {
                     console.log('JWT Verification Error: ' + err);
                     return cb(err);
                 } else {
-                    return cb(null, decoded);
+                    return cb(null, decoded, sanitizedUser);
                 }
             });
         } else {

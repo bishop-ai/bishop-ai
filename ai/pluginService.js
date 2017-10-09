@@ -176,18 +176,22 @@ pluginService.getPlugin = function (name) {
     return plugin;
 };
 
-pluginService.updatePlugin = function (pluginName, updateTemplate, username) {
+pluginService.updatePlugin = function (pluginName, updateTemplate, user) {
     var plugin = this.getPlugin(pluginName);
 
     if (updateTemplate && plugin) {
-        if (updateTemplate.enabled) {
-            this.enablePlugin(plugin);
-        } else {
-            this.disablePlugin(plugin);
+
+        // Only allow enabling and disabling plugins as an admin
+        if (user && user.admin) {
+            if (updateTemplate.enabled) {
+                this.enablePlugin(plugin);
+            } else {
+                this.disablePlugin(plugin);
+            }
         }
 
         if (updateTemplate.hasOwnProperty('options')) {
-            var memories = memory.get(username);
+            var memories = memory.get(user.username);
 
             var option;
             for (option in updateTemplate.options) {
@@ -197,7 +201,7 @@ pluginService.updatePlugin = function (pluginName, updateTemplate, username) {
                 }
             }
 
-            memory.set(username, memories);
+            memory.set(user.username, memories);
         }
     }
 
@@ -221,7 +225,7 @@ pluginService.disablePlugin = function (plugin) {
     }
 };
 
-pluginService.sanitizePlugins = function (input, username) {
+pluginService.sanitizePlugins = function (input, user) {
     if (input instanceof Array) {
         var plugins = [];
 
@@ -252,8 +256,8 @@ pluginService.sanitizePlugins = function (input, username) {
 
     var options = null;
 
-    if (username) {
-        var memories = memory.get(username);
+    if (user) {
+        var memories = memory.get(user.username);
         var option;
         var name;
         for (option in plugin.options) {

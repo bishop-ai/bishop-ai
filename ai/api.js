@@ -8,7 +8,7 @@ var classifier = require('./classifier');
 var pluginService = require('./pluginService');
 
 router.get('/auth', authService.authorize, function (req, res) {
-    res.status(204).send();
+    res.status(200).send(req.user);
 });
 
 router.post('/auth', function (req, res) {
@@ -32,7 +32,7 @@ router.delete('/auth', function (req, res) {
     }
 });
 
-router.post('/train', authService.authorize, function (req, res) {
+router.post('/train', authService.authorizeAsAdmin, function (req, res) {
     classifier.train().then(function () {
         res.send();
     }, function (err) {
@@ -46,7 +46,7 @@ router.get('/packages', function (req, res) {
     });
 });
 
-router.post('/packages', authService.authorize, function (req, res) {
+router.post('/packages', authService.authorizeAsAdmin, function (req, res) {
     if (!req.body || !req.body.name) {
         res.status(500).send("Invalid package");
     }
@@ -62,8 +62,8 @@ router.post('/packages', authService.authorize, function (req, res) {
 });
 
 router.get('/plugins', function (req, res) {
-    authService.verifyToken(req, function (err, decoded) {
-        res.send(pluginService.sanitizePlugins(pluginService.getPlugins(), decoded ? decoded.user : null));
+    authService.verifyToken(req, function (err, decoded, user) {
+        res.send(pluginService.sanitizePlugins(pluginService.getPlugins(), user));
     });
 });
 
@@ -71,8 +71,8 @@ router.get('/plugins/:name', function (req, res) {
     var plugin = pluginService.getPlugin(req.params.name);
 
     if (plugin) {
-        authService.verifyToken(req, function (err, decoded) {
-            res.send(pluginService.sanitizePlugins(plugin, decoded ? decoded.user : null));
+        authService.verifyToken(req, function (err, decoded, user) {
+            res.send(pluginService.sanitizePlugins(plugin, user));
         });
     } else {
         res.status(404).send();
@@ -83,8 +83,8 @@ router.put('/plugins/:name', authService.authorize, function (req, res) {
     var plugin = pluginService.getPlugin(req.params.name);
 
     if (plugin) {
-        plugin = pluginService.updatePlugin(req.params.name, req.body, req.decoded.user);
-        res.send(pluginService.sanitizePlugins(plugin, req.decoded.user));
+        plugin = pluginService.updatePlugin(req.params.name, req.body, req.user);
+        res.send(pluginService.sanitizePlugins(plugin, req.user));
     } else {
         res.status(404).send();
     }

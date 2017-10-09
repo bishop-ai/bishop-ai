@@ -11,14 +11,6 @@ var classifier = {
     bayesClassifier: new natural.BayesClassifier()
 };
 
-pluginService.onPluginEnabled(function () {
-    classifier.train();
-});
-
-pluginService.onPluginDisabled(function () {
-    classifier.train();
-});
-
 classifier.classify = function (inputExpression) {
     var result = {
         trigger: "",
