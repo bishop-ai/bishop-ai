@@ -33,11 +33,11 @@ angular.module('AI').factory('authenticationService', [
                 method: 'GET',
                 url: "/api/auth",
                 ignoreAuthFail: true
-            }).then(function () {
-                $rootScope.authenticated = true;
+            }).then(function (response) {
+                $rootScope.authenticatedUser = response.data;
                 dfd.resolve();
             }, function () {
-                $rootScope.authenticated = false;
+                $rootScope.authenticatedUser = null;
                 dfd.reject();
             });
 
@@ -83,12 +83,12 @@ angular.module('AI').factory('authenticationService', [
                 url: "/api/auth",
                 data: {username: username, password: password}
             }).then(function (response) {
-                $rootScope.authenticated = true;
+                $rootScope.authenticatedUser = response.data.user;
                 authenticationService.token = response.data.token;
                 localStorage.set(localStorage.keys.TOKEN, response.data.token);
                 dfd.resolve();
             }, function () {
-                $rootScope.authenticated = false;
+                $rootScope.authenticatedUser = null;
                 dfd.reject();
             });
 
@@ -101,7 +101,7 @@ angular.module('AI').factory('authenticationService', [
                 url: "/api/auth"
             }).finally(function () {
                 localStorage.remove(localStorage.keys.TOKEN);
-                $rootScope.authenticated = false;
+                $rootScope.authenticatedUser = null;
                 authenticationService.token = "";
             });
         };
@@ -111,7 +111,7 @@ angular.module('AI').factory('authenticationService', [
          * Do not do anything if the current page is the login page.
          */
         authenticationService.redirectToLogin = function () {
-            $rootScope.authenticated = false;
+            $rootScope.authenticatedUser = null;
             if ($location.path().indexOf('/login') === -1) {
                 this.redirectedUrl = $location.path();
                 $location.url('/login');

@@ -17,7 +17,7 @@ router.post('/auth', function (req, res) {
     if (token) {
         res.status(200).send({
             'token': token,
-            'username': req.body.username
+            'user': req.user
         });
     } else {
         res.status(401).send('Incorrect username or password.');

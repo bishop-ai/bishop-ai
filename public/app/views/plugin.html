@@ -4,7 +4,7 @@
             <ul class="nav masthead-nav">
                 <li><a href="#/">Interface</a></li>
                 <li class="active"><a href="#/plugins">Plugins</a></li>
-                <li data-ng-show="authenticated"><a href data-ng-click="logout()">Logout</a></li>
+                <li data-ng-show="authenticatedUser"><a href data-ng-click="logout()">Logout</a></li>
             </ul>
         </nav>
     </div>
@@ -22,7 +22,7 @@
         </ul>
     </div>
 
-    <div class="section" data-ng-show="authenticated">
+    <div class="section" data-ng-show="authenticatedUser">
 
         <div data-ng-show="plugin.enabled">
             <h3>Configuration</h3>
@@ -64,7 +64,7 @@
                 <div class="col-xs-6 col-sm-4 col-sm-offset-2" data-ng-show="plugin.options">
                     <button type="submit" class="btn btn-primary btn-block" data-ng-click="updatePluginOptions()">Save</button>
                 </div>
-                <div data-ng-class="{'col-xs-6 col-sm-4': plugin.options, 'col-xs-12 col-sm-4': !plugin.options}">
+                <div data-ng-class="{'col-xs-6 col-sm-4': plugin.options, 'col-xs-12 col-sm-4': !plugin.options}" data-ng-show="authenticatedUser.admin">
                     <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-if="!plugin.enabled" class="btn btn-primary btn-block">Enable</button>
                     <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-if="plugin.enabled" class="btn btn-default btn-block">Disable</button>
                 </div>
@@ -73,6 +73,6 @@
     </div>
 
     <div class="section">
-        <p><i data-ng-show="!authenticated">You must <a href="/#/login">login</a> to change plugin settings.</i></p>
+        <p><i data-ng-show="!authenticatedUser">You must <a href="/#/login">login</a> to change plugin settings.</i></p>
     </div>
 </div>

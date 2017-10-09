@@ -4,7 +4,7 @@
             <ul class="nav masthead-nav">
                 <li><a href="#/">Interface</a></li>
                 <li class="active"><a href="#/plugins">Plugins</a></li>
-                <li data-ng-show="authenticated"><a href data-ng-click="logout()">Logout</a></li>
+                <li data-ng-show="authenticatedUser"><a href data-ng-click="logout()">Logout</a></li>
             </ul>
         </nav>
     </div>
@@ -12,7 +12,7 @@
 
 <div class="content-wrapper">
     <ul class="nav nav-tabs">
-        <li data-ng-repeat="tab in tabs" role="presentation" data-ng-class="{active: tab.active}" data-ng-click="setActiveTab($index)" data-ng-show="$index < 1 || authenticated">
+        <li data-ng-repeat="tab in tabs" role="presentation" data-ng-class="{active: tab.active}" data-ng-click="setActiveTab($index)" data-ng-show="$index < 1 || authenticatedUser.admin">
             <a href>{{tab.name}}</a>
         </li>
     </ul>
@@ -40,10 +40,10 @@
                         <td><a data-ng-href="/#/plugins/{{plugin.name}}">{{plugin.name}}</a></td>
                         <td>{{plugin.description}}</td>
                         <td class="hidden-xs">
-                            <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled && authenticated" class="btn btn-primary btn-block">Enable</button>
-                            <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled && authenticated" class="btn btn-default btn-block">Disable</button>
-                            <span data-ng-show="!authenticated && plugin.enabled">Enabled</span>
-                            <span data-ng-show="!authenticated && !plugin.enabled">Disabled</span>
+                            <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled && authenticatedUser.admin" class="btn btn-primary btn-block">Enable</button>
+                            <button data-ng-disabled="saving" data-ng-click="disablePlugin(plugin)" data-ng-show="plugin.enabled && authenticatedUser.admin" class="btn btn-default btn-block">Disable</button>
+                            <span data-ng-show="!authenticatedUser.admin && plugin.enabled">Enabled</span>
+                            <span data-ng-show="!authenticatedUser.admin && !plugin.enabled">Disabled</span>
                         </td>
                     </tr>
                     </tbody>
@@ -78,7 +78,7 @@
                             <td>{{package.name}}</td>
                             <td>{{package.description}}</td>
                             <td>
-                                <button data-ng-disabled="saving" data-ng-show="authenticated" data-ng-click="installPackage(package)" class="btn btn-primary">Install</button>
+                                <button data-ng-disabled="saving" data-ng-show="authenticatedUser.admin" data-ng-click="installPackage(package)" class="btn btn-primary">Install</button>
                             </td>
                         </tr>
                         </tbody>
@@ -87,7 +87,7 @@
             </div>
         </div>
 
-        <p><i data-ng-show="!authenticated">You must <a href="/#/login">login</a> to change plugin settings and add new plugins.</i></p>
+        <p><i data-ng-show="!authenticatedUser">You must <a href="/#/login">login</a> to change plugin settings.</i></p>
     </div>
 
 </div>
