@@ -24,7 +24,7 @@ configuration.init = function () {
 
 configuration.storeUser = function (user) {
     if (user.username) {
-        this.settings.users[user.username] = user;
+        this.settings.users[user.username.toLowerCase()] = user;
         this._commit();
     }
 };

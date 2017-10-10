@@ -7,10 +7,12 @@ var authService = require('./authService');
 var classifier = require('./classifier');
 var pluginService = require('./pluginService');
 
+// Get Authentication Status and Token User
 router.get('/auth', authService.authorize, function (req, res) {
     res.status(200).send(req.user);
 });
 
+// Login
 router.post('/auth', function (req, res) {
     var token = authService.login(req.body.username, req.body.password);
 
@@ -24,11 +26,25 @@ router.post('/auth', function (req, res) {
     }
 });
 
+// Logout
 router.delete('/auth', function (req, res) {
     authService.logout(req);
     res.status(204).send();
 });
 
+// Register
+router.post('/users', function (req, res) {
+    authService.register(req.body.username, req.body.password).then(function (response) {
+        res.status(200).send({
+            'token': response.token,
+            'user': response.user
+        });
+    }, function (e) {
+        res.status(500).send(e);
+    });
+});
+
+// Train Classifier
 router.post('/train', authService.authorizeAsAdmin, function (req, res) {
     classifier.train().then(function () {
         res.send();
@@ -37,12 +53,14 @@ router.post('/train', authService.authorizeAsAdmin, function (req, res) {
     });
 });
 
+// Get Available Plugins
 router.get('/packages', function (req, res) {
     npmKeyword(pjson.name + " plugin").then(function (packages) {
         res.send(packages);
     });
 });
 
+// Install New Plugin
 router.post('/packages', authService.authorizeAsAdmin, function (req, res) {
     if (!req.body || !req.body.name) {
         res.status(500).send("Invalid package");
@@ -58,12 +76,14 @@ router.post('/packages', authService.authorizeAsAdmin, function (req, res) {
     });
 });
 
+// Get Installed Plugins
 router.get('/plugins', function (req, res) {
     authService.verifyToken(req, function (err, decoded, user) {
         res.send(pluginService.sanitizePlugins(pluginService.getPlugins(), user));
     });
 });
 
+// Get Installed Plugin
 router.get('/plugins/:name', function (req, res) {
     var plugin = pluginService.getPlugin(req.params.name);
 
@@ -76,6 +96,7 @@ router.get('/plugins/:name', function (req, res) {
     }
 });
 
+// Update Installer Plugin
 router.put('/plugins/:name', authService.authorize, function (req, res) {
     var plugin = pluginService.getPlugin(req.params.name);
 

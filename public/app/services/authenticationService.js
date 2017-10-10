@@ -107,6 +107,32 @@ angular.module('AI').factory('authenticationService', [
         };
 
         /**
+         * Calls the authentication endpoint on the server to register a user.
+         * @param {String} username
+         * @param {String} password
+         * @returns {Promise} Resolved if authenticated. Rejected if not authenticated.
+         */
+        authenticationService.register = function (username, password) {
+            var dfd = $q.defer();
+
+            $http({
+                method: 'POST',
+                url: "/api/users",
+                data: {username: username, password: password}
+            }).then(function (response) {
+                $rootScope.authenticatedUser = response.data.user;
+                authenticationService.token = response.data.token;
+                localStorage.set(localStorage.keys.TOKEN, response.data.token);
+                dfd.resolve();
+            }, function (response) {
+                $rootScope.authenticatedUser = null;
+                dfd.reject(response);
+            });
+
+            return dfd.promise;
+        };
+
+        /**
          * Navigate to the login page and record the page that was redirected from.
          * Do not do anything if the current page is the login page.
          */
