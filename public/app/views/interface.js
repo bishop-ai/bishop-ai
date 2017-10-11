@@ -163,5 +163,10 @@ angular.module('AI').controller('InterfaceCtrl', [
         };
 
         listenForHotWord();
+
+        $scope.$on("$destroy", function () {
+            stopListeningForCommand();
+            stopListeningForHotWord();
+        });
     }
 ]);

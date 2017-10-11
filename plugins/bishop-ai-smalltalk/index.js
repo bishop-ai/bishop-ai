@@ -5,8 +5,8 @@ var shuffle = require('knuth-shuffle').knuthShuffle;
 var SmallTalk = function (nlp) {
 
     this.intent = [
-        {value: "(hi|hello|hey|what [is] up|what is happening|yo|sup|good (morning|evening|afternoon)) [*]", trigger: "smalltalk.greeting"},
-        {value: "([i will] (see|talk to) you later|see you|later|[and] i am (off|out)|i am leaving|bye|goodbye|[have a] good (night|day)|have a good (morning|evening|afternoon)) [*]", trigger: "smalltalk.farewell"},
+        {value: "(hi|hello|hey|what [is] up|what is happening|yo|sup|good (morning|evening|afternoon)) *", trigger: "smalltalk.greeting"},
+        {value: "([i will] (see|talk to) you later|see you|later|[and] i am (off|out)|i am leaving|bye|goodbye|[have a] good (night|day)|have a good (morning|evening|afternoon)) *", trigger: "smalltalk.farewell"},
         {value: "You are *", trigger: "smalltalk.compliment"},
         {value: "I (love|adore|can not live without|like|dislike|can not stand|despise|hate) you", trigger: "smalltalk.compliment"},
         {value: "(thank you|thanks)", trigger: "smalltalk.gratitude"},

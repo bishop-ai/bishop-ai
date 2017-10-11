@@ -22,6 +22,9 @@ angular.module('AI').factory('speechService', [
             };
         }
 
+        var listeningForHotWord = false;
+        var listeningForCommand = false;
+
         var capitalizeFirstLetter = function (string) {
             string = string.trim();
             if (string.length > 0) {
@@ -80,10 +83,16 @@ angular.module('AI').factory('speechService', [
         };
 
         speechService.startListeningForCommand = function () {
+            if (listeningForCommand) {
+                return;
+            }
+
             if (!this.SpeechRecognition) {
                 console.log("Speech Recognition not supported");
                 return;
             }
+
+            listeningForCommand = true;
 
             initializeCommandRecognition();
 
@@ -113,6 +122,8 @@ angular.module('AI').factory('speechService', [
                     callCommandListeners(transcript, true);
                     madeCall = true;
                 }
+
+                listeningForCommand = false;
             };
 
             this.commandRecognition.onspeechend = handleFinish;
@@ -129,10 +140,16 @@ angular.module('AI').factory('speechService', [
         };
 
         speechService.startListeningForHotWord = function (hotWord) {
+            if (listeningForHotWord) {
+                return;
+            }
+
             if (!this.SpeechRecognition) {
                 console.log("Speech Recognition not supported");
                 return;
             }
+
+            listeningForHotWord = true;
 
             initializeHotWordRecognition();
 
@@ -162,6 +179,7 @@ angular.module('AI').factory('speechService', [
             if (this.hotWordRecognition) {
                 this.listeningForHotWord = false;
                 this.hotWordRecognition.stop();
+                listeningForHotWord = false;
             }
         };
 
