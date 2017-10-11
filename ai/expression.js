@@ -28,9 +28,14 @@ var Expression = function (value, trigger, condition, context) {
 Expression.prototype.contains = function (v1, v2, v3) {
     var args = Array.prototype.slice.call(arguments);
 
+    var value = this.value.toLowerCase();
+    var normalized = this.normalized.toLowerCase();
+
     var i;
+    var arg;
     for (i = 0; i < args.length; i++) {
-        if (this.value.indexOf(args[i]) >= 0 || this.normalized.indexOf(args[i]) >= 0) {
+        arg = args[i].toLowerCase();
+        if (value.indexOf(arg) >= 0 || normalized.indexOf(arg) >= 0) {
             return true;
         }
     }

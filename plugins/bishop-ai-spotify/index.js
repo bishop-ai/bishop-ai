@@ -110,11 +110,11 @@ Spotify.play = function (song, album, artist, getMemory, setMemory, config, call
                 headers: {'Authorization': 'Bearer ' + token}
             }).then(function () {
                 if (song && artist) {
-                    callback("Playing " + song + " by " + artist + " on Spotify.");
+                    callback("Playing '" + song + "' by '" + artist + "' on Spotify.");
                 } else if (album && artist) {
-                    callback("Playing " + album + " by " + artist + " on Spotify.");
+                    callback("Playing '" + album + "' by '" + artist + "' on Spotify.");
                 } else if (artist) {
-                    callback("Playing " + artist + " on Spotify.");
+                    callback("Playing '" + artist + "' on Spotify.");
                 } else {
                     callback();
                 }
@@ -174,24 +174,37 @@ Spotify.play = function (song, album, artist, getMemory, setMemory, config, call
             }).then(function (response) {
                 if (response.data) {
                     var data;
-                    var song;
-                    var artist;
-                    var album;
+                    var resultSong;
+                    var resultArtist;
+                    var resultAlbum;
 
-                    if (type === "track" && response.data.tracks && response.data.tracks.items.length > 0) {
-                        data = {uris: [response.data.tracks.items[0].uri]};
-                        song = response.data.tracks.items[0].name;
-                        artist = response.data.tracks.items[0].artists[0].name;
-                    } else if (type === "album" && response.data.albums && response.data.albums.items.length > 0) {
-                        data = {context_uri: response.data.albums.items[0].uri};
-                        artist = response.data.albums.items[0].artists[0].name;
-                        album = response.data.albums.items[0].name;
-                    } else if (type === "artist" && response.data.artists && response.data.artists.items.length > 0) {
-                        data = {context_uri: response.data.artists.items[0].uri};
-                        artist = response.data.artists.items[0].name;
+                    if (type === "track") {
+                        if (response.data.tracks && response.data.tracks.items.length > 0) {
+                            data = {uris: [response.data.tracks.items[0].uri]};
+                            resultSong = response.data.tracks.items[0].name;
+                            resultArtist = response.data.tracks.items[0].artists[0].name;
+                            play(data, resultSong, null, resultArtist);
+                        } else {
+                            callback("I was unable to find the song '" + song + "'[ on Spotify].");
+                        }
+                    } else if (type === "album") {
+                        if (response.data.albums && response.data.albums.items.length > 0) {
+                            data = {context_uri: response.data.albums.items[0].uri};
+                            resultArtist = response.data.albums.items[0].artists[0].name;
+                            resultAlbum = response.data.albums.items[0].name;
+                            play(data, null, resultAlbum, resultArtist);
+                        } else {
+                            callback("I was unable to find the album '" + album + "'[ on Spotify].");
+                        }
+                    } else if (type === "artist") {
+                        if (response.data.artists && response.data.artists.items.length > 0) {
+                            data = {context_uri: response.data.artists.items[0].uri};
+                            resultArtist = response.data.artists.items[0].name;
+                            play(data, resultArtist);
+                        } else {
+                            callback("I was unable to find the artist '" + artist + "'[ on Spotify].");
+                        }
                     }
-
-                    play(data, song, album, artist);
                 }
             }).catch(function (err) {
                 console.log(err.message);

@@ -15,8 +15,8 @@ angular.module('AI').controller('InterfaceCtrl', [
               socket,
               speechService) {
 
-        //var hotWord = "wheatley"; // TODO: Get this from the server and allow the server to update it at any time
-        //var useHotWord = true; // TODO: Allow this to be set by the user
+        var hotWord = "bishop"; // Must be lowercase // TODO: Get this from the server and allow the server to update it at any time
+        var useHotWord = true; // TODO: Allow this to be set by the user
 
         $scope.message = "";
         $scope.transcript = [];
@@ -57,13 +57,7 @@ angular.module('AI').controller('InterfaceCtrl', [
 
                 var handleMessage = function () {
                     if (data.message) {
-
-                        if (speechService.speechSynthesis && speechService.SpeechSynthesisUtterance) {
-                            var msg = new speechService.SpeechSynthesisUtterance(data.message);
-                            msg.voice = speechService.voice;
-                            speechService.speechSynthesis.speak(msg);
-                        }
-
+                        speechService.speak(data.message);
                         message.m = data.message;
                         message.html = $sanitize(data.html);
                         $rootScope.$emit("fire");
@@ -94,73 +88,80 @@ angular.module('AI').controller('InterfaceCtrl', [
             }
         };
 
-        if (speechService.SpeechRecognition) {
-            var recognition = new speechService.SpeechRecognition();
-            recognition.continuous = true;
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
+        var listeningForHotWord = false;
 
-            var handleResult = function (event) {
-                var i;
-                var finalTranscript = "";
-                var interimTranscript = "";
-                for (i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
-                    $scope.message = event.results[i][0].transcript;
-                }
+        var stopListeningForHotWord = function () {
+            speechService.stopListeningForHotWord();
+            listeningForHotWord = false;
+        };
 
-                var isMatch = true;
+        var listenForHotWord = function () {
+            if (!listeningForHotWord && useHotWord && hotWord) {
+                speechService.startListeningForHotWord(hotWord);
+                listeningForHotWord = true;
+            }
+        };
 
-                /*if (useHotWord) {
-                 isMatch = false;
-                 var trimmed = finalTranscript.trim().toLowerCase();
-                 if (trimmed.startsWith(hotWord) || trimmed.endsWith(hotWord)) {
+        var listeningForCommand = false;
 
-                 isMatch = true;
-                 if (trimmed.startsWith(hotWord)) {
-                 finalTranscript = trimmed.replace(new RegExp("^" + hotWord,"i"), "");
-                 } else {
-                 finalTranscript = trimmed.replace(new RegExp(hotWord + "$","i"), "");
-                 }
-                 }
-                 }*/
+        var stopListeningForCommand = function () {
+            $scope.recording = false;
+            $scope.message = "";
+            listenForHotWord();
+            listeningForCommand = false;
+        };
 
-                if (isMatch) {
-                    console.log('Voice Match: ' + finalTranscript);
-                    socket.emit('command', {token : authenticationService.token, command: finalTranscript});
-                    $scope.transcript.push({html: null, m: finalTranscript, ai: false});
+        var listenForCommand = function () {
+            if (listeningForCommand) {
+                return;
+            }
+            listeningForCommand = true;
+            stopListeningForHotWord();
+            $scope.recording = true;
+            speechService.startListeningForCommand();
+        };
+
+        speechService.onCommandDetected($scope, function (event, transcript, isFinal) {
+            if (!isFinal) {
+                $scope.message = transcript;
+            } else {
+                if (transcript) {
+                    console.log('Voice Match: ' + transcript);
+                    socket.emit('command', {token : authenticationService.token, command: transcript});
+                    $scope.transcript.push({html: null, m: transcript, ai: false});
                     messageSentTime = (new Date()).getTime();
                 }
 
-                $scope.message = "";
-            };
+                stopListeningForCommand();
+            }
+        });
 
-            recognition.onresult = function (event) {
-                $scope.$apply(function () {
-                    handleResult(event);
-                });
-            };
+        speechService.onHotWordDetected($scope, function (event, transcript) {
+            var command = null;
+            if (transcript.toLowerCase().startsWith(hotWord + " ")) {
+                command = transcript.substring(hotWord.length + 1).trim();
+            } else if (transcript.toLowerCase().endsWith(" " + hotWord)) {
+                command = transcript.substring(0, transcript.length - (hotWord.length + 1)).trim();
+            }
 
-            // Start it if it ends
-            recognition.onend = function() {
-                if ($scope.recording) {
-                    recognition.start();
-                }
-            };
-        }
+            if (command) {
+                console.log('Voice Match: ' + transcript);
+                socket.emit('command', {token : authenticationService.token, command: command});
+                $scope.transcript.push({html: null, m: transcript, ai: false});
+                messageSentTime = (new Date()).getTime();
+            } else {
+                listenForCommand();
+            }
+        });
 
         $scope.toggleRecording = function () {
-            var isRecording = $scope.recording;
-            $scope.recording = !$scope.recording;
-            if (isRecording) {
-                recognition.stop();
+            if ($scope.recording) {
+                speechService.stopListeningForCommand();
             } else {
-                recognition.start();
+                listenForCommand();
             }
         };
+
+        listenForHotWord();
     }
 ]);

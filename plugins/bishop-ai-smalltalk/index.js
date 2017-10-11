@@ -5,7 +5,8 @@ var shuffle = require('knuth-shuffle').knuthShuffle;
 var SmallTalk = function (nlp) {
 
     this.intent = [
-        {value: "(hi|hello|hey|what [is] up|what is happening|yo|sup) *", trigger: "smalltalk.greeting"},
+        {value: "(hi|hello|hey|what [is] up|what is happening|yo|sup|good (morning|evening|afternoon)) [*]", trigger: "smalltalk.greeting"},
+        {value: "([i will] (see|talk to) you later|see you|later|[and] i am (off|out)|i am leaving|bye|goodbye|[have a] good (night|day)|have a good (morning|evening|afternoon)) [*]", trigger: "smalltalk.farewell"},
         {value: "You are *", trigger: "smalltalk.compliment"},
         {value: "I (love|adore|can not live without|like|dislike|can not stand|despise|hate) you", trigger: "smalltalk.compliment"},
         {value: "(thank you|thanks)", trigger: "smalltalk.gratitude"},
@@ -45,7 +46,7 @@ var SmallTalk = function (nlp) {
             if (name) {
                 responses = responses.concat([
                     {value: "(Hello|Hi) " + name + ". [(How can I (help [you]|be of assistance)|What can I (help you with|do for you))?]", weight: 3},
-                    {value: "(Hello|Hi). (How can I (help [you]|be of assistance)|What can I (help you with|do for you)), " + name + "?", weight: 3},
+                    {value: "(Hello|Hi). (How can I (help [you]|be of assistance)|What can I (help you with|do for you)) " + name + "?", weight: 3},
                     {value: name + "! Nice to see you again.", weight: 3}
                 ]);
                 if (dt >= 0 && dt <= 11) {
@@ -66,6 +67,44 @@ var SmallTalk = function (nlp) {
             dfd.resolve(responses);
         },
 
+        farewell: function (dfd, expression, utils) {
+            var name = utils.getMemory('userName');
+
+            var responses = [
+                "Goodbye!",
+                "Talk to you later."
+            ];
+
+            var dt = new Date().getHours();
+            if (dt >= 0 && dt <= 8) {
+                responses.push({value: "Have a good morning.", weight: 2});
+            } else if (dt >= 9 && dt <= 14) {
+                responses.push({value: "Have a good afternoon.", weight: 2});
+            } else if (dt >= 15 && dt <= 20) {
+                responses.push({value: "Have a good evening.", weight: 2});
+            } else {
+                responses.push({value: "(Have a good|Good) night.", weight: 2});
+            }
+
+            if (name) {
+                responses = responses.concat([
+                    {value: "Goodbye " + name + ".", weight: 3},
+                    {value: "Talk to you later " + name + ".", weight: 3}
+                ]);
+                if (dt >= 0 && dt <= 8) {
+                    responses.push({value: "Have a good morning " + name + ".", weight: 2});
+                } else if (dt >= 9 && dt <= 14) {
+                    responses.push({value: "Have a good afternoon " + name + ".", weight: 2});
+                } else if (dt >= 15 && dt <= 20) {
+                    responses.push({value: "Have a good evening " + name + ".", weight: 2});
+                } else {
+                    responses.push({value: "(Have a good|Good) night " + name + ".", weight: 2});
+                }
+            }
+
+            dfd.resolve(responses);
+        },
+
         compliment: function (dfd, expression, utils) {
             var responses = [];
 
@@ -79,7 +118,7 @@ var SmallTalk = function (nlp) {
                 ]);
                 if (name) {
                     responses = responses.concat([
-                        {value: "That wasn't [very] (nice|kind), " + name + ".", weight: 2}
+                        {value: "That wasn't [very] (nice|kind) " + name + ".", weight: 2}
                     ]);
                 }
             } else if (sentiment === 0 && !expression.contains("friend")) {
@@ -91,12 +130,12 @@ var SmallTalk = function (nlp) {
                 responses = responses.concat([
                     "You shouldn't...",
                     "(Thank you|Thanks)!",
-                    "Why, thank you!"
+                    "Why thank you!"
                 ]);
                 if (name) {
                     responses = responses.concat([
-                        {value: "[(Thanks|Thank you)!] That is [very] (nice|kind) [of you], " + name + ".", weight: 2},
-                        {value: "(Thank you|Thanks), " + name + ".", weight: 2}
+                        {value: "[(Thanks|Thank you)!] That is [very] (nice|kind) [of you] " + name + ".", weight: 2},
+                        {value: "(Thank you|Thanks) " + name + ".", weight: 2}
                     ]);
                 }
             }
@@ -114,7 +153,7 @@ var SmallTalk = function (nlp) {
 
             if (name) {
                 responses = responses.concat([
-                    {value: "(You're [very] welcome|No problem), " + name + ".", weight: 2}
+                    {value: "(You're [very] welcome|No problem) " + name + ".", weight: 2}
                 ]);
             }
 
@@ -132,7 +171,7 @@ var SmallTalk = function (nlp) {
                 ]);
                 if (name) {
                     responses = responses.concat([
-                        {value: "I am your personal assistant, " + name + ".", weight: 2}
+                        {value: "I am your personal assistant " + name + ".", weight: 2}
                     ]);
                 } else {
                     responses = responses.concat([
@@ -141,7 +180,7 @@ var SmallTalk = function (nlp) {
                 }
             } else if (expression.contains('how')) {
                 responses = [
-                    {value: "I'm doing (well|fine|great), [(thanks|thank you) and] ((how|what) about you|how are you [doing]|and yourself)?", context: "smalltalk.howAreYou"}
+                    {value: "I'm doing (well|fine|great), [(thanks|thank you),] ([and] (how|what) about you|[and] how are you [doing]|and yourself)?", context: "smalltalk.howAreYou"}
                 ];
             } else if (expression.contains("what") && expression.contains("skills", "you do", "ask", "questions", "answer")) {
                 var examples = shuffle(utils.getExamples().slice(0));
@@ -267,7 +306,7 @@ var SmallTalk = function (nlp) {
                 utils.setMemory('aiName', name);
                 dfd.resolve([
                     "[That's a (great|good) name.] You (can|may) now call me " + name + ".",
-                    "From hence forth, I shall be " + name + ", the (mighty|magnificent|omnipotent|all knowing|all powerful)!"
+                    "From hence forth I shall be " + name + " the (mighty|magnificent|omnipotent|all knowing|all powerful)!"
                 ]);
             } else {
                 dfd.reject();
