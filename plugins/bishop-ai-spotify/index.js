@@ -17,8 +17,11 @@ var Spotify = function (config) {
         {value: "(turn off|stop [playing]) [(the|my)] music", trigger: "spotify.pause"},
         {value: "turn [(the|my)] music off", trigger: "spotify.pause"},
         {value: "pause [(the|my)] music", trigger: "spotify.pause"},
-        {value: "[play [the]] last song [again]", trigger: "spotify.previous"},
-        {value: "[play [the]] next song", trigger: "spotify.next"}
+        {value: "play (that [song] again|the last song [again])", trigger: "spotify.last"},
+        {value: "[play [the]] previous song", trigger: "spotify.previous"},
+        {value: "[play [the]] next song", trigger: "spotify.next"},
+        {value: "what (was the last (song|track)|(song|track) played last|(song|track) was (that|last played|played last)|was that (song|track))", trigger: "spotify.lastInfo"},
+        {value: "what ((song|track) is this|is this (song|track)|[(song|track)] (is playing|(are we|am i) listening to))", trigger: "spotify.currentInfo"}
     ];
 
     // TODO: "Save this song", "Set Volume", "Play playlist", "Add this song to playlist", "Play songs like this"
@@ -47,6 +50,21 @@ var Spotify = function (config) {
             Spotify.sendCmd(Spotify.commands.PREV, null, utils.getMemory, utils.setMemory, config, function (response) {
                 dfd.resolve(response);
             });
+        },
+        last: function (dfd, expression, utils) {
+            Spotify.playLast(utils.getMemory, utils.setMemory, config, function (response) {
+                dfd.resolve(response);
+            });
+        },
+        lastInfo: function (dfd, expression, utils) {
+            Spotify.getLastSongInfo(utils.getMemory, utils.setMemory, config, function (response) {
+                dfd.resolve(response);
+            });
+        },
+        currentInfo: function (dfd, expression, utils) {
+            Spotify.getCurrentSongInfo(utils.getMemory, utils.setMemory, config, function (response) {
+                dfd.resolve(response);
+            });
         }
     };
 
@@ -69,11 +87,21 @@ var Spotify = function (config) {
         }
     }
 
+    var scopes = [
+        "playlist-read-private",
+        "playlist-read-collaborative",
+        "user-read-playback-state",
+        "user-modify-playback-state",
+        "user-read-playback-state",
+        "user-read-private",
+        "user-read-recently-played"
+    ];
+
     this.options.authCode = {
         name: "Auth Code",
         description: "",
         oauth: {
-            url: "https://accounts.spotify.com/authorize?client_id=" + clientIdString + "&response_type=code&redirect_uri=" + redirectUrl + "&scope=playlist-read-private%20playlist-read-collaborative%20user-read-playback-state%20user-modify-playback-state%20user-read-private",
+            url: "https://accounts.spotify.com/authorize?client_id=" + clientIdString + "&response_type=code&redirect_uri=" + redirectUrl + "&scope=" + scopes.join("%20"),
             urlParam: "code"
         },
         onChange: function (getMemory, setMemory) {
@@ -97,6 +125,56 @@ var Spotify = function (config) {
     };
 };
 
+Spotify.playFromData = function (token, callback, data, song, album, artist) {
+    axios.put("https://api.spotify.com/v1/me/player/play", data, {
+        headers: {'Authorization': 'Bearer ' + token}
+    }).then(function () {
+        if (song && artist) {
+            callback("Playing " + song + " by " + artist + "[ on Spotify].");
+        } else if (album && artist) {
+            callback("Playing " + album + " by " + artist + "[ on Spotify].");
+        } else if (artist) {
+            callback("Playing " + artist + "[ on Spotify].");
+        } else {
+            callback();
+        }
+    }).catch(function (err) {
+        console.log(err.message);
+        console.log(JSON.stringify(err.response.data));
+        callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+    });
+};
+
+Spotify.getLastTrack = function (token, callback) {
+    axios.get("https://api.spotify.com/v1/me/player/recently-played?limit=1", {
+        headers: {'Authorization': 'Bearer ' + token}
+    }).then(function (response) {
+        if (response.data.items && response.data.items.length > 0) {
+            return callback(response.data.items[0].track);
+        }
+        callback(null);
+    }).catch(function (err) {
+        console.log(err.message);
+        console.log(JSON.stringify(err.response.data));
+        callback();
+    });
+};
+
+Spotify.getCurrentTrack = function (token, callback) {
+    axios.get("https://api.spotify.com/v1/me/player/currently-playing", {
+        headers: {'Authorization': 'Bearer ' + token}
+    }).then(function (response) {
+        if (response.data.item) {
+            return callback(response.data.item);
+        }
+        callback(null);
+    }).catch(function (err) {
+        console.log(err.message);
+        console.log(JSON.stringify(err.response.data));
+        callback();
+    });
+};
+
 Spotify.play = function (song, album, artist, getMemory, setMemory, config, callback) {
     Spotify.getToken(getMemory, setMemory, config, function (err, token) {
         if (err) {
@@ -104,26 +182,6 @@ Spotify.play = function (song, album, artist, getMemory, setMemory, config, call
             callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
             return;
         }
-
-        var play = function (data, song, album, artist) {
-            axios.put("https://api.spotify.com/v1/me/player/play", data, {
-                headers: {'Authorization': 'Bearer ' + token}
-            }).then(function () {
-                if (song && artist) {
-                    callback("Playing '" + song + "' by '" + artist + "' on Spotify.");
-                } else if (album && artist) {
-                    callback("Playing '" + album + "' by '" + artist + "' on Spotify.");
-                } else if (artist) {
-                    callback("Playing '" + artist + "' on Spotify.");
-                } else {
-                    callback();
-                }
-            }).catch(function (err) {
-                console.log(err.message);
-                console.log(JSON.stringify(err.response.data));
-                callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
-            });
-        };
 
         if (song || album || artist) {
 
@@ -172,38 +230,36 @@ Spotify.play = function (song, album, artist, getMemory, setMemory, config, call
             axios.get("https://api.spotify.com/v1/search?q=" + query + "&type=" + type + "&market=from_token&limit=1", {
                 headers: {'Authorization': 'Bearer ' + token}
             }).then(function (response) {
-                if (response.data) {
-                    var data;
-                    var resultSong;
-                    var resultArtist;
-                    var resultAlbum;
+                var data;
+                var resultSong;
+                var resultArtist;
+                var resultAlbum;
 
-                    if (type === "track") {
-                        if (response.data.tracks && response.data.tracks.items.length > 0) {
-                            data = {uris: [response.data.tracks.items[0].uri]};
-                            resultSong = response.data.tracks.items[0].name;
-                            resultArtist = response.data.tracks.items[0].artists[0].name;
-                            play(data, resultSong, null, resultArtist);
-                        } else {
-                            callback("I was unable to find the song '" + song + "'[ on Spotify].");
-                        }
-                    } else if (type === "album") {
-                        if (response.data.albums && response.data.albums.items.length > 0) {
-                            data = {context_uri: response.data.albums.items[0].uri};
-                            resultArtist = response.data.albums.items[0].artists[0].name;
-                            resultAlbum = response.data.albums.items[0].name;
-                            play(data, null, resultAlbum, resultArtist);
-                        } else {
-                            callback("I was unable to find the album '" + album + "'[ on Spotify].");
-                        }
-                    } else if (type === "artist") {
-                        if (response.data.artists && response.data.artists.items.length > 0) {
-                            data = {context_uri: response.data.artists.items[0].uri};
-                            resultArtist = response.data.artists.items[0].name;
-                            play(data, resultArtist);
-                        } else {
-                            callback("I was unable to find the artist '" + artist + "'[ on Spotify].");
-                        }
+                if (type === "track") {
+                    if (response.data.tracks && response.data.tracks.items.length > 0) {
+                        data = {uris: [response.data.tracks.items[0].uri]};
+                        resultSong = response.data.tracks.items[0].name;
+                        resultArtist = response.data.tracks.items[0].artists[0].name;
+                        Spotify.playFromData(token, callback, data, resultSong, null, resultArtist);
+                    } else {
+                        callback("I was unable to find the song " + song + "[ on Spotify].");
+                    }
+                } else if (type === "album") {
+                    if (response.data.albums && response.data.albums.items.length > 0) {
+                        data = {context_uri: response.data.albums.items[0].uri};
+                        resultArtist = response.data.albums.items[0].artists[0].name;
+                        resultAlbum = response.data.albums.items[0].name;
+                        Spotify.playFromData(token, callback, data, null, resultAlbum, resultArtist);
+                    } else {
+                        callback("I was unable to find the album " + album + "[ on Spotify].");
+                    }
+                } else if (type === "artist") {
+                    if (response.data.artists && response.data.artists.items.length > 0) {
+                        data = {context_uri: response.data.artists.items[0].uri};
+                        resultArtist = response.data.artists.items[0].name;
+                        Spotify.playFromData(token, callback, data, resultArtist);
+                    } else {
+                        callback("I was unable to find the artist " + artist + "[ on Spotify].");
                     }
                 }
             }).catch(function (err) {
@@ -212,9 +268,76 @@ Spotify.play = function (song, album, artist, getMemory, setMemory, config, call
                 callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
             });
         } else {
-            play(null);
+            Spotify.playFromData(token, callback);
         }
 
+    });
+};
+
+Spotify.playLast = function (getMemory, setMemory, config, callback) {
+    Spotify.getToken(getMemory, setMemory, config, function (err, token) {
+        if (err) {
+            console.log(JSON.stringify(err.response.data));
+            callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+            return;
+        }
+
+        Spotify.getLastTrack(token, function (track) {
+            if (track) {
+                var data = {uris: [track.uri]};
+                var resultSong = track.name;
+                var resultArtist = track.artists[0].name;
+                Spotify.playFromData(token, callback, data, resultSong, null, resultArtist);
+            } else if (track === null) {
+                callback("I was unable to determine what song was last played[ on Spotify].");
+            } else {
+                callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+            }
+        });
+    });
+};
+
+Spotify.getLastSongInfo = function (getMemory, setMemory, config, callback) {
+    Spotify.getToken(getMemory, setMemory, config, function (err, token) {
+        if (err) {
+            console.log(JSON.stringify(err.response.data));
+            callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+            return;
+        }
+
+        Spotify.getLastTrack(token, function (track) {
+            if (track) {
+                var resultSong = track.name;
+                var resultArtist = track.artists[0].name;
+                callback("[(That|It) was ]" + resultSong + " by " + resultArtist + ".");
+            } else if (track === null) {
+                callback("I was unable to determine what song was last played[ on Spotify].");
+            } else {
+                callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+            }
+        });
+    });
+};
+
+Spotify.getCurrentSongInfo = function (getMemory, setMemory, config, callback) {
+    Spotify.getToken(getMemory, setMemory, config, function (err, token) {
+        if (err) {
+            console.log(JSON.stringify(err.response.data));
+            callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+            return;
+        }
+
+        Spotify.getCurrentTrack(token, function (track) {
+            if (track) {
+                var resultSong = track.name;
+                var resultArtist = track.artists[0].name;
+                callback("[It is ]" + resultSong + " by " + resultArtist + ".");
+            } else if (track === null) {
+                callback("There is not a song playing right now[ on Spotify].");
+            } else {
+                callback("Sorry, something went wrong. Please make sure your Spotify plugin is set up correctly.");
+            }
+        });
     });
 };
 
