@@ -3,8 +3,6 @@ angular.module('AI').factory('speechService', [
 
     function ($rootScope) {
 
-        // TODO: Move more speech handling here.
-
         var speechService = {
             voice: null,
             speechSynthesis: window.speechSynthesis,
