@@ -228,8 +228,6 @@ var Weather = function (config) {
         }
     };
 
-    this.context = {};
-
     this.options = {};
     if (!config || !config.apiKey) {
         this.options.apiKey = {name: "API Key", description: "Your Dark Sky API key found at https://darksky.net/dev/account"};

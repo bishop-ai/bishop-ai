@@ -2,7 +2,6 @@ var request = require('request');
 
 var Ifttt = function () {
     this.intent = [];
-    this.context = {};
 
     var self = this;
     this.triggers = {

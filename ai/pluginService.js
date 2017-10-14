@@ -29,7 +29,6 @@ var Plugin = function (module, pkg) {
 
     this.intentMatchers = [];
     this.triggers = {};
-    this.contextTriggers = {};
     this.options = null;
 };
 
@@ -43,7 +42,6 @@ Plugin.prototype.register = function () {
 
     this.intentMatchers = [];
     this.triggers = {};
-    this.contextTriggers = {};
 
     var i;
 
@@ -58,20 +56,12 @@ Plugin.prototype.register = function () {
             }
         }
     }
-    if (service.hasOwnProperty("context")) {
-        var context;
-        for (context in service.context) {
-            if (service.context.hasOwnProperty(context) && this.triggers.hasOwnProperty(service.context[context])) {
-                this.contextTriggers[this.namespace + "." + context] = service.context[context];
-            }
-        }
-    }
     if (service.hasOwnProperty("intent")) {
         var intent;
         for (i = 0; i < service.intent.length; i++) {
             intent = service.intent[i];
-            if (intent.value && intent.trigger && this.triggers.hasOwnProperty(intent.trigger) && (!intent.context || this.contextTriggers.hasOwnProperty(intent.context))) {
-                this.intentMatchers.push(new intentService.Matcher(intent.value, intent.trigger, intent.context));
+            if (intent.value && intent.trigger && this.triggers.hasOwnProperty(intent.trigger)) {
+                this.intentMatchers.push(new intentService.Matcher(intent.value, intent.trigger, intent.expectations));
             }
         }
     }
@@ -240,17 +230,11 @@ pluginService.sanitizePlugins = function (input, user) {
     var plugin = input;
 
     var triggers = [];
-    var contextTriggers = [];
 
     var trigger;
     for (trigger in plugin.triggers) {
         if (plugin.triggers.hasOwnProperty(trigger)) {
             triggers.push(trigger);
-        }
-    }
-    for (trigger in plugin.contextTriggers) {
-        if (plugin.contextTriggers.hasOwnProperty(trigger)) {
-            contextTriggers.push(trigger);
         }
     }
 
@@ -279,7 +263,6 @@ pluginService.sanitizePlugins = function (input, user) {
         options: options,
         enabled: plugin.enabled,
         triggers: triggers,
-        contextTriggers: contextTriggers,
         examples: plugin.examples
     };
 };

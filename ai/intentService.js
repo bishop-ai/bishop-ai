@@ -39,7 +39,7 @@ intentService.getInputs = function (matchers) {
             result.push({
                 value: phrases[p],
                 trigger: matchers[i].intent,
-                context: matchers[i].context
+                expectations: matchers[i].expectations
             });
         }
     }
@@ -47,9 +47,9 @@ intentService.getInputs = function (matchers) {
     return result;
 };
 
-intentService.Matcher = function (input, intent, context) {
+intentService.Matcher = function (input, intent, expectations) {
     this.intent = intent;
-    this.context = context || "";
+    this.expectations = expectations || [];
     this.tokens = intentService.Matcher.lex(input);
     this.tree = intentService.Matcher.buildParseTree(this.tokens.slice(0));
     this.specificity = intentService.Matcher.getSpecificity(this.tree);

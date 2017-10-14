@@ -68,8 +68,6 @@ var Spotify = function (config) {
         }
     };
 
-    this.context = {};
-
     var redirectUrl = encodeURIComponent(redirect);
 
     this.options = {};

@@ -15,7 +15,6 @@ var CoinFlip = function () {
         }
     };
 
-    this.context = {};
 };
 
 module.exports = {

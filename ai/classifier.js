@@ -58,15 +58,12 @@ classifier.train = function () {
     var value;
     var trigger;
     for (i = 0; i < intents.length; i++) {
-        if (!intents[i].context) {
+        trigger = intents[i].trigger;
+        value = nlp.normalizer.clean(intents[i].value);
+        value = nlp.normalizer.normalize(value).toLowerCase();
 
-            trigger = intents[i].trigger;
-            value = nlp.normalizer.clean(intents[i].value);
-            value = nlp.normalizer.normalize(value).toLowerCase();
-
-            if (value.length > 0) {
-                this.bayesClassifier.addDocument(value, trigger);
-            }
+        if (value.length > 0) {
+            this.bayesClassifier.addDocument(value, trigger);
         }
     }
 

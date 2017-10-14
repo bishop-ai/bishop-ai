@@ -60,7 +60,7 @@ responseService.getUnknownResponse = function (inputExpression) {
 
 responseService.Builder = function (template) {
     var string = (typeof template === "string") ? template : template.value || "";
-    this.context = (typeof template === "string") ? "" : template.context || "";
+    this.expectations = (typeof template === "string") ? [] : template.expectations || [];
     this.weight = (typeof template === "string") ? "" : template.weight || 0;
     this.tokens = responseService.Builder.lex(string);
     this.tree = responseService.Builder.buildParseTree(this.tokens);
@@ -76,7 +76,7 @@ responseService.Builder.prototype.getResponses = function () {
     var input;
     for (i = 0; i < inputs.length; i++) {
         input = inputs[i].join(" ").replace(/\s+([.,!:?;])/g, "$1");
-        responses.push(new Response(input, this.context, this.weight));
+        responses.push(new Response(input, this.expectations, this.weight));
     }
 
     return responses;

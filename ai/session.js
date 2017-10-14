@@ -20,7 +20,7 @@ var Session = function () {
     // times, the AI can respond differently.
     this._transcript = [];
 
-    this._context = "";
+    this._expectations = [];
 
     this.timers = [];
 };
@@ -73,13 +73,13 @@ Session.prototype.processExpression = function (input, username) {
         var response = result.response;
         var matchedClassification = result.matchedClassification;
 
-        self._context = response.context || "";
+        self._expectations = response.expectations || [];
 
         var data = {
             input: inputExpression,
             classification: matchedClassification,
             response: response.value,
-            context: self._context
+            expectations: self._expectations
         };
 
         console.log(JSON.stringify({
@@ -87,7 +87,7 @@ Session.prototype.processExpression = function (input, username) {
             trigger: data.classification ? data.classification.trigger : "",
             confidence: data.classification ? data.classification.confidence : 0,
             response: data.response,
-            context: data.context
+            expectations: data.expectations
         }, null, "  "));
 
         if (!pushedInputToTranscript) {
@@ -102,13 +102,13 @@ Session.prototype.processExpression = function (input, username) {
         var response = intermediateResponse.response;
         var matchedClassification = intermediateResponse.matchedClassification;
 
-        self._context = response.context || "";
+        self._expectations = response.expectations || [];
 
         var data = {
             input: inputExpression,
             classification: matchedClassification,
             response: response.value,
-            context: self._context
+            expectations: self._expectations
         };
 
         console.log(JSON.stringify({
@@ -116,7 +116,7 @@ Session.prototype.processExpression = function (input, username) {
             trigger: data.classification ? data.classification.trigger : "",
             confidence: data.classification ? data.classification.confidence : 0,
             response: data.response,
-            context: data.context
+            expectations: data.expectations
         }, null, "  "));
 
         if (!pushedInputToTranscript) {
@@ -139,7 +139,6 @@ Session.prototype.processIntent = function (inputExpression, username) {
     var matchers = [];
     var examples = [];
     var triggers = {};
-    var contextTriggers = {};
     var plugins = pluginService.getEnabledPlugins();
     var option;
     var customPluginIntent = [];
@@ -150,7 +149,6 @@ Session.prototype.processIntent = function (inputExpression, username) {
         matchers = matchers.concat(plugins[i].intentMatchers);
         examples = examples.concat(plugins[i].examples);
         extend(triggers, plugins[i].triggers);
-        extend(contextTriggers, plugins[i].contextTriggers);
 
         if (plugins[i].options) {
             for (option in plugins[i].options) {
@@ -164,41 +162,39 @@ Session.prototype.processIntent = function (inputExpression, username) {
         }
     }
 
-    if (this._context) {
-        if (contextTriggers[this._context]) {
-            matchedClassification = {
-                trigger: contextTriggers[this._context],
-                confidence: 1
-            };
+    for (i = 0; i < customPluginIntent.length; i++) {
+        matchers.push(new intentService.Matcher(customPluginIntent[i].value, customPluginIntent[i].trigger, customPluginIntent[i].expectations));
+    }
+
+    // Reverse sort by specificity so the most specific matcher is at the top
+    matchers.sort(function (a, b) {
+        if (a.specificity > b.specificity) {
+            return -1;
         }
+        if (b.specificity > a.specificity) {
+            return 1;
+        }
+        return 0;
+    });
+
+    // If there are any expectations, add them as the matchers to check first
+    var expectation;
+    for (i = 0; i < this._expectations.length; i++) {
+        expectation = this._expectations[i];
+        matchers.unshift(new intentService.Matcher(expectation.value, expectation.trigger, expectation.expectations));
+    }
+
+    var input = inputExpression.normalized.replace(/^please\s/i, "");
+    input = input.replace(/\splease$/i, "");
+    var matchedIntent = intentService.matchInputToIntent(input, matchers);
+    if (matchedIntent.confidence > 0.6) {
+        matchedClassification = {
+            trigger: matchedIntent.intent,
+            confidence: matchedIntent.confidence,
+            namedWildcards: matchedIntent.namedWildcards
+        };
     } else {
-        for (i = 0; i < customPluginIntent.length; i++) {
-            matchers.push(new intentService.Matcher(customPluginIntent[i].value, customPluginIntent[i].trigger, customPluginIntent[i].context));
-        }
-
-        // Reverse sort by specificity so the most specific matcher is at the top
-        matchers.sort(function (a, b) {
-            if (a.specificity > b.specificity) {
-                return -1;
-            }
-            if (b.specificity > a.specificity) {
-                return 1;
-            }
-            return 0;
-        });
-
-        var input = inputExpression.normalized.replace(/^please\s/i, "");
-        input = input.replace(/\splease$/i, "");
-        var matchedIntent = intentService.matchInputToIntent(input, matchers);
-        if (matchedIntent.confidence > 0.6) {
-            matchedClassification = {
-                trigger: matchedIntent.intent,
-                confidence: matchedIntent.confidence,
-                namedWildcards: matchedIntent.namedWildcards
-            };
-        } else {
-            matchedClassification = classifier.classify(inputExpression);
-        }
+        matchedClassification = classifier.classify(inputExpression);
     }
 
     if (matchedClassification && matchedClassification.confidence > 0.5) {

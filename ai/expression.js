@@ -1,6 +1,6 @@
 var nlp = require('./../nlp');
 
-var Expression = function (value, trigger, condition, context) {
+var Expression = function (value, trigger, condition, expectations) {
     this.value = "";
 
     this.normalized = "";
@@ -10,17 +10,17 @@ var Expression = function (value, trigger, condition, context) {
     this.qType = null;
     this.qClass = null;
 
-    this.context = "";
+    this.expectations = "";
     this.trigger = null;
 
     if (typeof value === "object" && value.hasOwnProperty("value")) {
         var intent = value;
         this.value = intent.value;
-        this.context = intent.context || "";
+        this.expectations = intent.expectations || [];
         this.trigger = intent.trigger || null;
     } else {
         this.value = value || "";
-        this.context = context || "";
+        this.expectations = expectations || [];
         this.trigger = trigger || null;
     }
 };

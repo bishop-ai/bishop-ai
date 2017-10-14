@@ -1,16 +1,16 @@
-var Response = function (value, context, weight) {
+var Response = function (value, expectations, weight) {
     this.value = "";
-    this.context = "";
+    this.expectations = [];
     this.weight = 1;
 
     if (typeof value === "object" && value.hasOwnProperty("value")) {
         var response = value;
         this.value = response.value;
-        this.context = response.context || "";
+        this.expectations = response.expectations || [];
         this.weight = response.weight || 1;
     } else {
         this.value = value || "";
-        this.context = context || "";
+        this.expectations = expectations || [];
         this.weight = weight || 1;
     }
 };
