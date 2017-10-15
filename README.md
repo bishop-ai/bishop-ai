@@ -1,3 +1,3 @@
-#Bishop AI
+# Bishop AI
 
-Simple NodeJS App for capturing text or audio, determining intent, and executing commands
+Simple NodeJS App for capturing text, determining intent, and executing commands.
