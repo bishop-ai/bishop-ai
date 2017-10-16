@@ -1,5 +1,7 @@
 # Bishop AI
 
+[![Build Status](https://travis-ci.org/bishop-ai/bishop-ai.svg?branch=master)](https://travis-ci.org/bishop-ai/bishop-ai)
+
 Node based Virtual Assistant using natural language processing.
 
 Inspired by Siri, the Google Assistant and Alexa, Bishop AI is a conversational, contextual chatbot that can perform defined tasks on command. It is built to handle Q/A style conversation as well as following a conversation. Rather than trying to build a chatbot solely based on neural networks that can handle contextual conversations (the holy grail of NLP AI), this chatbot uses a template based input/output system that is easy to understand and falls back to using a classifier when the input doesn't match a template exactly. While the server expects natural language commands in the form of text and provides responses as text, each client can be set up to enable Speech-to-Text and Text-to-Speech. The key difference from the mainstream virtual assistants is that the functionality is broken into plugins. This allows building a customized virtual assistant that can do what the other popular assistants can do (if not more) or building a virtual assistant that is very good at a limited domain.
