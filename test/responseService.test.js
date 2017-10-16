@@ -28,18 +28,18 @@ describe('Response Service', function () {
             var inputs = responseService.getResponses(template);
 
             assert.equal(inputs.length, 12);
-            assert.equal(inputs[0], "Hello.");
-            assert.equal(inputs[1], "Hi.");
-            assert.equal(inputs[2], "Hello. How can I help, Steve?");
-            assert.equal(inputs[3], "Hi. How can I help, Steve?");
-            assert.equal(inputs[4], "Hello. How can I help you, Steve?");
-            assert.equal(inputs[5], "Hi. How can I help you, Steve?");
-            assert.equal(inputs[6], "Hello. How can I be of assistance, Steve?");
-            assert.equal(inputs[7], "Hi. How can I be of assistance, Steve?");
-            assert.equal(inputs[8], "Hello. What can I help you with, Steve?");
-            assert.equal(inputs[9], "Hi. What can I help you with, Steve?");
-            assert.equal(inputs[10], "Hello. What can I do for you, Steve?");
-            assert.equal(inputs[11], "Hi. What can I do for you, Steve?");
+            assert.equal(inputs[0].value, "Hello.");
+            assert.equal(inputs[1].value, "Hi.");
+            assert.equal(inputs[2].value, "Hello. How can I help, Steve?");
+            assert.equal(inputs[3].value, "Hi. How can I help, Steve?");
+            assert.equal(inputs[4].value, "Hello. How can I help you, Steve?");
+            assert.equal(inputs[5].value, "Hi. How can I help you, Steve?");
+            assert.equal(inputs[6].value, "Hello. How can I be of assistance, Steve?");
+            assert.equal(inputs[7].value, "Hi. How can I be of assistance, Steve?");
+            assert.equal(inputs[8].value, "Hello. What can I help you with, Steve?");
+            assert.equal(inputs[9].value, "Hi. What can I help you with, Steve?");
+            assert.equal(inputs[10].value, "Hello. What can I do for you, Steve?");
+            assert.equal(inputs[11].value, "Hi. What can I do for you, Steve?");
         });
 
         it ("Should take a simple string and return the same text", function () {
@@ -49,7 +49,7 @@ describe('Response Service', function () {
             var inputs = responseService.getResponses(simpleResponse);
 
             assert.equal(inputs.length, 1);
-            assert.equal(inputs[0], "Hey there!");
+            assert.equal(inputs[0].value, "Hey there!");
         });
 
     });
