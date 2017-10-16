@@ -1,6 +1,6 @@
 # Bishop AI
 
-[![Build Status](https://travis-ci.org/bishop-ai/bishop-ai.svg?branch=master)](https://travis-ci.org/bishop-ai/bishop-ai)
+[![Build Status](https://travis-ci.org/bishop-ai/bishop-ai.svg?branch=master)](https://travis-ci.org/bishop-ai/bishop-ai) [![GitQ](https://gitq.com/badge.svg)](https://gitq.com/bishop-ai/bishop-ai)
 
 Node based Virtual Assistant using natural language processing.
 
