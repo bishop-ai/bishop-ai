@@ -5,7 +5,7 @@ angular.module('AI').constant('debugMode', 0);
 angular.module('AI').constant('appName', 'Bishop AI');
 
 angular.module('AI').factory('socket', ['socketFactory', function (socketFactory) {
-    var socket = io.connect();
+    var socket = io();
 
     return socketFactory({
         ioSocket: socket
