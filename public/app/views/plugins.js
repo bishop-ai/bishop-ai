@@ -23,7 +23,7 @@ angular.module('AI').controller('PluginsCtrl', [
         ];
 
         $scope.loadingAvailable = true;
-        $http.get("/api/packages").then(function (response) {
+        $http.get("api/packages").then(function (response) {
             $scope.loadingAvailable = false;
 
             var installedPkgNames = [];
@@ -49,7 +49,7 @@ angular.module('AI').controller('PluginsCtrl', [
 
         var updatePlugin = function (plugin) {
             $scope.saving = true;
-            return $http.put("/api/plugins/" + plugin.name, plugin).then(function (response) {
+            return $http.put("api/plugins/" + plugin.name, plugin).then(function (response) {
                 $scope.saving = false;
                 return response;
             }, function (error) {
@@ -79,7 +79,7 @@ angular.module('AI').controller('PluginsCtrl', [
         };
 
         $scope.installPackage = function (pkg) {
-            $http.post("/api/packages/", pkg).then(function () {
+            $http.post("api/packages/", pkg).then(function () {
                 $location.path("/plugins/" + pkg.name);
                 $rootScope.$broadcast("fire");
             }, function () {

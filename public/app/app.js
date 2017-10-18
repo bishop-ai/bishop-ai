@@ -52,7 +52,7 @@ angular.module('AI').config([
                 controller: 'PluginsCtrl',
                 resolve: {
                     plugins: ['$http', function ($http) {
-                        return $http.get("/api/plugins").then(function (response) {
+                        return $http.get("api/plugins").then(function (response) {
                             return response.data;
                         });
                     }]
@@ -63,7 +63,7 @@ angular.module('AI').config([
                 controller: 'PluginCtrl',
                 resolve: {
                     plugin: ['$http', '$route', function ($http, $route) {
-                        return $http.get("/api/plugins/" + $route.current.params.name).then(function (response) {
+                        return $http.get("api/plugins/" + $route.current.params.name).then(function (response) {
                             return response.data;
                         });
                     }]

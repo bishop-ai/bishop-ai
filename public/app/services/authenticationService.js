@@ -31,7 +31,7 @@ angular.module('AI').factory('authenticationService', [
 
             $http({
                 method: 'GET',
-                url: "/api/auth",
+                url: "api/auth",
                 ignoreAuthFail: true
             }).then(function (response) {
                 $rootScope.authenticatedUser = response.data;
@@ -80,7 +80,7 @@ angular.module('AI').factory('authenticationService', [
 
             $http({
                 method: 'POST',
-                url: "/api/auth",
+                url: "api/auth",
                 data: {username: username, password: password}
             }).then(function (response) {
                 $rootScope.authenticatedUser = response.data.user;
@@ -98,7 +98,7 @@ angular.module('AI').factory('authenticationService', [
         authenticationService.logout = function () {
             $http({
                 method: 'DELETE',
-                url: "/api/auth"
+                url: "api/auth"
             }).finally(function () {
                 localStorage.remove(localStorage.keys.TOKEN);
                 $rootScope.authenticatedUser = null;
@@ -117,7 +117,7 @@ angular.module('AI').factory('authenticationService', [
 
             $http({
                 method: 'POST',
-                url: "/api/users",
+                url: "api/users",
                 data: {username: username, password: password}
             }).then(function (response) {
                 $rootScope.authenticatedUser = response.data.user;

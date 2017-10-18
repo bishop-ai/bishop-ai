@@ -16,7 +16,7 @@ angular.module('AI').controller('PluginCtrl', [
 
         var updatePlugin = function (plugin) {
             $scope.saving = true;
-            return $http.put("/api/plugins/" + plugin.name, plugin).then(function (response) {
+            return $http.put("api/plugins/" + plugin.name, plugin).then(function (response) {
                 $scope.saving = false;
                 return response;
             }, function (error) {
