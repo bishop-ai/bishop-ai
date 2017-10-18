@@ -37,7 +37,7 @@
                     </thead>
                     <tbody>
                     <tr data-ng-repeat="plugin in plugins">
-                        <td><a data-ng-href="/#/plugins/{{plugin.name}}">{{plugin.name}}</a></td>
+                        <td><a data-ng-href="#/plugins/{{plugin.name}}">{{plugin.name}}</a></td>
                         <td>{{plugin.description}}</td>
                         <td class="hidden-xs">
                             <button data-ng-disabled="saving" data-ng-click="enablePlugin(plugin)" data-ng-show="!plugin.enabled && authenticatedUser.admin" class="btn btn-primary btn-block">Enable</button>
@@ -87,7 +87,7 @@
             </div>
         </div>
 
-        <p><i data-ng-show="!authenticatedUser">You must <a href="/#/login">login</a> to change plugin settings.</i></p>
+        <p><i data-ng-show="!authenticatedUser">You must <a href="#/login">login</a> to change plugin settings.</i></p>
     </div>
 
 </div>
