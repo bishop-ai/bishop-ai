@@ -4,6 +4,7 @@ var extend = require('extend');
 var EventEmitter = require('events');
 var findPlugins = require('find-plugins');
 var npmi = require('npmi');
+var path = require('path');
 
 var configuration = require('./configuration');
 var intentService = require('./intentService');
@@ -97,7 +98,9 @@ pluginService.load = function () {
     console.log('Plugin Loader: Initializing plugins');
 
     var packages = findPlugins({
-        keyword: pjson.name + " plugin"
+        keyword: pjson.name + " plugin",
+        dir: path.join('.', 'node_modules'),
+        pkg: path.join('.', 'package.json')
     }) || [];
 
     var self = this;
