@@ -28,6 +28,13 @@ var Server = function () {
     this.app.use('/lib', express.static(__dirname + '/node_modules'));
     this.app.use('/api', apiRoutes);
 
+    // Allow CORS requests so that the server can be called by a client hosted somewhere else.
+    this.app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
+
     this.server = http.createServer(this.app);
 
     this.server.listen(this.port, function () {
