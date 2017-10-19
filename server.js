@@ -1,5 +1,6 @@
 #!/bin/env node
 var bodyParser = require('body-parser');
+var cors = require('cors');
 var express = require('express');
 var http = require('http');
 var methodOverride = require('method-override');
@@ -24,17 +25,18 @@ var Server = function () {
     this.app.use(bodyParser.json());
     this.app.use(methodOverride('X-HTTP-Method-Override'));
 
+    var corsOptions = {
+        allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, X-Access-Token',
+        credentials: true,
+        optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+    };
+
+    this.app.options('*', cors(corsOptions));
+    this.app.use(cors(corsOptions));
+
     this.app.use(express.static(__dirname + '/public'));
     this.app.use('/lib', express.static(__dirname + '/node_modules'));
     this.app.use('/api', apiRoutes);
-
-    // Allow CORS requests so that the server can be called by a client hosted somewhere else.
-    this.app.use(function(req, res, next) {
-        res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
-        res.header("Access-Control-Allow-Credentials", "true");
-        next();
-    });
 
     this.server = http.createServer(this.app);
 
