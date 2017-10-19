@@ -31,7 +31,7 @@ var Server = function () {
     // Allow CORS requests so that the server can be called by a client hosted somewhere else.
     this.app.use(function(req, res, next) {
         res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-access-token");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
         res.header("Access-Control-Allow-Credentials", "true");
         next();
     });
