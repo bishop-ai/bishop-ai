@@ -1,3 +1,5 @@
 *.idea
 /cache/*
 **/node_modules/
+plugins/**/*
+!plugins/package.json.example

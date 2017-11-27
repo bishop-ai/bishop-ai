@@ -68,13 +68,11 @@ There are two ways to contribute:
 All installed NPM packages with the keyword `bishop-ai-plugin` are assumed to be plugins for Bishop AI and can be enabled. 
 Plugins that follow the guidelines and are submitted as NPM packages should be available for install through the interface. This adds the NPM package as a dependency and runs NPM install. 
 
-For developing a new plugin or making changes to an existing plugin, add the checked-out plugin as an optional dependency to the package.json using the file path instead of the NPM package name. This will create a link to the plugin source and load it in Bishop AI.
+For developing a new plugin or making changes to an existing plugin, add the checked-out plugin as an optional dependency to the plugins/package.json file using the file path instead of the NPM package name. This will create a link to the plugin source and load it in Bishop AI.
 
-package.json Example:
+plugins/package.json Example:
 ```json
 "optionalDependencies": {
     "bishop-ai-coinflip": "file:../bishop-ai-coinflip"
 }
 ```
-
-**_Please do not check in the package.json file or the package.lock file with these changes._**

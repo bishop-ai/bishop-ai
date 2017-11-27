@@ -4,7 +4,6 @@ var extend = require('extend');
 var EventEmitter = require('events');
 var findPlugins = require('find-plugins');
 var npmi = require('npmi');
-var path = require('path');
 
 var configuration = require('./configuration');
 var intentService = require('./intentService');
@@ -83,7 +82,7 @@ pluginService.installPluginPackage = function (pkgName, cb) {
     var options = {
         name: pkgName,
         version: 'latest',
-        path: '.'
+        path: './plugins'
     };
     npmi(options, function (err) {
         if (!err) {
@@ -99,14 +98,15 @@ pluginService.load = function () {
 
     var packages = findPlugins({
         keyword: pjson.name + " plugin",
-        dir: path.join('.', 'node_modules'),
-        pkg: path.join('.', 'package.json')
-    }) || [];
+        dir: './plugins/node_modules'
+    });
+
+    packages = packages || [];
 
     var self = this;
     packages.forEach(function (result) {
         var pkg = result.pkg;
-        var module = require(pkg.name);
+        var module = require('../plugins/node_modules/' + pkg.name);
 
         if (typeof module.register === 'function' && module.namespace) {
 
