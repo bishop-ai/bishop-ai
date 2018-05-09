@@ -11,5 +11,5 @@
     "devel": true,
     "laxbreak": true,
     "mocha": true,
-    "predef": [ "$", "angular", "RecordRTC", "io", "module", "require", "__dirname" ]
+    "predef": ["module", "require"]
 }

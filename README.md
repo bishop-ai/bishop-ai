@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/bishop-ai/bishop-ai.svg?branch=master)](https://travis-ci.org/bishop-ai/bishop-ai) [![GitQ](https://gitq.com/badge.svg)](https://gitq.com/bishop-ai/bishop-ai)
 
-Node based Virtual Assistant using natural language processing.
+JS based Virtual Assistant using natural language processing.
 
-Inspired by Siri, the Google Assistant and Alexa, Bishop AI is a conversational, contextual chatbot that can perform defined tasks on command. It is built to handle Q/A style conversation as well as following a conversation. Rather than trying to build a chatbot solely based on neural networks that can handle contextual conversations (the holy grail of NLP AI), this chatbot uses a template based input/output system that is easy to understand and falls back to using a classifier when the input doesn't match a template exactly. While the server expects natural language commands in the form of text and provides responses as text, each client can be set up to enable Speech-to-Text and Text-to-Speech. The key difference from the mainstream virtual assistants is that the functionality is broken into plugins. This allows building a customized virtual assistant that can do what the other popular assistants can do (if not more) or building a virtual assistant that is very good at a limited domain.
+Inspired by Siri, the Google Assistant and Alexa, Bishop AI is a conversational, contextual virtual assistant that can perform defined tasks on command. It is built to handle Q/A style conversation as well as following a conversation. Rather than trying to build a chatbot solely based on neural networks that can handle contextual conversations (the holy grail of NLP AI), Bishop AI uses a template based input/output system that is easy to understand. While the server expects natural language commands in the form of text and provides responses as text, each client can be set up to enable Speech-to-Text and Text-to-Speech. The key difference from the mainstream virtual assistants is that the functionality is broken into plugins. This allows building a customized virtual assistant that can do what the other popular assistants can do (if not more) or building a virtual assistant that is very good at a limited domain.
 
 ## Demo
 
@@ -12,24 +12,10 @@ For a demo of Bishop AI, visit http://bishop-ai.github.io
 
 ## Features
 
-### Server
-
-- Use sockets to receive text, determine intent, trigger a command and return a response
-- Intent is determined both by a pattern matching syntax and through a trained classifier
+- Use simple API to receive text, determine intent, trigger a command and return a response
+- Intent is determined by a pattern matching syntax
 - Responses use a template to generate multiple alternate responses
-- Trigger intents are defined in plugins and can integrate with any system that can integrate with Node
-- Authentication using JWTs
-- API exposed to allow modifying plugin settings, authentication and training
-
-### Client
-
-- Speech to Text and Text to Speech using browser APIs
-- Hot-Word detection
-- Manage plugins and authentication
-
-## Dependencies
-
-- Node v6+ (_I try to keep the list small_)
+- Trigger intents are defined in plugins and can integrate with any system that can integrate with JS
 
 ## Versioning
 
@@ -60,17 +46,17 @@ There are two ways to contribute:
 
 - Check out the [source code](https://github.com/bishop-ai/bishop-ai) for the core project
 - Run `npm install`
-- Start the server with `npm start`
-- Go to http://localhost:3000
+- Build with Grunt
+- Use the dist JS file to test from an api or frontend. The core functionality can be run within a NodeJS server or in a browser. See the [demo app](http://bishop-ai.github.io) for an example of working with the core API.
 
 #### Plugin Development
 
 All installed NPM packages with the keyword `bishop-ai-plugin` are assumed to be plugins for Bishop AI and can be enabled. 
-Plugins that follow the guidelines and are submitted as NPM packages should be available for install through the interface. This adds the NPM package as a dependency and runs NPM install. 
+Plugins that follow the guidelines and are submitted as NPM packages should be usable with the core platform. 
 
-For developing a new plugin or making changes to an existing plugin, add the checked-out plugin as an optional dependency to the plugins/package.json file using the file path instead of the NPM package name. This will create a link to the plugin source and load it in Bishop AI.
+For developing a new plugin or making changes to an existing plugin, add the checked-out plugin as an optional dependency to your package.json file using the file path instead of the NPM package name. This will create a link to the plugin source and load it in Bishop AI.
 
-plugins/package.json Example:
+package.json Example:
 ```json
 "optionalDependencies": {
     "bishop-ai-coinflip": "file:../../bishop-ai-coinflip"
