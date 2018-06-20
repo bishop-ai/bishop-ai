@@ -46,8 +46,7 @@ There are two ways to contribute:
 
 - Check out the [source code](https://github.com/bishop-ai/bishop-ai) for the core project
 - Run `npm install`
-- Build with Grunt
-- Use the dist JS file to test from an api or frontend. The core functionality can be run within a NodeJS server or in a browser. See the [demo app](http://bishop-ai.github.io) for an example of working with the core API.
+- The core functionality can be run within a NodeJS server or in a browser. See the [demo app](http://bishop-ai.github.io) for an example of working with the core API from a browser.
 
 #### Plugin Development
 

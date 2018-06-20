@@ -1,38 +1,39 @@
-var BISHOP_AI = (function (module) {
-    'use strict';
+var Session = require("./session");
+var utils = require("./utils");
 
-    var sessionService = {
-        sessions: {}
-    };
+var sessionService = {
+    sessions: {}
+};
 
-    sessionService.getOrCreateSession = function (id, username) {
-        if (this.sessions.hasOwnProperty(id)) {
-            return this.sessions[id];
-        }
+sessionService.getOrCreateSession = function (id, username) {
+    if (this.sessions.hasOwnProperty(id)) {
+        return this.sessions[id];
+    }
 
-        var session = new module.Session();
-        session.link(username);
-        this.sessions[id] = session;
+    var session = new Session();
+    session.link(username);
+    this.sessions[id] = session;
 
-        return session;
-    };
+    return session;
+};
 
-    sessionService.newSession = function () {
-        var id = module.utils.generateUuid();
-        var session = new module.Session();
-        this.sessions[id] = session;
+sessionService.newSession = function (userConfig) {
+    var id = utils.generateUuid();
+    var session = new Session();
+    this.sessions[id] = session;
 
-        return session;
-    };
+    if (userConfig) {
+        session.loadUserConfig(config);
+    }
 
-    sessionService.getSession = function (id) {
-        if (this.sessions.hasOwnProperty(id)) {
-            return this.sessions[id];
-        }
-        return null;
-    };
+    return session;
+};
 
-    module.sessionService = sessionService;
+sessionService.getSession = function (id) {
+    if (this.sessions.hasOwnProperty(id)) {
+        return this.sessions[id];
+    }
+    return null;
+};
 
-    return module;
-}(BISHOP_AI || {}));
+module.exports = sessionService;

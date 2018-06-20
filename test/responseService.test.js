@@ -1,6 +1,6 @@
 var assert = require("assert");
 
-var BISHOP_AI = require("../dist/bishop-ai-core");
+var responseService = require("../src/responseService");
 
 describe('Response Service', function () {
 
@@ -25,7 +25,7 @@ describe('Response Service', function () {
             hi what can I do for you
              */
 
-            var inputs = BISHOP_AI.responseService.getResponses(template);
+            var inputs = responseService.getResponses(template);
 
             assert.equal(inputs.length, 12);
             assert.equal(inputs[0].value, "Hello.");
@@ -46,7 +46,7 @@ describe('Response Service', function () {
 
             var simpleResponse = "Hey there!";
 
-            var inputs = BISHOP_AI.responseService.getResponses(simpleResponse);
+            var inputs = responseService.getResponses(simpleResponse);
 
             assert.equal(inputs.length, 1);
             assert.equal(inputs[0].value, "Hey there!");

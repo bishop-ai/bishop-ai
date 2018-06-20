@@ -1,62 +1,58 @@
-var BISHOP_AI = (function (module) {
-    'use strict';
+var nlp = require("./nlp/nlp");
 
-    var Expression = function (value, trigger, condition, expectations) {
-        this.value = "";
+var Expression = function (value, trigger, condition, expectations) {
+    this.value = "";
 
-        this.normalized = "";
+    this.normalized = "";
 
-        this.analysis = [];
+    this.analysis = [];
 
-        this.expectations = "";
-        this.trigger = null;
+    this.expectations = "";
+    this.trigger = null;
 
-        if (typeof value === "object" && value.hasOwnProperty("value")) {
-            var intent = value;
-            this.value = intent.value;
-            this.expectations = intent.expectations || [];
-            this.trigger = intent.trigger || null;
-        } else {
-            this.value = value || "";
-            this.expectations = expectations || [];
-            this.trigger = trigger || null;
+    if (typeof value === "object" && value.hasOwnProperty("value")) {
+        var intent = value;
+        this.value = intent.value;
+        this.expectations = intent.expectations || [];
+        this.trigger = intent.trigger || null;
+    } else {
+        this.value = value || "";
+        this.expectations = expectations || [];
+        this.trigger = trigger || null;
+    }
+};
+
+Expression.prototype.contains = function (v1, v2, v3) {
+    var args = Array.prototype.slice.call(arguments);
+
+    var value = this.value.toLowerCase();
+    var normalized = this.normalized.toLowerCase();
+
+    var i;
+    var arg;
+    for (i = 0; i < args.length; i++) {
+        arg = args[i].toLowerCase();
+        if (value.indexOf(arg) >= 0 || normalized.indexOf(arg) >= 0) {
+            return true;
         }
-    };
+    }
 
-    Expression.prototype.contains = function (v1, v2, v3) {
-        var args = Array.prototype.slice.call(arguments);
+    return false;
+};
 
-        var value = this.value.toLowerCase();
-        var normalized = this.normalized.toLowerCase();
+Expression.prototype.process = function () {
+    if (this.value) {
+        var value = this.value;
 
-        var i;
-        var arg;
-        for (i = 0; i < args.length; i++) {
-            arg = args[i].toLowerCase();
-            if (value.indexOf(arg) >= 0 || normalized.indexOf(arg) >= 0) {
-                return true;
-            }
-        }
+        // Clean the value
+        this.value = nlp.clean(value);
 
-        return false;
-    };
+        // Set the normalized value
+        this.normalized = nlp.normalize(this.value);
 
-    Expression.prototype.process = function () {
-        if (this.value) {
-            var value = this.value;
+        this.analysis = nlp.analyse(this.normalized);
+    }
+    return this;
+};
 
-            // Clean the value
-            this.value = module.nlp.clean(value);
-
-            // Set the normalized value
-            this.normalized = module.nlp.normalize(this.value);
-
-            this.analysis = module.nlp.analyse(this.normalized);
-        }
-        return this;
-    };
-
-    module.Expression = Expression;
-
-    return module;
-}(BISHOP_AI || {}));
+module.exports = Expression;

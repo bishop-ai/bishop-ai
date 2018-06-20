@@ -1,93 +1,40 @@
-var BISHOP_AI = (function (module) {
-    'use strict';
+var memory = require("./memory");
+var pluginService = require("./pluginService");
+var sessionService = require("./sessionService");
 
-    /**
-     * The API class interfaces with the core AI engine
-     */
-    var api = {
-        handlers: [],
-        userConfig: null,
-        session: null
-    };
+/**
+ * The API class interfaces with the core AI engine
+ */
+var api = {};
 
-    api.sendResponse = function (data) {
-        var i;
-        for (i = 0; i < this.handlers.length; i++) {
-            this.handlers[i](data);
-        }
-    };
+api.loadConfig = function (config) {
+    memory.loadConfig(config);
+};
 
-    module.loadConfig = function (config) {
-        module.memory.loadConfig(config);
-    };
+api.startSession = function (userConfig) {
+    return sessionService.newSession(userConfig);
+};
 
-    module.startSession = function () {
-        api.session = module.sessionService.newSession();
-        if (api.userConfig) {
-            api.session.loadConfig(api.userConfig);
-            api.userConfig = null;
-        }
-    };
+api.getSession = function (sessionId) {
+    return sessionService.getSession(sessionId);
+};
 
-    module.loadUserConfig = function (config) {
-        if (api.session) {
-            api.session.loadConfig(config);
-        } else {
-            api.userConfig = config;
-        }
-    };
+api.registerPlugin = function (pluginConfig) {
+    pluginService.register(pluginConfig);
+};
 
-    module.linkSession = function (username) {
-        api.session.link(username);
-    };
+api.getPlugins = function () {
+    var plugins = pluginService.getPlugins();
+    return pluginService.sanitizePlugins(plugins);
+};
 
-    module.unlinkSession = function () {
-        api.session.unlink();
-    };
+api.getPlugin = function (namespace) {
+    var plugin = pluginService.getPlugin(namespace);
+    return pluginService.sanitizePlugins(plugin);
+};
 
-    module.sendCommand = function (message) {
-        if (api.session) {
-            api.session.processExpression(message, api.session).then(function (result) { // TODO: Pass in the user
-                if (result) {
-                    api.sendResponse(result);
-                }
-            }, function (e) {
-                console.error("API: unexpected error: " + e);
-            }, function (intermediateResponse) {
-                if (intermediateResponse) {
-                    api.sendResponse(intermediateResponse);
-                }
-            });
-        }
-    };
+api.updatePlugin = function (namespace, plugin) {
+    return pluginService.updatePlugin(namespace, plugin);
+};
 
-    module.onResponse = function (handler) {
-        if (api.handlers.indexOf(handler) >= 0) {
-            return;
-        }
-        api.handlers.push(handler);
-
-        return function () {
-            var idx = self.handlers.indexOf(handler);
-            if (idx >= 0) {
-                api.handlers.splice(idx, 1);
-            }
-        };
-    };
-
-    module.getPlugins = function () {
-        var plugins = module.pluginService.getPlugins();
-        return module.pluginService.sanitizePlugins(plugins, api.session);
-    };
-
-    module.getPlugin = function (namespace) {
-        var plugin = module.pluginService.getPlugin(namespace);
-        return module.pluginService.sanitizePlugins(plugin, api.session);
-    };
-
-    module.updatePlugin = function (namespace, plugin) {
-        return module.pluginService.updatePlugin(namespace, plugin, api.session);
-    };
-
-    return module;
-}(BISHOP_AI || {}));
+module.exports = api;

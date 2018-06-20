@@ -1,14 +1,14 @@
 var assert = require("assert");
 var moment = require('moment');
 
-var BISHOP_AI = require("../dist/bishop-ai-core");
+var datetimeNer = require("../src/nlp/ner/datetime");
 
 var eql = function (string, moment) {
-    assert.equal(BISHOP_AI.nlp.datetimeNer.extractDatetime(string), moment.format(), string);
+    assert.equal(datetimeNer.extractDatetime(string), moment.format(), string);
 };
 var expEql = function (string, type, moment) {
     var matched = false;
-    var entities = BISHOP_AI.nlp.datetimeNer.extract(string);
+    var entities = datetimeNer.extract(string);
     var i;
     for (i = 0; i < entities.length; i++) {
         if (entities[i].type === type) {
